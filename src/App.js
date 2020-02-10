@@ -37,10 +37,9 @@ class SplitText extends React.Component{
           side = 'left'
           text = {text}
           onTextChange = {this.handleLeftChange} />
-       <TextInput
-          side = 'right'
+        <TextOutput 
           text = {text}
-          onTextChange = {this.handleRightChange} />
+          onTextChange = {this.handleRightChange}/>
       </SplitPane>
     )
   }
@@ -62,6 +61,25 @@ class TextInput extends React.Component{
     const side = this.props.side;
     return(
       <textarea value = {text} onChange = {this.handleChange}/>
+    );
+  }
+}
+
+class TextOutput extends React.Component{
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    }
+
+  handleChange(e) {
+    this.props.onTextChange(e.target.value);
+  }
+
+  render(){
+    const text = this.props.text;
+    console.log(text);
+    return(
+      <div>Writing: {text} </div>
     );
   }
 }

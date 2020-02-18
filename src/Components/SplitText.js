@@ -1,0 +1,45 @@
+import React from 'react';
+import SplitPane from 'react-split-pane'
+import TextInput from './Components/TextInput';
+import TextOutput from './Components/TextOutput'
+
+
+
+
+class SplitText extends React.Component{
+  //handles the state for both text boxes
+  constructor(props){
+    super(props);
+    this.handleLeftChange = this.handleLeftChange.bind(this);
+    this.handleRightChange = this.handleRightChange.bind(this);
+    this.state={text: '', side: 'left'}
+  }
+
+  handleLeftChange(text){
+    this.setState({side: 'left', text});
+  }
+
+  handleRightChange(text){
+    this.setState({side: 'right', text});
+  }
+
+  render(){
+
+    const side = this.state.side;
+    const text = this.state.text;
+
+    return (
+      <SplitPane split="vertical" minSize={500} defaultSize={500}>
+        <TextInput
+          side = 'left'
+          text = {text}
+          onTextChange = {this.handleLeftChange} />
+        <TextOutput 
+          text = {text}
+          onTextChange = {this.handleRightChange}/>        
+      </SplitPane>
+    )
+  }
+}
+
+export default SplitText

@@ -1,9 +1,7 @@
 import React from 'react';
 import SplitPane from 'react-split-pane'
-import TextInput from './Components/TextInput';
-import TextOutput from './Components/TextOutput'
-
-
+import TextOutput from './TextOutput'
+import TextInput from './TextInput'
 
 
 class SplitText extends React.Component{
@@ -34,7 +32,8 @@ class SplitText extends React.Component{
           side = 'left'
           text = {text}
           onTextChange = {this.handleLeftChange} />
-        <TextOutput 
+        <TextInput 
+          side = 'right'
           text = {text}
           onTextChange = {this.handleRightChange}/>        
       </SplitPane>

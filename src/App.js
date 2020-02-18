@@ -2,6 +2,10 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 import SplitPane from 'react-split-pane'
+import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/mode-python";
+import "ace-builds/src-noconflict/theme-github";
+
 
 function App() {
   return (
@@ -39,7 +43,7 @@ class SplitText extends React.Component{
           onTextChange = {this.handleLeftChange} />
         <TextOutput 
           text = {text}
-          onTextChange = {this.handleRightChange}/>
+          onTextChange = {this.handleRightChange}/>        
       </SplitPane>
     )
   }
@@ -53,14 +57,22 @@ class TextInput extends React.Component{
     }
 
   handleChange(e) {
-    this.props.onTextChange(e.target.value);
+    this.props.onTextChange(e);
   }
 
   render(){
     const text = this.props.text;
     const side = this.props.side;
     return(
-      <textarea value = {text} onChange = {this.handleChange}/>
+      <AceEditor
+          mode="python"
+          theme="github"
+          onChange={this.handleChange}
+          name="UNIQUE_ID_OF_DIV"
+          value = {text}
+          editorProps={{ $blockScrolling: true }}
+        />
+      
     );
   }
 }
@@ -77,7 +89,6 @@ class TextOutput extends React.Component{
 
   render(){
     const text = this.props.text;
-    console.log(text);
     return(
       <div>Writing: {text} </div>
     );

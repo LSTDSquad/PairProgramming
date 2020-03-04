@@ -2,7 +2,7 @@ import React from 'react';
 import SplitPane from 'react-split-pane'
 import TextOutput from './TextOutput'
 import TextInput from './TextInput'
-
+import RunButton from './RunButton';
 
 class SplitText extends React.Component{
   //handles the state for both text boxes
@@ -27,16 +27,19 @@ class SplitText extends React.Component{
     const text = this.state.text;
 
     return (
-      <SplitPane split="vertical" minSize={500} defaultSize={500}>
-        <TextInput
-          side = 'left'
-          text = {text}
-          onTextChange = {this.handleLeftChange} />
-        <TextInput 
-          side = 'right'
-          text = {text}
-          onTextChange = {this.handleRightChange}/>        
-      </SplitPane>
+      <div>
+        <RunButton text = {text}/>
+        <SplitPane split="vertical" minSize={500} defaultSize={500}>
+          <TextInput
+            side = 'left'
+            text = {text}
+            onTextChange = {this.handleLeftChange} />
+          <TextInput 
+            side = 'right'
+            text = {text}
+            onTextChange = {this.handleRightChange}/>        
+        </SplitPane>
+      </div>
     )
   }
 }

@@ -28,21 +28,22 @@ class LoadButton extends React.Component{
 
 	    // alert('Session Text:  ' + loadedText);
 	    event.preventDefault();
+
+	    this.props.onSessionIDChange(this.state.value); //set session ID for app
   }
 
   render() {
   	
-  	const text = this.props.text;
     return (
       <form onSubmit={this.handleSubmit}>
         <label>
           SessionID:
           <input type="text" value={this.state.value} onChange={this.handleChange} />
         </label>
-        <input type="submit" value="Load Session" />
+        <input type="submit" value= "Load Session"/>
       </form>
     );
   }
 }
 
-export default ReloadButton
+export default LoadButton

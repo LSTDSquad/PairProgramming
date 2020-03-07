@@ -3,6 +3,7 @@ import SplitPane from 'react-split-pane'
 import TextOutput from './TextOutput'
 import TextInput from './TextInput'
 import RunButton from './RunButton';
+import ReloadButton from './ReloadButton';
 
 class SplitText extends React.Component{
   //handles the state for both text boxes
@@ -28,7 +29,10 @@ class SplitText extends React.Component{
 
     return (
       <div>
-        <RunButton text = {text}/>
+        <RunButton text = {text} />
+        <ReloadButton 
+            text = {text}
+            onTextChange = {this.handleLeftChange} />
         <SplitPane split="vertical" minSize={500} defaultSize={500}>
           <TextInput
             side = 'left'

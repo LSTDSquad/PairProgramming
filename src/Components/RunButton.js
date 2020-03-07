@@ -9,15 +9,10 @@ class RunButton extends React.Component{
 
     handleClick(e){
     	console.log(this.props.text);
-    	// axios.get('https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/ping')
-    	// 	.then(response => {
-    	// 		const message = response.data;
-    	// 		console.log(message);
-    	// 	},(error) => {
-    	// 		console.log(error);
-    	// 	});
 
     	let data = {text: this.props.text};
+
+    	//console.log(this.props.side)
 
     	axios.post('https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/setData', data)
     		.then(response => {
@@ -34,14 +29,6 @@ class RunButton extends React.Component{
       	<button type="button" text = {text} onClick = {this.handleClick}>Run</button>
     );
   }
-
-  static _putText(url, text, callback){
-	console.log('post', url);
-
-	axios.post(url, {
-
-	})
-}
 }
 
 export default RunButton

@@ -3,7 +3,7 @@ import SplitPane from 'react-split-pane'
 import TextOutput from './TextOutput'
 import TextInput from './TextInput'
 import RunButton from './RunButton';
-import ReloadButton from './ReloadButton';
+import LoadButton from './LoadButton';
 
 class SplitText extends React.Component{
   //handles the state for both text boxes
@@ -11,7 +11,8 @@ class SplitText extends React.Component{
     super(props);
     this.handleLeftChange = this.handleLeftChange.bind(this);
     this.handleRightChange = this.handleRightChange.bind(this);
-    this.state={text: '', side: 'left'}
+    this.handleSessionIDChange = this.handleSessionIDChange.bind(this);
+    this.state={text: '', side: 'left', sessionID: 'unsaved'}
   }
 
   handleLeftChange(text){
@@ -22,17 +23,26 @@ class SplitText extends React.Component{
     this.setState({side: 'right', text});
   }
 
+  handleSessionIDChange(sessionID){
+    this.setState({sessionID: sessionID});
+  }
+
   render(){
 
     const side = this.state.side;
     const text = this.state.text;
+    const sessionID = this.state.sessionID
 
     return (
       <div>
-        <RunButton text = {text} />
-        <ReloadButton 
+        <RunButton 
+          text = {text} 
+          sessionID = {sessionID}/>
+        <LoadButton 
             text = {text}
-            onTextChange = {this.handleLeftChange} />
+            sessionID = {sessionID}
+            onTextChange = {this.handleLeftChange}
+            onSessionIDChange = {this.handleSessionIDChange} />
         <SplitPane split="vertical" minSize={500} defaultSize={500}>
           <TextInput
             side = 'left'

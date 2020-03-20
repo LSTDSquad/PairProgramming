@@ -101,15 +101,12 @@ class SplitText extends React.Component{
             text = {text}
             onTextChange = {this.handleLeftChange} 
             onSendMessage = {this.sendMessage}
-            userID = {userID}
-            history = {history}/>
+            userID = {userID}/>
           <TextOutput
             side = 'right'
             text = {text}
             onTextChange = {this.handleRightChange}
-            //onSendMessage = {() => this.sendMessage()}
-            userID = {userID}
-            history = {history}/>        
+            userID = {userID}/>        
         </SplitPane>
       </div>
     )

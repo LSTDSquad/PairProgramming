@@ -28,28 +28,26 @@ class SplitText extends React.Component{
             cursors: {}
           } 
 
-      this.PubNub = new PubNub({
-      subscribe_key: "sub-c-76b1e8e8-6988-11ea-94ed-e20534093ea4",
-      publish_key: "pub-c-94dff15e-b743-4157-a74e-c7270627723b"})
+    this.PubNub = new PubNub({
+    subscribe_key: "sub-c-76b1e8e8-6988-11ea-94ed-e20534093ea4",
+    publish_key: "pub-c-94dff15e-b743-4157-a74e-c7270627723b"})
 
-      this.PubNub.addListener({
-            status: event => {
-              if (event.category === "PNConnectedCategory") {
-              }
-            },
-            message: ({ channel, message}) => {
-              console.log(`Message received in channel: ${channel}`, message.What);
-
-              this.setState(({...this.state.cursors[message.Who]=message.What}));
-              console.log(this.state.cursors)
+    this.PubNub.addListener({
+          status: event => {
+            if (event.category === "PNConnectedCategory") {
             }
-          });
+          },
+          message: ({ channel, message}) => {
+            console.log(`Message received in channel: ${channel}`, message.What);
 
-      this.PubNub.subscribe({channels: ["channel1"]});
-    }
+            this.setState(({...this.state.cursors[message.Who]=message.What}));
+          }
+      });
+
+    this.PubNub.subscribe({channels: ["channel1"], withPresence: true});
+  }
 
   handleLeftChange(text){
-    //sendMessage
     this.setState({side: 'left', text});
   }
 
@@ -63,10 +61,10 @@ class SplitText extends React.Component{
 
   sendMessage(message){
 
-        this.PubNub.publish( {channel:'channel1', 
-                              message: message}, function(status, response) {
-                                  console.log('Publish Result: ', status, message)
-        });
+    this.PubNub.publish( {channel:'channel1', 
+                          message: message}, function(status, response) {
+                              console.log('Publish Result: ', status, message)
+    });
   }
 
   componentWillUnmount() {
@@ -101,7 +99,8 @@ class SplitText extends React.Component{
             text = {text}
             onTextChange = {this.handleLeftChange} 
             onSendMessage = {this.sendMessage}
-            userID = {userID}/>
+            userID = {userID}
+            cursors = {cursors}/>
           <TextOutput
             side = 'right'
             text = {text}

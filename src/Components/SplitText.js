@@ -6,7 +6,7 @@ import RunButton from './RunButton';
 import SaveButton from './SaveButton';
 import LoadButton from './LoadButton';
 import PubNub from 'pubnub';
-import { PubNubProvider, usePubNub} from 'pubnub-react';
+import {PubNubProvider, usePubNub} from 'pubnub-react';
 
 
 class SplitText extends React.Component{
@@ -25,7 +25,8 @@ class SplitText extends React.Component{
             side: 'left', 
             sessionID: 'unsaved', //new session will default to 'unsaved' as the session ID
             userID: Math.round(Math.random() * 1000000).toString(),
-            cursors: {}
+            cursors: {},
+            selections: {}
           } 
 
     this.PubNub = new PubNub({
@@ -40,7 +41,15 @@ class SplitText extends React.Component{
           message: ({ channel, message}) => {
             console.log(`Message received in channel: ${channel}`, message.What);
 
-            this.setState(({...this.state.cursors[message.Who]=message.What}));
+            if(message.Type == 'cursor'){
+              this.setState(({...this.state.cursors[message.Who]=message.What}));
+            }
+
+            else{
+              //if(Object.keys(message.What).includes('start')){ //make sure that we use a complete range in state
+                this.setState(({...this.state.selections[message.Who]=message.What}));
+              //}
+            }
           }
       });
 
@@ -59,7 +68,7 @@ class SplitText extends React.Component{
     this.setState({sessionID: sessionID});
   }
 
-  sendMessage(message){
+  sendMessage(message,type){
 
     this.PubNub.publish( {channel:'channel1', 
                           message: message}, function(status, response) {
@@ -78,6 +87,7 @@ class SplitText extends React.Component{
     const sessionID = this.state.sessionID
     const userID = this.state.userID
     const cursors = this.state.cursors
+    const selections = this.state.selections
     
     return (
       <div>
@@ -100,7 +110,8 @@ class SplitText extends React.Component{
             onTextChange = {this.handleLeftChange} 
             onSendMessage = {this.sendMessage}
             userID = {userID}
-            cursors = {cursors}/>
+            cursors = {cursors}
+            selections = {selections}/>
           <TextOutput
             side = 'right'
             text = {text}

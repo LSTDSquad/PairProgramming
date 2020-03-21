@@ -19,24 +19,29 @@ class TextInput extends React.Component{
     }
 
   componentDidMount(){
+
     console.log(this.props.userID);
 
     this.editor1 = this.refs.editor2.editor //set reference to ace editor
+    
     this.curMgr = new AceMultiCursorManager(this.editor1.getSession()); //setup cursor manager in reference to editor
-
+    this.curMgr.addCursor(this.props.userID, this.props.userID, "orange"); //add this window's curser to the cursor manager
   }
 
   componentDidUpdate() {
 
-        //run this loop when other window changes, not when it itself changes
-        //i.e cursors gets updated when message is sent
+        // run this loop when other window changes, not when it itself changes
+        // i.e cursors gets updated when message is sent
         for (const [key, value] of Object.entries(this.props.cursors)) {
+            
+            //if other window's cursor not in this instance of curMgr, add it
+            if(Object.keys(this.curMgr._cursors).includes(key)==false){ 
+              this.curMgr.addCursor(key, key, "orange");
+            }
+
+            //if another window updates, move their cursor
             if(key != this.props.userID){
-              
-              //need some functionality here to clear cursor if it already exists.
-              
-              this.curMgr.addCursor("uid1", key, "orange");
-              this.curMgr.setCursor("uid1", {row: value.row, column: value.column});
+              this.curMgr.setCursor(key, {row: value.row, column: value.column});
 
             }
         }  
@@ -56,7 +61,6 @@ class TextInput extends React.Component{
         };
 
     this.props.onSendMessage(messageObj);
-
   }
 
   render(){

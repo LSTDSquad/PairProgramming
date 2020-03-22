@@ -18,7 +18,7 @@ class TextInput extends React.Component{
     this.handleSelectionChange = this.handleSelectionChange.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
     
-    this.editor1 = React.createRef(); //will reference Ace Editor
+    this.editor = React.createRef(); //will reference Ace Editor
     this.curMgr = Object //empty cursor manager
     this.selMgr = Object
 
@@ -27,28 +27,43 @@ class TextInput extends React.Component{
 
   componentDidMount(){
 
-    this.editor1 = this.refs.editor2.editor //set reference to ace editor
+    this.editor = this.refs.editor.editor //set reference to ace editor
+    //this.editor = this.refs.editor //set reference to ace editor
+
     
-    this.curMgr = new AceMultiCursorManager(this.editor1.getSession()); //setup cursor manager in reference to editor
+    this.curMgr = new AceMultiCursorManager(this.editor.getSession()); //setup cursor manager in reference to editor
     this.curMgr.addCursor(this.props.userID, this.props.userID, "orange"); //add this window's curser to the cursor manager
 
-    this.selMgr = new AceMultiSelectionManager(this.editor1.getSession());
+    this.selMgr = new AceMultiSelectionManager(this.editor.getSession());
     this.selMgr.addSelection(this.props.userID, this.props.userID, "blue");
 
   }
 
   componentDidUpdate() {
-
+    //console.log(this.props.cursors,this.curMgr);
     //I think we should try to combine these two for loops...Maybe put selection and cursors in the same dictionary?
+
+        for(const key of Object.keys(this.curMgr._cursors)){
+          //remove other user's cursors form the cursor manager on sessionID change
+          if(Object.keys(this.props.cursors).includes(key)==false){
+            this.curMgr.removeCursor(key);
+          }
+        }
+
+        for(const key of Object.keys(this.selMgr._selections)){
+          //remove other user's selection form the selection manager on sessionID change
+          if(Object.keys(this.props.selections).includes(key)==false){
+            this.selMgr.removeSelection(key);
+          }
+        }
 
         // run this loop when other window changes, not when it itself changes
         // i.e cursors gets updated when message is sent
         for (const [key, value] of Object.entries(this.props.cursors)) {
             
             //if other window's cursor not in this instance of curMgr, add it
-            if(Object.keys(this.curMgr._cursors).includes(key)==false){ 
+            if(Object.keys(this.curMgr._cursors).includes(key)==false){
               this.curMgr.addCursor(key, key, "orange");
-              
             }
 
             //if another window updates, move their cursor
@@ -108,8 +123,7 @@ class TextInput extends React.Component{
     return(
     <div>
       <AceEditor
-          ref = {this.editor1}
-          ref = "editor2"
+          ref = "editor"
           mode="python"
           theme="github"
           highlightActiveLine = {false}

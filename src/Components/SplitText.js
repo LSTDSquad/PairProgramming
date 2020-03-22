@@ -61,6 +61,7 @@ class SplitText extends React.Component{
   handleSessionIDChange(id){
 
     this.PubNub.unsubscribe({ channels: [this.state.sessionID]});
+    this.setState({cursors: {}, selections:{}});
 
     this.setState({sessionID: id}, () =>{
 

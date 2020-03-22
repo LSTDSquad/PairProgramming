@@ -34,10 +34,6 @@ class SplitText extends React.Component{
     publish_key: "pub-c-94dff15e-b743-4157-a74e-c7270627723b"})
 
     this.PubNub.addListener({
-          status: event => {
-            if (event.category === "PNConnectedCategory") {
-            }
-          },
           message: ({ channel, message}) => {
             console.log(`Message received in channel: ${channel}`, message.What);
 
@@ -46,14 +42,12 @@ class SplitText extends React.Component{
             }
 
             else{
-              //if(Object.keys(message.What).includes('start')){ //make sure that we use a complete range in state
                 this.setState(({...this.state.selections[message.Who]=message.What}));
-              //}
             }
           }
       });
 
-    this.PubNub.subscribe({channels: ["channel1"], withPresence: true});
+    this.PubNub.subscribe({channels: [this.state.sessionID], withPresence: true});
   }
 
   handleLeftChange(text){
@@ -64,13 +58,20 @@ class SplitText extends React.Component{
     this.setState({side: 'right', text});
   }
 
-  handleSessionIDChange(sessionID){
-    this.setState({sessionID: sessionID});
+  handleSessionIDChange(id){
+
+    this.PubNub.unsubscribe({ channels: [this.state.sessionID]});
+
+    this.setState({sessionID: id}, () =>{
+
+       //use callback due to asynchronous nature of .setState
+       this.PubNub.subscribe({channels: [this.state.sessionID], withPresence: true});
+    }) 
   }
 
   sendMessage(message,type){
 
-    this.PubNub.publish( {channel:'channel1', 
+    this.PubNub.publish( {channel: this.state.sessionID, 
                           message: message}, function(status, response) {
                               console.log('Publish Result: ', status, message)
     });

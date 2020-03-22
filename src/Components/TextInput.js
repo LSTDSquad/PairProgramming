@@ -33,7 +33,7 @@ class TextInput extends React.Component{
     this.curMgr.addCursor(this.props.userID, this.props.userID, "orange"); //add this window's curser to the cursor manager
 
     this.selMgr = new AceMultiSelectionManager(this.editor1.getSession());
-    this.selMgr.addSelection(this.props.userID, this.props.userID, "orange");
+    this.selMgr.addSelection(this.props.userID, this.props.userID, "blue");
 
   }
 
@@ -47,7 +47,7 @@ class TextInput extends React.Component{
             
             //if other window's cursor not in this instance of curMgr, add it
             if(Object.keys(this.curMgr._cursors).includes(key)==false){ 
-              this.curMgr.addCursor(key, key, "blue");
+              this.curMgr.addCursor(key, key, "orange");
               
             }
 
@@ -85,7 +85,7 @@ class TextInput extends React.Component{
 
   handleSelectionChange(e,selection){
     const selectionRange = e.getRange();
-    this.packageMessage(selectionRange);
+    this.packageMessage(selectionRange, "selection");
     
   }
 

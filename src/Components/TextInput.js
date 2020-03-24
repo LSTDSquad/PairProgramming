@@ -22,7 +22,6 @@ class TextInput extends React.Component{
     this.curMgr = Object //empty cursor manager
     this.selMgr = Object //empty selection manager
 
-
     }
 
   componentDidMount(){
@@ -88,7 +87,9 @@ class TextInput extends React.Component{
     }
 
   handleChange(e, event) {
-    this.props.onTextChange(e);
+
+      this.props.onTextChange(e);
+    
   }
 
   handleCursorChange(e){
@@ -99,7 +100,6 @@ class TextInput extends React.Component{
   handleSelectionChange(e,selection){
     const selectionRange = e.getRange();
     this.packageMessage(selectionRange, "selection");
-    
   }
 
   packageMessage(what,type){
@@ -119,6 +119,7 @@ class TextInput extends React.Component{
     const text = this.props.text;
     const side = this.props.side;
     const cursors = this.props.cursors
+    const role = this.props.role
     return(
     <div>
       <AceEditor
@@ -127,6 +128,7 @@ class TextInput extends React.Component{
           theme="github"
           highlightActiveLine = {false}
           onChange={this.handleChange}
+          readOnly = {!role} //if user is not the pilot, editor is readOnly
           onCursorChange={this.handleCursorChange}
           onSelectionChange = {this.handleSelectionChange}
           name="UNIQUE_ID_OF_DIV"

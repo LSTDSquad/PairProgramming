@@ -1,6 +1,7 @@
 import React from 'react';
 import SaveButton from './SaveButton';
 import LoadButton from './LoadButton';
+import ToggleButton from './ToggleButton';
 
 class ToolBar extends React.Component{
 
@@ -9,6 +10,7 @@ class ToolBar extends React.Component{
 
 		this.handleChange = this.handleChange.bind(this);
 	    this.handleSubmit = this.handleSubmit.bind(this);
+	    this.handleToggle = this.handleToggle.bind(this);
 	}
 
 	handleChange(e){
@@ -19,6 +21,9 @@ class ToolBar extends React.Component{
 		this.props.handleSubmit(e);
 	}
 
+	handleToggle(){
+		this.props.handleToggle();
+	}
 
 	render(){
 		return(
@@ -31,10 +36,13 @@ class ToolBar extends React.Component{
 	         		 //component to reload session from session ID
 	            	 onTextChange = {this.handleChange}
 	           		 onSessionIDChange = {this.handleSubmit}/>
+	           	<ToggleButton
+	           		onToggle = {this.handleToggle}
+	           		role = {this.props.role}/>
+
 	         </div>
 			)
 	}
-
 }
 
 export default ToolBar

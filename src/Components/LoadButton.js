@@ -24,14 +24,12 @@ class LoadButton extends React.Component{
 
 	  	axios.get(url)
 	  	.then(function(response){
-	  		console.log(response.data)
 	  		self.props.onTextChange(response.data);
 	  	})
 
-	    // alert('Session Text:  ' + loadedText);
 	    event.preventDefault();
 
-	    this.props.onSessionIDChange(this.state.value); //set session ID for app
+	    this.props.onSessionIDChange(this.state.value); //set session ID for app by calling SplitText.js handleSessionIDChange
   }
 
   render() {

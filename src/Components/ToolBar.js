@@ -8,17 +8,17 @@ class ToolBar extends React.Component{
 	constructor(props){
 		super(props);
 
-		this.handleChange = this.handleChange.bind(this);
-	    this.handleSubmit = this.handleSubmit.bind(this);
+		this.handleTextChange = this.handleTextChange.bind(this);
+	    this.handleIDChange = this.handleIDChange.bind(this);
 	    this.handleToggle = this.handleToggle.bind(this);
 	}
 
-	handleChange(e){
-		this.props.handleChange(e);
+	handleTextChange(e){
+		this.props.handleTextChange(e);
 	}
 
-	handleSubmit(e){
-		this.props.handleSubmit(e);
+	handleIDChange(e){
+		this.props.handleIDChange(e);
 	}
 
 	handleToggle(){
@@ -34,11 +34,12 @@ class ToolBar extends React.Component{
 	         		sessionID = {this.props.sessionID}/>
 	       		 <LoadButton 
 	         		 //component to reload session from session ID
-	            	 onTextChange = {this.handleChange}
-	           		 onSessionIDChange = {this.handleSubmit}/>
+	            	 onTextChange = {this.handleTextChange}
+	           		 onSessionIDChange = {this.handleIDChange}/>
 	           	<ToggleButton
 	           		onToggle = {this.handleToggle}
-	           		role = {this.props.role}/>
+	           		userNumber = {this.props.userNumber}
+	           		isPilot = {this.props.isPilot}/>
 
 	         </div>
 			)

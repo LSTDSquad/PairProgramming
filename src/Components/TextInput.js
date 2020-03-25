@@ -43,14 +43,14 @@ class TextInput extends React.Component{
 
         for(const key of Object.keys(this.curMgr._cursors)){
           //remove other user's cursors from previous session from the cursor manager on sessionID change
-          if(Object.keys(this.props.cursors).includes(key)==false){
+          if(Object.keys(this.props.cursors).includes(key)===false){
             this.curMgr.removeCursor(key);
           }
         }
 
         for(const key of Object.keys(this.selMgr._selections)){
           //remove other user's selection from previous session from the selection manager on sessionID change
-          if(Object.keys(this.props.selections).includes(key)==false){
+          if(Object.keys(this.props.selections).includes(key)===false){
             this.selMgr.removeSelection(key);
           }
         }
@@ -60,12 +60,12 @@ class TextInput extends React.Component{
         for (const [key, value] of Object.entries(this.props.cursors)) {
             
             //if another user's cursor not in this of cursor manager, add it
-            if(Object.keys(this.curMgr._cursors).includes(key)==false){
+            if(Object.keys(this.curMgr._cursors).includes(key)===false){
               this.curMgr.addCursor(key, key, "orange");
             }
 
             //if another user updates their cursor another window, move their cursor on this window
-            if(key != this.props.userID){
+            if(key !== this.props.userID){
               this.curMgr.setCursor(key, {row: value.row, column: value.column});
 
             }
@@ -74,12 +74,12 @@ class TextInput extends React.Component{
         for (const [key, value] of Object.entries(this.props.selections)) {
             
             //if another user's selection not in this selection manager, add it
-            if(Object.keys(this.selMgr._selections).includes(key)==false){ 
+            if(Object.keys(this.selMgr._selections).includes(key)===false){ 
               this.selMgr.addSelection(key, key, "blue");
             }
 
             //if another user updates their selection another window, move their selection on this window
-            if(key != this.props.userID){
+            if(key !== this.props.userID){
               this.selMgr.setSelection(key, new Range(value.start.row, value.start.column, value.end.row, value.end.column));
 
             }
@@ -117,9 +117,7 @@ class TextInput extends React.Component{
 
   render(){
     const text = this.props.text;
-    const side = this.props.side;
-    const cursors = this.props.cursors
-    const role = this.props.role
+    const isPilot = this.props.isPilot
     return(
     <div>
       <AceEditor
@@ -128,7 +126,7 @@ class TextInput extends React.Component{
           theme="github"
           highlightActiveLine = {false}
           onChange={this.handleChange}
-          readOnly = {!role} //if user is not the pilot, editor is readOnly
+          readOnly = {!isPilot} //if user is not the pilot, editor is readOnly
           onCursorChange={this.handleCursorChange}
           onSelectionChange = {this.handleSelectionChange}
           name="UNIQUE_ID_OF_DIV"

@@ -2,6 +2,7 @@ import React from 'react';
 import AceEditor from "react-ace";
 import {AceMultiCursorManager, AceMultiSelectionManager} from "@convergencelabs/ace-collab-ext"
 import {Range} from 'ace-builds/';
+import axios from 'axios';
 
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-github";
@@ -17,6 +18,7 @@ class TextInput extends React.Component{
     this.handleCursorChange = this.handleCursorChange.bind(this);
     this.handleSelectionChange = this.handleSelectionChange.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
+    this.handleTextChange = this.handleTextChange.bind(this);
     
     this.editor = React.createRef(); //will reference Ace Editor
     this.curMgr = Object //empty cursor manager
@@ -88,7 +90,11 @@ class TextInput extends React.Component{
 
   handleChange(e, event) {
 
+      console.log(e, event.action);
       this.props.onTextChange(e);
+      this.packageMessage(e,'text');
+      //this.handleTextChange(e)
+     
     
   }
 
@@ -114,6 +120,42 @@ class TextInput extends React.Component{
 
     this.props.onSendMessage(messageObj);
   }
+
+    handleTextChange(e){
+
+        //uses session ID from props to either update backend or create new table entry
+
+      let data = e;
+      let sessionID = this.props.sessionID;
+      console.log(this.props.sessionID, sessionID)
+
+
+      if(sessionID==='unsaved'){
+            //if this is a new session, write new session to dynamoDB
+        const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/setData'
+
+        axios.post(url, data)
+          .then(response => {
+            const message = response.data;
+            console.log(message);
+          },(error) => {
+            console.log(error);
+          });
+      }
+      else{
+            //if this session exists already, update the entry in dynamoDB
+        const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateData/'+sessionID
+        
+        axios.put(url,data)
+          .then(response => {
+            const message = response.data;
+            console.log(message)},
+          (error) => {
+            console.log(error);
+            }
+          );
+      }
+    }
 
   render(){
     const text = this.props.text;

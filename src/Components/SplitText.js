@@ -50,6 +50,10 @@ class SplitText extends React.Component{
               this.setState(({...this.state.cursors[message.Who]=message.What}));
             }
 
+            else if(message.Type === 'text'){
+              this.setState(({text: message.What}));
+            }
+
             else{
                 //if message containing highlight change info comes in, update selection object in state
                 this.setState(({...this.state.selections[message.Who]=message.What}));
@@ -184,6 +188,7 @@ class SplitText extends React.Component{
             text = {text}
             isPilot = {isPilot}
             onTextChange = {this.handleLeftChange} 
+            sessionID = {sessionID}
             onSendMessage = {this.sendMessage}
             userID = {userID}
             cursors = {cursors}

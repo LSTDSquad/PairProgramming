@@ -6,7 +6,6 @@ import ToolBar from './ToolBar';
 import PubNub from 'pubnub';
 import {PubNubProvider, usePubNub} from 'pubnub-react';
 
-
 class SplitText extends React.Component{
   //handles the state for both text boxes
   //state gets managed here (for now?)
@@ -18,6 +17,8 @@ class SplitText extends React.Component{
     this.handleSessionIDChange = this.handleSessionIDChange.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
     this.toggleRole = this.toggleRole.bind(this);
+    this.assignUserNumber = this.assignUserNumber.bind(this);
+    this.assignRole = this.assignRole.bind(this);
 
     this.state={
             text: 'The quick brown fox jumped over the lazy dog', 
@@ -28,7 +29,8 @@ class SplitText extends React.Component{
             //these two items operate like dictionaries key: userID, value: cursor/highligh coordinates
             cursors: {},
             selections: {},
-            isPilot: true
+            isPilot: true,
+            userNumber: 1 //number based on order of subscription to channel
           } 
 
     this.PubNub = new PubNub({
@@ -43,7 +45,7 @@ class SplitText extends React.Component{
           message: ({ channel, message}) => {
             console.log(`Message received in channel: ${channel}`, message.What);
 
-            if(message.Type == 'cursor'){
+            if(message.Type === 'cursor'){
               //if message containing cursor change info comes in, update cursor object in setState
               this.setState(({...this.state.cursors[message.Who]=message.What}));
             }
@@ -52,29 +54,29 @@ class SplitText extends React.Component{
                 //if message containing highlight change info comes in, update selection object in state
                 this.setState(({...this.state.selections[message.Who]=message.What}));
             }
-          },
-          presence: function(presenceEvent){
-            console.log(presenceEvent);}
+          }
       });
 
     //subscribe to channel based on sessionID
     this.PubNub.subscribe({channels: [this.state.sessionID], withPresence: true});
-  }
 
-  componentDidMount(){
+    let currentComponent = this;
+    //to reference state in callback function
+
     this.PubNub.hereNow(
       {
-          //channels: [this.state.sessionID], 
-          //channelGroups : ["cg1"],
+          channels: [this.state.sessionID], 
           includeUUIDs: true,
           includeState: true 
       },
       function (status, response) {
-          console.log(status,response);
+          //set this window's userNumber to the current number of users on the channel
+          console.log(2,status,response.totalOccupancy);
+          currentComponent.setState({userNumber: response.totalOccupancy});
+          currentComponent.assignRole();
       }
     );
   }
-
 
   //                                             ///
   //Functions that handle various changes/updates///
@@ -99,11 +101,45 @@ class SplitText extends React.Component{
     this.setState({sessionID: id}, () =>{
        //use callback due to asynchronous nature of .setState
        this.PubNub.subscribe({channels: [this.state.sessionID], withPresence: true});
+       this.assignUserNumber();
+       this.assignRole();
     }) 
   }
 
   toggleRole(){
+    console.log(this.state.userNumber);
     this.setState({isPilot: !this.state.isPilot});
+  }
+
+  assignRole(){
+    //only person with number 1 will start as pilot
+    console.log('userNumber', this.state.userNumber);
+    if(this.state.userNumber <= 1){
+      this.setState({isPilot: true});
+    }
+    else{
+      this.setState({isPilot: false});
+    }
+  }
+
+  assignUserNumber(){
+    //assign the window a number based on when they showed up in channel
+    //i.e the 7th user to subscribe will get number 7
+    let currentComponent = this;
+
+    this.PubNub.hereNow(
+    //set this window's userNumber to the current number of users on the channel
+      {
+          channels: [this.state.sessionID], 
+          includeUUIDs: true,
+          includeState: true 
+      },
+      function (status, response) {
+          console.log(2,status,response.totalOccupancy);
+          currentComponent.setState({userNumber: response.totalOccupancy});
+          //currentComponent.assignRole();
+      }
+    );
   }
 
   sendMessage(message,type){
@@ -127,16 +163,18 @@ class SplitText extends React.Component{
     const userID = this.state.userID
     const cursors = this.state.cursors
     const selections = this.state.selections
-    const role = this.state.isPilot
+    const isPilot = this.state.isPilot
+    const userNumber = this.state.userNumber
     
     return (
       <div>
         <ToolBar
             text = {text}
             sessionID = {sessionID}
-            role = {role}
-            handleChange = {this.handleLeftChange}
-            handleSubmit = {this.handleSessionIDChange}
+            isPilot = {isPilot}
+            userNumber = {userNumber}
+            handleTextChange = {this.handleLeftChange}
+            handleIDChange = {this.handleSessionIDChange}
             handleToggle = {this.toggleRole}/>
         <SplitPane 
             //One side input, other side output, once we get app to run code?
@@ -144,7 +182,7 @@ class SplitText extends React.Component{
           <TextInput
             side = 'left'
             text = {text}
-            role = {role}
+            isPilot = {isPilot}
             onTextChange = {this.handleLeftChange} 
             onSendMessage = {this.sendMessage}
             userID = {userID}

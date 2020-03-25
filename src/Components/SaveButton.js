@@ -15,7 +15,7 @@ class SaveButton extends React.Component{
     	let sessionID = this.props.sessionID;
 
 
-    	if(sessionID=='unsaved'){
+    	if(sessionID==='unsaved'){
             //if this is a new session, write new session to dynamoDB
     		const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/setData'
 

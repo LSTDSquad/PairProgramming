@@ -92,8 +92,8 @@ class TextInput extends React.Component{
 
       console.log(e, event.action);
       this.props.onTextChange(e);
-      this.packageMessage(e,'text');
-      this.handleTextChange(e)
+      // this.packageMessage(e,'text');
+      // this.handleTextChange(e)
      
     
   }

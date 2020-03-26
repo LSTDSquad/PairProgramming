@@ -92,9 +92,6 @@ class SplitText extends React.Component{
     );
   }
 
-  componentDidMount(){
-
-  }
    outf(text) { 
      var arr = []
      console.log(text);

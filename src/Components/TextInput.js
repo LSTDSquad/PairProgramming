@@ -93,7 +93,7 @@ class TextInput extends React.Component{
       console.log(e, event.action);
       this.props.onTextChange(e);
       this.packageMessage(e,'text');
-      //this.handleTextChange(e)
+      this.handleTextChange(e)
      
     
   }
@@ -125,26 +125,13 @@ class TextInput extends React.Component{
 
         //uses session ID from props to either update backend or create new table entry
 
-      let data = e;
+      let data = {text: this.props.text};
       let sessionID = this.props.sessionID;
-      console.log(this.props.sessionID, sessionID)
 
-
-      if(sessionID==='unsaved'){
-            //if this is a new session, write new session to dynamoDB
-        const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/setData'
-
-        axios.post(url, data)
-          .then(response => {
-            const message = response.data;
-            console.log(message);
-          },(error) => {
-            console.log(error);
-          });
-      }
-      else{
+      if(sessionID !=='unsaved'){
             //if this session exists already, update the entry in dynamoDB
         const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateData/'+sessionID
+        console.log(url)
         
         axios.put(url,data)
           .then(response => {

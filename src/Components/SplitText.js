@@ -5,6 +5,10 @@ import TextInput from './TextInput'
 import ToolBar from './ToolBar';
 import PubNub from 'pubnub';
 import {PubNubProvider, usePubNub} from 'pubnub-react';
+import Sk from 'skulpt';
+import 'skulpt/dist/skulpt.min.js'
+import 'skulpt/dist/skulpt-stdlib.js'
+
 
 class SplitText extends React.Component{
   //handles the state for both text boxes
@@ -19,9 +23,14 @@ class SplitText extends React.Component{
     this.toggleRole = this.toggleRole.bind(this);
     this.assignUserNumber = this.assignUserNumber.bind(this);
     this.assignRole = this.assignRole.bind(this);
+    this.outputRef = React.createRef();
+    this.outf = this.outf.bind(this);
+    this.builtinRead = this.builtinRead.bind(this);
+    this.runCode = this.runCode.bind(this);
 
     this.state={
-            text: 'The quick brown fox jumped over the lazy dog', 
+            text: 'print(3+5)', 
+            codeOutput: 'hi',
             side: 'left', 
             sessionID: 'unsaved', //new session will default to 'unsaved' as the session ID
             userID: Math.round(Math.random() * 1000000).toString(),
@@ -30,6 +39,7 @@ class SplitText extends React.Component{
             cursors: {},
             selections: {},
             isPilot: true,
+            lines:['Output:'],
             userNumber: 1 //number based on order of subscription to channel
           } 
 
@@ -82,11 +92,41 @@ class SplitText extends React.Component{
     );
   }
 
+  componentDidMount(){
+
+  }
+   outf(text) { 
+     var arr = []
+     console.log(text);
+     arr.push(text);
+     console.log(arr);
+     //this.setState({lines:["Output"]});
+     this.setState(prevState => ({
+          lines: [...prevState.lines, text]
+        }))
+    } 
+ 
+ builtinRead(x) {
+    if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+            throw "File not found: '" + x + "'";
+    return Sk.builtinFiles["files"][x];
+  }
+
+  runCode(){
+
+    var input = this.state.text
+    
+    Sk.configure({output:this.outf, read:this.builtinRead}); 
+    Sk.importMainWithBody("<stdin>", false, input, true);
+
+  }
+
   //                                             ///
   //Functions that handle various changes/updates///
   //                                             ///
 
   handleLeftChange(text){
+      this.setState({lines:["Output"]});
       this.setState({side: 'left', text});
   }
 
@@ -116,6 +156,7 @@ class SplitText extends React.Component{
   }
 
   assignRole(){
+    //assign role based on userNumber
     //only person with number 1 will start as pilot
     console.log('userNumber', this.state.userNumber);
     if(this.state.userNumber <= 1){
@@ -169,7 +210,8 @@ class SplitText extends React.Component{
     const selections = this.state.selections
     const isPilot = this.state.isPilot
     const userNumber = this.state.userNumber
-    
+    const codeOutput = this.state.lines;
+
     return (
       <div>
         <ToolBar
@@ -179,13 +221,15 @@ class SplitText extends React.Component{
             userNumber = {userNumber}
             handleTextChange = {this.handleLeftChange}
             handleIDChange = {this.handleSessionIDChange}
-            handleToggle = {this.toggleRole}/>
+            handleToggle = {this.toggleRole}
+            handleRun = {this.runCode}/>
         <SplitPane 
             //One side input, other side output, once we get app to run code?
             split="vertical" minSize={500} defaultSize={500}>
           <TextInput
             side = 'left'
             text = {text}
+            ref = 'input'
             isPilot = {isPilot}
             onTextChange = {this.handleLeftChange} 
             sessionID = {sessionID}
@@ -195,7 +239,8 @@ class SplitText extends React.Component{
             selections = {selections}/>
           <TextOutput
             side = 'right'
-            text = {text}
+            ref = {this.outputRef}
+            text = {codeOutput}
             onTextChange = {this.handleRightChange}
             userID = {userID}/>        
         </SplitPane>

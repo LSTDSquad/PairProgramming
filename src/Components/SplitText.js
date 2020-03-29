@@ -5,6 +5,7 @@ import TextInput from './TextInput'
 import ToolBar from './ToolBar';
 import PubNub from 'pubnub';
 import {PubNubProvider, usePubNub} from 'pubnub-react';
+import axios from 'axios';
 import Sk from 'skulpt';
 import 'skulpt/dist/skulpt.min.js'
 import 'skulpt/dist/skulpt-stdlib.js'
@@ -19,6 +20,8 @@ class SplitText extends React.Component{
     this.handleLeftChange = this.handleLeftChange.bind(this);
     this.handleRightChange = this.handleRightChange.bind(this);
     this.handleSessionIDChange = this.handleSessionIDChange.bind(this);
+    this.handleCursorChange = this.handleCursorChange.bind(this);
+    this.handleSelectionChange = this.handleSelectionChange.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
     this.toggleRole = this.toggleRole.bind(this);
     this.assignUserNumber = this.assignUserNumber.bind(this);
@@ -30,18 +33,22 @@ class SplitText extends React.Component{
 
     this.state={
             text: 'print(3+5)', 
-            codeOutput: 'hi',
             side: 'left', 
             sessionID: 'unsaved', //new session will default to 'unsaved' as the session ID
             userID: Math.round(Math.random() * 1000000).toString(),
 
-            //these two items operate like dictionaries key: userID, value: cursor/highligh coordinates
+            //these two items operate like dictionaries key: userID, value: cursor/highlight coordinates
             cursors: {},
             selections: {},
             isPilot: true,
             lines:['Output:'],
             userNumber: 1 //number based on order of subscription to channel
           } 
+
+
+    //////                                       //////
+   //////      Initial Pubnub setup             //////
+  //////                                       //////
 
     this.PubNub = new PubNub({
             subscribe_key: "sub-c-76b1e8e8-6988-11ea-94ed-e20534093ea4",
@@ -53,18 +60,20 @@ class SplitText extends React.Component{
     //add PubNub listener to handle messages
     this.PubNub.addListener({
           message: ({ channel, message}) => {
-            console.log(`Message received in channel: ${channel}`, message.What);
+            console.log(`Message received in channel: ${channel}`, message.What, message.Who);
 
-            if(message.Type === 'cursor'){
+            if(message.Type === 'cursor' & message.Who != this.state.userID){
               //if message containing cursor change info comes in, update cursor object in setState
+
               this.setState(({...this.state.cursors[message.Who]=message.What}));
+
             }
 
-            else if(message.Type === 'text'){
+             if(message.Type === 'text' & message.Who != this.state.userID){
               this.setState(({text: message.What}));
             }
 
-            else{
+            else if (message.Type === 'selection' & message.Who != this.state.userID){
                 //if message containing highlight change info comes in, update selection object in state
                 this.setState(({...this.state.selections[message.Who]=message.What}));
             }
@@ -85,12 +94,24 @@ class SplitText extends React.Component{
       },
       function (status, response) {
           //set this window's userNumber to the current number of users on the channel
-          console.log(2,status,response.totalOccupancy);
           currentComponent.setState({userNumber: response.totalOccupancy});
           currentComponent.assignRole();
       }
     );
   }
+
+  sendMessage(message,type){
+
+    //send cursor/selection message on sessionID channel
+    this.PubNub.publish( {channel: this.state.sessionID, 
+                          message: message}, function(status, response) {
+                              console.log('Publish Result: ', status, message)
+    });
+  }
+
+    //////                                       //////
+   //////     Skulpt functions to run python    //////
+  //////                                       //////
 
    outf(text) { 
      var arr = []
@@ -118,9 +139,14 @@ class SplitText extends React.Component{
 
   }
 
-  //                                             ///
-  //Functions that handle various changes/updates///
-  //                                             ///
+    //////                                                    //////
+   //////   Functions that handle state changes/updates      //////
+  //////                                                    //////
+
+  componentDidMount(){
+  }
+  componentDidUpdate(){
+  }
 
   handleLeftChange(text){
       this.setState({lines:["Output"]});
@@ -129,6 +155,14 @@ class SplitText extends React.Component{
 
   handleRightChange(text){
     this.setState({side: 'right', text});
+  }
+
+  handleCursorChange(user,cursor){
+
+  }
+
+  handleSelectionChange(){
+
   }
 
   handleSessionIDChange(id){
@@ -177,20 +211,10 @@ class SplitText extends React.Component{
           includeState: true 
       },
       function (status, response) {
-          console.log(2,status,response.totalOccupancy);
           currentComponent.setState({userNumber: response.totalOccupancy});
           //currentComponent.assignRole();
       }
     );
-  }
-
-  sendMessage(message,type){
-
-    //send cursor/selection message on sessionID channel
-    this.PubNub.publish( {channel: this.state.sessionID, 
-                          message: message}, function(status, response) {
-                              console.log('Publish Result: ', status, message)
-    });
   }
 
   componentWillUnmount() {
@@ -229,6 +253,8 @@ class SplitText extends React.Component{
             ref = 'input'
             isPilot = {isPilot}
             onTextChange = {this.handleLeftChange} 
+            onCursorChange = {this.handleCursorChange}
+            onSelectionChange = {this.handleSelectionChange}
             sessionID = {sessionID}
             onSendMessage = {this.sendMessage}
             userID = {userID}

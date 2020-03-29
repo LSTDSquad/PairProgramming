@@ -20,7 +20,6 @@ class TextOutput extends React.Component{
 
   render(){
     const text = this.props.text;
-    console.log(this.props.text)
     const numbers = this.props.text
     const listItems = numbers.map((numbers) =>
       <li>{numbers}</li>

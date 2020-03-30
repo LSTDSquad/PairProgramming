@@ -44,7 +44,6 @@ class TextInput extends React.Component{
 
     //add keyboard listener to ace editor to record which key was pressed
     this.editor.keyBinding.addKeyboardHandler(function(data, hashId, keyString, keyCode, e) {
-       console.log(data, hashId, keyString, keyCode, e);
        currentComponent.setState({key: keyCode});
       })
 
@@ -108,7 +107,6 @@ class TextInput extends React.Component{
 
   handleChange(e, event) {
 
-    console.log(this.state.key);
 
     //If the cursor changes due to arrow key movement
     // 37-40 are the key codes corresponding to arrow keys
@@ -136,7 +134,6 @@ class TextInput extends React.Component{
        this.state.key === 38 ||
        this.state.key === 39 ||
        this.state.key === 40 )){
-      console.log('hi',e, e.getRange());
       const selectionRange = e.getRange();
       this.packageMessage(selectionRange, "selection");
     }
@@ -164,7 +161,6 @@ class TextInput extends React.Component{
   }
 
   handleSelectionChange(e,selection){
-    console.log('hi',e, e.getRange());
     const selectionRange = e.getRange();
     //this.packageMessage(selectionRange, "selection");
   }

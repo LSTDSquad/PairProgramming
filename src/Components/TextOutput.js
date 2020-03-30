@@ -24,6 +24,8 @@ class TextOutput extends React.Component{
     const listItems = numbers.map((numbers) =>
       <li>{numbers}</li>
     );
+
+   
     return(
       <ul>{listItems}</ul>
     );

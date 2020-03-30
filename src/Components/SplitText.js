@@ -135,7 +135,16 @@ class SplitText extends React.Component{
     var input = this.state.text
     
     Sk.configure({output:this.outf, read:this.builtinRead}); 
-    Sk.importMainWithBody("<stdin>", false, input, true);
+
+    try {
+      Sk.importMainWithBody("<stdin>", false, input, true);
+    }
+
+    catch(e) {
+      this.setState(prevState => ({
+          lines: [...prevState.lines, e.toString()]
+        }))
+    }
 
   }
 

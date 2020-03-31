@@ -9,9 +9,15 @@ import axios from 'axios';
 import Sk from 'skulpt';
 import 'skulpt/dist/skulpt.min.js'
 import 'skulpt/dist/skulpt-stdlib.js'
+import {
+  HashRouter as Router,
+  Route,
+  Link
+} from 'react-router-dom'
 
 
-class SplitText extends React.Component{
+
+class SplitText extends React.Component {
   //handles the state for both text boxes
   //state gets managed here (for now?)
   constructor(props){
@@ -148,16 +154,39 @@ class SplitText extends React.Component{
 
   }
 
+
+
     //////                                                    //////
    //////   Functions that handle state changes/updates      //////
   //////                                                    //////
 
   componentDidMount(){
+   // console.log(this.props);
+    if(this.props.match.path != '/'){
+        console.log(this.props.match.params.sessionID)
+        let session = this.props.match.params.sessionID
+
+          const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/getData/'+session
+          var self = this     
+
+          axios.get(url)
+          .then(function(response){
+            //self.props.onTextChange(response.data);
+            self.handleLeftChange(response.data);
+          })
+          this.setState({sessionID: session});
+          this.handleSessionIDChange(session)
+      }
+      //event.preventDefault();
+
+      //this.props.onSessionIDChange(session); //set session ID for app by calling SplitText.js handleSessionIDChange
+
   }
   componentDidUpdate(){
   }
 
   handleLeftChange(text){
+      // console.log(this.state.sessionID);
       this.setState({lines:["Output"]});
       this.setState({side: 'left', text});
   }
@@ -241,42 +270,45 @@ class SplitText extends React.Component{
     const isPilot = this.state.isPilot
     const userNumber = this.state.userNumber
     const codeOutput = this.state.lines;
+    const history = this.props.history
 
     return (
-      <div>
-        <ToolBar
-            text = {text}
-            sessionID = {sessionID}
-            isPilot = {isPilot}
-            userNumber = {userNumber}
-            handleTextChange = {this.handleLeftChange}
-            handleIDChange = {this.handleSessionIDChange}
-            handleToggle = {this.toggleRole}
-            handleRun = {this.runCode}/>
-        <SplitPane 
-            //One side input, other side output, once we get app to run code?
-            split="vertical" minSize={500} defaultSize={500}>
-          <TextInput
-            side = 'left'
-            text = {text}
-            ref = 'input'
-            isPilot = {isPilot}
-            onTextChange = {this.handleLeftChange} 
-            onCursorChange = {this.handleCursorChange}
-            onSelectionChange = {this.handleSelectionChange}
-            sessionID = {sessionID}
-            onSendMessage = {this.sendMessage}
-            userID = {userID}
-            cursors = {cursors}
-            selections = {selections}/>
-          <TextOutput
-            side = 'right'
-            ref = {this.outputRef}
-            text = {codeOutput}
-            onTextChange = {this.handleRightChange}
-            userID = {userID}/>        
-        </SplitPane>
-      </div>
+          <div>
+            <ToolBar
+                text = {text}
+                sessionID = {sessionID}
+                isPilot = {isPilot}
+                userNumber = {userNumber}
+                handleTextChange = {this.handleLeftChange}
+                handleIDChange = {this.handleSessionIDChange}
+                handleToggle = {this.toggleRole}
+                history = {history}
+                handleRun = {this.runCode}/>
+            <SplitPane 
+                //One side input, other side output, once we get app to run code?
+                split="vertical" minSize={500} defaultSize={500}>
+              <TextInput
+                side = 'left'
+                text = {text}
+                ref = 'input'
+                path = {this.props.match.path}
+                isPilot = {isPilot}
+                onTextChange = {this.handleLeftChange} 
+                onCursorChange = {this.handleCursorChange}
+                onSelectionChange = {this.handleSelectionChange}
+                sessionID = {sessionID}
+                onSendMessage = {this.sendMessage}
+                userID = {userID}
+                cursors = {cursors}
+                selections = {selections}/>
+              <TextOutput
+                side = 'right'
+                ref = {this.outputRef}
+                text = {codeOutput}
+                onTextChange = {this.handleRightChange}
+                userID = {userID}/>        
+            </SplitPane>
+          </div>
     )
   }
 }

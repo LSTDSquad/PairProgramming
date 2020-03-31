@@ -156,6 +156,7 @@ class TextInput extends React.Component{
 
          this.props.onTextChange(e); //update text for everyone through state
          this.packageMessage(e,'text'); //synch text through pubnub
+         this.handleTextChange(e);
          //this.packageMessage(this.props.sessionID, 'textUpdate');} //use this line to synch text via dynamoDB pulls
       }
   }
@@ -184,7 +185,7 @@ class TextInput extends React.Component{
       let data = {text: this.props.text};
       let sessionID = this.props.sessionID;
 
-      if(sessionID !=='unsaved'){
+      if(this.props.path != '/'){
             //if this session exists already, update the entry in dynamoDB
         const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateData/'+sessionID
         console.log(url)

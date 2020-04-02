@@ -1,5 +1,7 @@
 import React from 'react';
 import axios from 'axios';
+import { Button } from 'react-bootstrap';
+import { SwapHoriz } from '@material-ui/icons';
 import { useHistory } from "react-router-dom";
 
 class CopyButton extends React.Component{
@@ -34,7 +36,7 @@ class CopyButton extends React.Component{
 
     render(){
     	return(
-      	<button type="button" onClick = {this.handleClick}>Make Copy</button>
+      	<Button variant='info' type="button" onClick = {this.handleClick}>Make Copy</Button>
     );
   }
 }

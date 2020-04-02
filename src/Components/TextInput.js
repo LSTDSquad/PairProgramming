@@ -230,6 +230,7 @@ class TextInput extends React.Component {
          //this.packageMessage(this.props.sessionID, 'textUpdate');} //use this line to synch text via dynamoDB pulls
       }
   }
+}
 
   handleSelectionChange(e,selection){
     const selectionRange = e.getRange();
@@ -369,7 +370,7 @@ class TextInput extends React.Component {
           defaultSize={100}
           style={{ width: "100%" }}
           resizerStyle={{ border: 10 }}
-          pane2Style={this.state.annotations ? {border: '5px solid red'} : {} }
+          pane2Style={this.state.annotations && this.state.annotations.length > 0 ? {border: '5px solid red'} : {} }
         >
           <div className="problem-desc">
             {`

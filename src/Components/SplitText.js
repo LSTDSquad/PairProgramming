@@ -196,7 +196,7 @@ class SplitText extends React.Component {
 
   }
 
-  }
+  
   componentDidUpdate() {}
 
   handleLeftChange(text) {

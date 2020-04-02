@@ -295,6 +295,7 @@ class SplitText extends React.Component {
           handleTextChange={this.handleLeftChange}
           handleIDChange={this.handleSessionIDChange}
           handleToggle={this.toggleRole}
+          history = {history}
         />
           </Row>
         <Row noGutters={true} >

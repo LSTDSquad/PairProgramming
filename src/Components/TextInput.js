@@ -200,15 +200,15 @@ class TextInput extends React.Component {
     }
 
     //and instead use the cursor positions from the two event actions
-    else {
-      if (event.action === "insert") {
-        var cursorPosition = event.end;
-        this.packageMessage(cursorPosition, "cursor");
-      } else if (event.action === "remove") {
-        var cursorPosition = event.end;
-        cursorPosition.column--;
-        this.packageMessage(cursorPosition, "cursor");
-      }
+    // else {
+    //   if (event.action === "insert") {
+    //     var cursorPosition = event.end;
+    //     this.packageMessage(cursorPosition, "cursor");
+    //   } else if (event.action === "remove") {
+    //     var cursorPosition = event.end;
+    //     cursorPosition.column--;
+    //     this.packageMessage(cursorPosition, "cursor");
+    //   }
 
 
    //and instead use the cursor positions from the two event actions
@@ -229,7 +229,7 @@ class TextInput extends React.Component {
          this.handleTextChange(e);
          //this.packageMessage(this.props.sessionID, 'textUpdate');} //use this line to synch text via dynamoDB pulls
       }
-  }
+  //}
 }
 
   handleSelectionChange(e,selection){

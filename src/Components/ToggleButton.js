@@ -1,4 +1,6 @@
 import React from 'react';
+import { Button } from 'react-bootstrap';
+import { SwapHoriz } from '@material-ui/icons';
 
 class ToggleButton extends React.Component{
 
@@ -24,8 +26,8 @@ class ToggleButton extends React.Component{
     	return(
     		<div>
     			{this.props.isPilot 
-					? <label> Role: Pilot <button type="button" onClick = {this.handleClick}>Toggle Role</button></label>
-					: <label>Role: 'Copilot' <button type="button" onClick = {this.requestToggle}>Request Toggle</button></label>
+					? <label> Role: Pilot <Button variant='warning' type="button" onClick = {this.handleClick}><SwapHoriz/></Button></label>
+					: <label>Role: Copilot <Button variant='info' type="button" onClick = {this.requestToggle}><SwapHoriz/></Button></label>
       			}
       		</div>
     	);

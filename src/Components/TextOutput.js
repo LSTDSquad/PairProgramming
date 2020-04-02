@@ -5,14 +5,7 @@ class TextOutput extends React.Component{
   constructor(props) {
     super(props);
     this.handleChange = this.handleChange.bind(this);
-    //this.renderLine = this.renderLine.bind(this);
     }
-
-    // renderLine(line, i) {
-    //     return <OutputLine 
-    //               output={line} 
-    //               key={i} />
-    // }
 
   handleChange(e) {
     this.props.onTextChange(e.target.value);
@@ -22,12 +15,12 @@ class TextOutput extends React.Component{
     const text = this.props.text;
     const numbers = this.props.text
     const listItems = numbers.map((numbers) =>
-      <li>{numbers}</li>
+      <div>{numbers}</div>
     );
 
    
     return(
-      <ul>{listItems}</ul>
+      <div>{listItems}</div>
     );
   }
 }

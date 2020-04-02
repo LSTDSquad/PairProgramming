@@ -1,0 +1,43 @@
+.left-side.container-fluid {
+    height: 100%;
+    bottom: 0px;
+    padding: 0px;
+    position: relative;
+}
+
+.problem-desc {
+    padding: 20px;
+}
+
+.run {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+
+}
+
+.confused-btn {
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    width: 50px;
+
+}
+
+.confused-marker {
+    position: absolute;
+    background-color: rgb(187, 76, 76);
+    pointer-events: auto;
+    width: 50px;
+}
+
+.confused-popover {
+    padding: 10px;
+}
+
+.resolve-btn {
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    width: 50px;
+}

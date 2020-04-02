@@ -210,10 +210,30 @@ class TextInput extends React.Component {
         this.packageMessage(cursorPosition, "cursor");
       }
 
-      this.props.onTextChange(e); //update text for everyone through state
-      this.packageMessage(e, "text"); //synch text through pubnub
-      //this.packageMessage(this.props.sessionID, 'textUpdate');} //use this line to synch text via dynamoDB pulls
-    }
+
+   //and instead use the cursor positions from the two event actions
+    else{
+        if(event.action === "insert"){
+            var cursorPosition = event.end
+            this.packageMessage(cursorPosition,'cursor');
+        }
+
+        else if(event.action === "remove"){
+            var cursorPosition = event.end
+            cursorPosition.column --
+            this.packageMessage(cursorPosition,'cursor');
+        }
+
+         this.props.onTextChange(e); //update text for everyone through state
+         this.packageMessage(e,'text'); //synch text through pubnub
+         this.handleTextChange(e);
+         //this.packageMessage(this.props.sessionID, 'textUpdate');} //use this line to synch text via dynamoDB pulls
+      }
+  }
+
+  handleSelectionChange(e,selection){
+    const selectionRange = e.getRange();
+    //this.packageMessage(selectionRange, "selection");
   }
 
   packageMessage(what, type) {
@@ -233,24 +253,21 @@ class TextInput extends React.Component {
     //uses session ID from props to either update backend
     let data = { text: this.props.text };
     let sessionID = this.props.sessionID;
-
-    if (sessionID !== "unsaved") {
-      //if this session exists already, update the entry in dynamoDB
-      const url =
-        "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateData/" +
-        sessionID;
-      console.log(url);
-
-      axios.put(url, data).then(
-        response => {
-          const message = response.data;
-          console.log(message);
-        },
-        error => {
-          console.log(error);
-        }
-      );
-    }
+     if(this.props.path != '/'){
+            //if this session exists already, update the entry in dynamoDB
+        const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateData/'+sessionID
+        console.log(url)
+        
+        axios.put(url,data)
+          .then(response => {
+            const message = response.data;
+            console.log(message)},
+          (error) => {
+            console.log(error);
+            }
+          );
+      }
+    
   }
 
   setAnnotations = annots => {
@@ -265,6 +282,8 @@ class TextInput extends React.Component {
       //this.session.$annotations = annotations;
     }
   };
+
+
 
   handleConfused = event => {
     event.preventDefault();

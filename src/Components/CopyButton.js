@@ -10,7 +10,7 @@ class CopyButton extends React.Component{
 
     handleClick(e){
 
-        //uses session ID from props to either update backend or create new table entry
+        //Generates copy of current page and saves it to dynamoDB
 
     	let data = {text: this.props.text};
     	let sessionID = this.props.sessionID;
@@ -26,26 +26,10 @@ class CopyButton extends React.Component{
 	    			console.log(response.data.id);
                     let newSession = '/'+response.data.id;
                     this.props.onSessionIDChange(response.data.id);
-                    this.props.history.push(newSession);
+                    this.props.history.push(newSession); //navigate to page referencing copy
 	    		},(error) => {
 	    			console.log(error);
 	    		});
-
-
-    	//}
-    	// else{
-     //        //if this session exists already, update the entry in dynamoDB
-    	// 	const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateData/'+sessionID
-    	// 	console.log(url);
-    	// 	axios.put(url,data)
-    	// 		.then(response => {
-    	// 			const message = response.data;
-    	// 			console.log(message)},
-    	// 		(error) => {
-    	// 			console.log(error);
-    	// 			}
-    	// 		);
-    	// }
     }
 
     render(){

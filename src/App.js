@@ -5,6 +5,11 @@ import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-github";
 import SplitText from './Components/SplitText';
+import {
+  HashRouter as Router,
+  Route,
+  Switch
+} from 'react-router-dom'
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -13,10 +18,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   return (
-  	<div>
-   		<SplitText/>
-   		
-   	</div>
+  	
+  		<Router>
+  			<div>
+  				<Switch>
+  					<Route exact path="/" render={(routeProps) => <SplitText {...routeProps}/>} />
+  					<Route exact path="/:sessionID" render={(routeProps) => <SplitText {...routeProps}  />} />
+  				</Switch>
+
+  		   	</div>
+   		</Router>
   );
 }
 

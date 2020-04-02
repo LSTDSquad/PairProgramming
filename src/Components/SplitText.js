@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import SplitPane from "react-split-pane";
 import TextOutput from "./TextOutput";
 import TextInput from "./TextInput";
@@ -13,6 +13,13 @@ import './CSS/SplitText.css'
 import $ from "jquery"
 
 import { Container, Row, Button } from "react-bootstrap";
+import {
+  HashRouter as Router,
+  Route,
+  Link
+} from 'react-router-dom'
+
+
 
 class SplitText extends React.Component {
   //handles the state for both text boxes
@@ -161,14 +168,34 @@ class SplitText extends React.Component {
     }
   }
 
-  //////                                                    //////
-  //////   Functions that handle state changes/updates      //////
+
+    //////                                                    //////
+   //////   Functions that handle state changes/updates      //////
   //////                                                    //////
 
-  componentDidMount() {
-    $(function() {
-      console.log('ready!');
-    })
+  componentDidMount(){
+   // console.log(this.props);
+    if(this.props.match.path != '/'){
+        console.log(this.props.match.params.sessionID)
+        let session = this.props.match.params.sessionID
+
+          const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/getData/'+session
+          var self = this     
+
+          axios.get(url)
+          .then(function(response){
+            //self.props.onTextChange(response.data);
+            self.handleLeftChange(response.data);
+          })
+          this.setState({sessionID: session});
+          this.handleSessionIDChange(session)
+      }
+      //event.preventDefault();
+
+      //this.props.onSessionIDChange(session); //set session ID for app by calling SplitText.js handleSessionIDChange
+
+  }
+
   }
   componentDidUpdate() {}
 
@@ -253,13 +280,17 @@ class SplitText extends React.Component {
     const isPilot = this.state.isPilot;
     const userNumber = this.state.userNumber;
     const codeOutput = this.state.lines;
+    const history = this.props.history
 
     return (
+
       <div>
         <Container  fluid style={{padding: 0, margin: 0}} >
         <Row noGutters={true}>
         <ToolBar
           isPilot={isPilot}
+          sessionID = {sessionID}
+          text = {text}
           userNumber={userNumber}
           handleTextChange={this.handleLeftChange}
           handleIDChange={this.handleSessionIDChange}
@@ -305,6 +336,7 @@ class SplitText extends React.Component {
         </Container>
       </div>
     );
+
   }
 }
 

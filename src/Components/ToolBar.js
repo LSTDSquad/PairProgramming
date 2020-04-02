@@ -1,10 +1,12 @@
 import React from "react";
-// import SaveButton from "./SaveButton";
 import LoadButton from "./LoadButton";
 import ToggleButton from "./ToggleButton";
 import { Navbar, Button, ListGroup } from "react-bootstrap";
 import { Menu } from "@material-ui/icons";
 import {Drawer } from '@material-ui/core'
+
+import CopyButton from './CopyButton';
+
 
 import './CSS/ToolBar.css'
 
@@ -64,9 +66,16 @@ class ToolBar extends React.Component {
           onTextChange={this.handleTextChange}
           onSessionIDChange={this.handleIDChange}
         />
+            <CopyButton 
+		          		//component to save session to backend
+		          		text = {this.props.text} 
+		          		history = {this.props.history}
+		         		sessionID = {this.props.sessionID}
+		         		onSessionIDChange = {this.handleIDChange}/>
        </Navbar>
     );
   }
+
 }
 
 export default ToolBar;

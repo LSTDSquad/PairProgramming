@@ -22,12 +22,12 @@ class TextOutput extends React.Component{
     const text = this.props.text;
     const numbers = this.props.text
     const listItems = numbers.map((numbers) =>
-      <li>{numbers}</li>
+      <div>{numbers}</div>
     );
 
    
     return(
-      <ul>{listItems}</ul>
+      <div>{listItems}</div>
     );
   }
 }

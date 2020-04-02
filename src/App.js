@@ -6,6 +6,8 @@ import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-github";
 import SplitText from './Components/SplitText';
 
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 
 

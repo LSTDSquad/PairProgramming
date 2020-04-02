@@ -1,5 +1,6 @@
 import React from 'react';
 import axios from 'axios';
+import {Button } from 'react-bootstrap'
 
 class LoadButton extends React.Component{
 	
@@ -37,10 +38,10 @@ class LoadButton extends React.Component{
     return (
       <form onSubmit={this.handleSubmit}>
         <label>
-          SessionID:
+          SessionID:{' '}
           <input type="text" value={this.state.value} onChange={this.handleChange} />
         </label>
-        <input type="submit" value= "Load Session"/>
+        <Button variant='info' type="submit">Load</Button>
       </form>
     );
   }

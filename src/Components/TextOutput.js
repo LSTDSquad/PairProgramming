@@ -5,14 +5,7 @@ class TextOutput extends React.Component{
   constructor(props) {
     super(props);
     this.handleChange = this.handleChange.bind(this);
-    //this.renderLine = this.renderLine.bind(this);
     }
-
-    // renderLine(line, i) {
-    //     return <OutputLine 
-    //               output={line} 
-    //               key={i} />
-    // }
 
   handleChange(e) {
     this.props.onTextChange(e.target.value);

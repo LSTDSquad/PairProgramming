@@ -67,20 +67,6 @@ class TextInput extends React.Component {
 
   componentDidMount() {
     this.editor = this.refs.editor.editor; //set reference to ace editor
-    // this.editor.renderer.$gutterLayer.$updateAnnotations = function(delta) {
-    //   console.log(delta);
-    //   if (!this.$annotations.length) return;
-    //   var firstRow = delta.start.row;
-    //   var len = delta.end.row - firstRow;
-    //   if (len === 0) {
-    //   } else if (delta.action == "remove") {
-    //     this.$annotations.splice(firstRow, len + 1, null);
-    //   } else {
-    //     var args = new Array(len + 1);
-    //     args.unshift(firstRow, 1);
-    //     this.$annotations.splice.apply(this.$annotations, args);
-    //   }
-    // };
 
     this.session = this.editor.getSession();
     this.session.$useWorker = false;
@@ -165,86 +151,7 @@ class TextInput extends React.Component {
   }
 
   handleChange(e, event) {
-    // Helper Methods ------------------------------------
-    // Returns a string array containing the HTML making up an Ace marker
-    // function getMarkerHTML(
-    //   markerLayer,
-    //   session,
-    //   config,
-    //   range,
-    //   markerClass
-    // ) {
-    //   let stringBuilder = [];
-    //   console.log(range)
-    //   if (range.isMultiLine()) {
-    //     // drawTextMarker is defined by ace's marker layer
-    //     markerLayer.drawTextMarker(stringBuilder, range, markerClass, config);
-    //   } else {
-    //     // drawSingleLineMarker is defined by ace's marker layer
-    //     console.log('RANGE', RANGE);
-    //     console.log('Range', Range);
-    //     markerLayer.drawSingleLineMarker(
-    //       stringBuilder,
-    //       range,
-    //       `${markerClass} ace_start ace_br15`,
-    //       config
-    //     );
-    //   }
 
-    //   return stringBuilder;
-    // }
-
-    // // Defines a generic dynamicMarker update that renders a bootstrap popover on mouseenter
-    // function customUpdateWithOverlay(
-    //   markerClass,
-    //   markerRange,
-    //   overlayPlacement,
-    //   overlayTitle,
-    //   overlayContent,
-    //   overrideWidth
-    // ) {
-    //   return (html, markerLayer, session, config) => {
-    //     // Use the helper method above to get the marker's HTML as a string (how Ace normally does it)
-    //     let markerHTML = getMarkerHTML(
-    //       markerLayer,
-    //       session,
-    //       config,
-    //       markerRange,
-    //       markerClass
-    //     );
-    //     // Use jQuery to parse that HTML into an actual DOM element
-    //     let markerElement = $.parseHTML(markerHTML.join(""))[0];
-    //     // From here, we can manipulate the DOM element however we so choose
-    //     // In this case, we use it as a root for ReactDOM and use
-    //     // react-bootstrap components to render a popover
-    //     ReactDOM.render(
-    //       <MarkerPopup
-    //         ref={popup => (this.popup = popup)}
-    //         overlayTarget={markerElement}
-    //         overlayPlacement={overlayPlacement}
-    //       >
-    //         <Popover
-    //           placement={overlayPlacement}
-    //           title={overlayTitle}
-    //           style={overrideWidth ? { maxWidth: "100%" } : {}}
-    //         >
-    //           {overlayContent}
-    //         </Popover>
-    //       </MarkerPopup>,
-    //       markerElement
-    //     );
-    //     $(markerElement).css("pointer-events", "auto");
-    //     // Since we have the actual DOM element, we can bind event handlers to it
-    //     $(markerElement).mouseenter(() => {
-    //       this.popup.setState({ show: true });
-    //     });
-
-    //     // Finally we append the element to the marker layer's DOM as a child
-    //     // Since the marker layer is now using insertAdjacentHTML with this
-    //     // custom build, the child is retained
-    //     markerLayer.element.appendChild(markerElement);
-    //   };
-    // }
 
     //If the cursor changes due to arrow key movement
     // 37-40 are the key codes corresponding to arrow keys
@@ -309,11 +216,6 @@ class TextInput extends React.Component {
     }
   }
 
-  // handleSelectionChange(e, selection) {
-  //   const selectionRange = e.getRange();
-  //   //this.packageMessage(selectionRange, "selection");
-  // }
-
   packageMessage(what, type) {
     //package either cursor or selection change into message
     //object and send it in SplitText.js sendMessage function
@@ -367,7 +269,6 @@ class TextInput extends React.Component {
   handleConfused = event => {
     event.preventDefault();
     console.log(event);
-    //console.log(this.state.selected)
     //this.state.selected is in this form: {start: {row:, column:}, end{row:, column:}}
     //let currAnnotations = this.session.$annotations;
     let currAnnotations = this.state.annotations || [];
@@ -376,7 +277,6 @@ class TextInput extends React.Component {
     let { start, end } = this.state.selected;
     console.log("start", start);
     console.log("end", end);
-    // this.session.setAnnotations([...currAnnotations, {row: start.row, html: '<button>new annot </button>', type: 'warning'}])
     this.session.setAnnotations([
       ...currAnnotations,
       {
@@ -412,8 +312,6 @@ class TextInput extends React.Component {
   getConfusedPopover = () =>
     this.state.showConfused ? (
       <Popover className="confused-popover">
-        {/* <Popover.Title as='h4'>Briefly describe your confusion</Popover.Title> */}
-        {/* <Popover.Content> */}
         {this.state && this.state.selected ? (
           <Form onSubmit={this.handleConfused}>
             <Form.Label>Briefly describe your confusion.</Form.Label>
@@ -452,8 +350,8 @@ class TextInput extends React.Component {
           defaultSize={100}
           style={{ width: "100%" }}
           resizerStyle={{ border: 10 }}
+          pane2Style={this.state.annotations ? {border: '5px solid red'} : {} }
         >
-          {/* <Row style={{height: 100}}> */}
           <div className="problem-desc">
             {`
         Some dank problems for you to solve
@@ -461,8 +359,6 @@ class TextInput extends React.Component {
         woohoo yeah
         `}{" "}
           </div>
-          {/* </Row> */}
-          {/* <Row style={{ height: "100%", whiteSpace: 'nowrap'}}> */}
           <AceEditor
             id="editor"
             style={{ height: "100%", width: "100%" }}
@@ -484,10 +380,8 @@ class TextInput extends React.Component {
             markers={this.state.markers}
             //annotations can either have html or text.
             //annotations={this.state.annotations}
-            //annotations={[{ row: 0, column: 2, html: '<button>this is a button </button>', type: 'warning'}, { row: 0, column: 2, text: 'another one', type: 'warning'}]} //types: info, warning, error
           />
         </SplitPane>
-        {/* </Row> */}
         {!this.props.isPilot && (
           <OverlayTrigger
             trigger={["click"]}

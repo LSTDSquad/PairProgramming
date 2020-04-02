@@ -26,8 +26,8 @@ class ToggleButton extends React.Component{
     	return(
     		<div>
     			{this.props.isPilot 
-					? <label> Role: Pilot <Button type="button" onClick = {this.handleClick}><SwapHoriz/></Button></label>
-					: <label>Role: Copilot <Button type="button" onClick = {this.requestToggle}><SwapHoriz/></Button></label>
+					? <label> Role: Pilot <Button variant='warning' type="button" onClick = {this.handleClick}><SwapHoriz/></Button></label>
+					: <label>Role: Copilot <Button variant='info' type="button" onClick = {this.requestToggle}><SwapHoriz/></Button></label>
       			}
       		</div>
     	);

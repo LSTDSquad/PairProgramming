@@ -259,14 +259,11 @@ class SplitText extends React.Component {
         <Container  fluid style={{padding: 0, margin: 0}} >
         <Row noGutters={true}>
         <ToolBar
-          // text={text}
-          // sessionID={sessionID}
           isPilot={isPilot}
           userNumber={userNumber}
           handleTextChange={this.handleLeftChange}
           handleIDChange={this.handleSessionIDChange}
           handleToggle={this.toggleRole}
-          //handleRun={this.runCode}
         />
           </Row>
         <Row noGutters={true} >

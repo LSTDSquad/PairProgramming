@@ -2,7 +2,6 @@ import React from "react";
 // import SaveButton from "./SaveButton";
 import LoadButton from "./LoadButton";
 import ToggleButton from "./ToggleButton";
-import RunButton from "./RunButton";
 import { Navbar, Button, ListGroup } from "react-bootstrap";
 import { Menu } from "@material-ui/icons";
 import {Drawer } from '@material-ui/core'
@@ -32,12 +31,10 @@ class ToolBar extends React.Component {
   }
 
   handleToggle() {
+	console.log(this.props.isPilot);
     this.props.handleToggle();
   }
 
-//   handleRun() {
-//     this.props.handleRun();
-//   }
 
   toggleDrawer = (open) => {
 	  this.setState({drawerOpen: open})
@@ -45,7 +42,7 @@ class ToolBar extends React.Component {
 
   render() {
     return (
-	  <Navbar variant="light" bg="info" className='top-bar'>
+	  <Navbar variant="light" bg={this.props.isPilot ? 'info' : 'warning'} className='top-bar'>
         <Button variant="light" onClick={() => this.toggleDrawer(true)}>
           <Menu />
         </Button>
@@ -62,17 +59,11 @@ class ToolBar extends React.Component {
           userNumber={this.props.userNumber}
           isPilot={this.props.isPilot}
         />
-        {/* <SaveButton
-          //component to save session to backend
-          text={this.props.text}
-          sessionID={this.props.sessionID}
-        /> */}
         <LoadButton
           //component to reload session from session ID
           onTextChange={this.handleTextChange}
           onSessionIDChange={this.handleIDChange}
         />
-        {/* <RunButton run={this.handleRun} /> */}
        </Navbar>
     );
   }

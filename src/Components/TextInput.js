@@ -52,6 +52,8 @@ class TextInput extends React.Component {
       toasts: [],
       showConfused: false,
       showComment: false,
+      commentError: false,
+      confusedError: false,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -99,14 +101,12 @@ class TextInput extends React.Component {
     this.selMgr.addSelection(this.props.userID, this.props.userID, "blue"); //add this window's selection to cursor manager
   }
 
-  static getDerivedStateFromProps(nextProps, prevState){
-    if(nextProps.confusionStatus !== prevState.confusionStatus){
-      return { confusionStatus: nextProps.confusionStatus};
-      }
-    else if(nextProps.resolve !== prevState.resolve) {
-      return {resolve: nextProps.resolve}
-    }
-    else return null;
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if (nextProps.confusionStatus !== prevState.confusionStatus) {
+      return { confusionStatus: nextProps.confusionStatus };
+    } else if (nextProps.resolve !== prevState.resolve) {
+      return { resolve: nextProps.resolve };
+    } else return null;
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -114,13 +114,13 @@ class TextInput extends React.Component {
     //Should we try to combine these sets for loops?...Maybe put selection and cursors in the same dictionary?
     //
 
-    if(prevState.confusionStatus !== this.props.confusionStatus){
-      this.receiveConfused()
+    if (prevState.confusionStatus !== this.props.confusionStatus) {
+      this.receiveConfused();
     }
 
-    if(prevState.resolve !== this.props.resolve) {
+    if (prevState.resolve !== this.props.resolve) {
       this.session.setAnnotations([]);
-      this.setState({annotations: []});
+      this.setState({ annotations: [] });
     }
 
     for (const key of Object.keys(this.curMgr._cursors)) {
@@ -294,6 +294,12 @@ class TextInput extends React.Component {
 
   handleConfused = event => {
     event.preventDefault();
+    if (!/\S/.test(this.state.confusedMsg)) {
+      //only white space
+      this.setState({confusedError: true});
+      return;
+    }
+    this.setState({confusedError: false});
     //this.state.selected is in this form: {start: {row:, column:}, end{row:, column:}}
     //let currAnnotations = this.session.$annotations;
     let currAnnotations = this.state.annotations || [];
@@ -310,6 +316,14 @@ class TextInput extends React.Component {
         type: "error"
       }
     ]);
+    let newToast = {
+      type: "confused",
+      msg: this.state.confusedMsg,
+      show: true,
+      ...this.state.selected
+    };
+    this.props.addToast(newToast);
+    
     this.setState({
       annotations: [
         ...currAnnotations,
@@ -320,6 +334,7 @@ class TextInput extends React.Component {
         }
       ],
       showConfused: false,
+      confusedMsg: '',
       markers: [
         ...markers,
         {
@@ -332,11 +347,10 @@ class TextInput extends React.Component {
         }
       ]
     });
-    this.packageMessage(this.state, 'confused');
+    this.packageMessage(this.state, "confused");
   };
 
-
-   receiveConfused = () => {
+  receiveConfused = () => {
     //update other users window when question is asked
     let currAnnotations = this.state.annotations || [];
     let markers = this.state.markers || [];
@@ -371,75 +385,91 @@ class TextInput extends React.Component {
         }
       ]
     });
-  }
-    
-  getConfusedPopover = () => (
-    this.state.showConfused ? 
-    <Popover className="confused-popover">
-      {this.state && this.state.selected ? (
-        <Form onSubmit={this.handleConfused}>
-          <Form.Label>Briefly describe your confusion.</Form.Label>
-          <Form.Control
-            onChange={event => {
-              this.setState({ confusedMsg: event.target.value });
-            }}
-            size="sm"
-            type="text"
-            // placeholder="briefly describe your confusion."
-          ></Form.Control>
-          <Button variant="primary" type="submit">
-            <SendRounded />
-          </Button>
-        </Form>
-      ) : (
-        <Alert variant="danger">
-          Please first select the code you're confused about.
-        </Alert>
-      )}
-    </Popover> : <span/>
-  );
+  };
+
+  getConfusedPopover = () =>
+    this.state.showConfused ? (
+      <Popover className="confused-popover">
+        {this.state && this.state.selected ? (
+          <Form onSubmit={this.handleConfused}>
+            <Form.Label>Briefly describe your confusion.</Form.Label>
+            {this.state.confusedError  && <Alert variant="danger">
+            Please enter a note.
+          </Alert>}
+            <Form.Control
+              onChange={event => {
+                this.setState({ confusedMsg: event.target.value });
+              }}
+              size="sm"
+              type="text"
+              // placeholder="briefly describe your confusion."
+            ></Form.Control>
+            <Button variant="primary" type="submit">
+              <SendRounded />
+            </Button>
+          </Form>
+        ) : (
+          <Alert variant="danger">
+            Please first select the code you're confused about.
+          </Alert>
+        )}
+      </Popover>
+    ) : (
+      <span />
+    );
 
   handleComment = event => {
     event.preventDefault();
-
+    if (!/\S/.test(this.state.commentMsg)) {
+      //only white space
+      this.setState({commentError: true});
+      return;
+    }
+    this.setState({commentError: false});
     //TODO: SEND TO THE BACKEND.
     console.log(this.state.selected);
     // let { start, end } = this.state.selected;
     let newToast = {
       type: "comment",
       msg: this.state.commentMsg,
+      show: true,
       ...this.state.selected
     };
     this.props.addToast(newToast);
-    this.setState({showComment: false})
+    this.setState({ showComment: false, commentMsg: '' });
     // console.log(this.state.toasts);
   };
 
-  getCommentPopover = () => (
-    this.state.showComment ? 
-    <Popover className="confused-popover">
-      {this.state && this.state.selected ? (
-        <Form onSubmit={this.handleComment}>
-          <Form.Label>Enter your comment:</Form.Label>
-          <Form.Control
-            onChange={event => {
-              this.setState({ commentMsg: event.target.value });
-            }}
-            size="sm"
-            type="text"
-            // placeholder="briefly describe your confusion."
-          ></Form.Control>
-          <Button variant="primary" type="submit">
-            <SendRounded />
-          </Button>
-        </Form>
-      ) : (
-        <Alert variant="danger">
-          Please first select the code you'd like to comment on.
-        </Alert>
-      )}
-    </Popover> : <span/>
-  );
+  getCommentPopover = () =>
+    this.state.showComment ? (
+      <Popover className="confused-popover">
+        {this.state && this.state.selected ? (
+          <Form onSubmit={this.handleComment}>
+            <Form.Label>Enter your comment:</Form.Label>
+            {this.state.commentError  && <Alert variant="danger">
+            Please enter a comment. 
+          </Alert>}
+            <Form.Control
+              onChange={event => {
+                this.setState({ commentMsg: event.target.value });
+              }}
+              size="sm"
+              type="text"
+              // placeholder="briefly describe your confusion."
+            ></Form.Control>
+            <Button variant="primary" type="submit">
+              <SendRounded />
+            </Button>
+          </Form>
+        ) : (
+          <Alert variant="danger">
+            Please first select the code you'd like to comment on.
+          </Alert>
+        )}
+      </Popover>
+    ) : (
+      <span />
+    );
 
   render() {
     const text = this.props.text;
@@ -502,8 +532,7 @@ class TextInput extends React.Component {
           <Button
             variant="danger"
             className="confused-btn"
-          onClick={() => this.setState({showConfused: true})}
-
+            onClick={() => this.setState({ showConfused: true })}
           >
             {/* ? */}
             <HelpOutlineRounded />
@@ -516,12 +545,12 @@ class TextInput extends React.Component {
           overlay={this.getCommentPopover()}
           rootClose={true}
           onHide={() => this.setState({ commentMsg: "" })}
-
         >
-          <Button variant="warning" 
-          onClick={() => this.setState({showComment: true})}
-
-          className="comment-btn">
+          <Button
+            variant="warning"
+            onClick={() => this.setState({ showComment: true })}
+            className="comment-btn"
+          >
             <CommentRounded />
           </Button>
         </OverlayTrigger>
@@ -538,20 +567,21 @@ class TextInput extends React.Component {
             <Button
               variant="success"
               className="resolve-btn"
-              onClick={ () => {
-                this.setState({ markers: [], annotations: [] }, () =>{
-                  var resolve = {markers: this.state.markers, annotations: this.state.annotations, showConfused:false}
-                  this.packageMessage(resolve,"resolve")
+              onClick={() => {
+                this.setState({ markers: [], annotations: [] }, () => {
+                  var resolve = {
+                    markers: this.state.markers,
+                    annotations: this.state.annotations,
+                    showConfused: false
+                  };
+                  this.packageMessage(resolve, "resolve");
                 });
                 this.session.setAnnotations([]);
-                
               }}
             >
               <DoneRounded />
             </Button>
           )}
-
-
       </Container>
     );
   }

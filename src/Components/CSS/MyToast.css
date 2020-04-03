@@ -1,0 +1,21 @@
+.toast-header-code {
+    margin-left: 10px;
+}
+
+.toast-header-comment, .toast-header-confused {
+    justify-content: space-between;
+    color: black !important;
+}
+
+.toast-header-comment {
+    background-color: #ffc107 !important;    
+}
+
+.toast-header-confused {
+    background-color: #dc3545 !important;    
+}
+
+.my-toast {
+    width: 250px;
+    min-height: 100px;
+}

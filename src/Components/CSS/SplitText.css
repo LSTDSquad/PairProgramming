@@ -5,3 +5,13 @@ button.chat-btn {
     right: 0px;
 }
 
+.toasts-container {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    align-items: flex-end;
+
+}

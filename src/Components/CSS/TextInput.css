@@ -9,18 +9,19 @@
     padding: 20px;
 }
 
-.run {
+.run, .confused-btn, .resolve-btn, .comment-btn {
     position: absolute;
-    bottom: 20px;
     right: 20px;
+    width: 50px;
+}
+
+.run {
+    bottom: 20px;
 
 }
 
 .confused-btn {
-    position: absolute;
     bottom: 80px;
-    right: 20px;
-    width: 50px;
 
 }
 
@@ -36,8 +37,9 @@
 }
 
 .resolve-btn {
-    position: absolute;
-    bottom: 80px;
-    right: 20px;
-    width: 50px;
+    bottom: 200px;
+}
+
+.comment-btn {
+    bottom: 140px;
 }

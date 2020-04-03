@@ -11,8 +11,10 @@ import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
 import "./CSS/SplitText.css";
 import $ from "jquery";
+import MyToast from './MyToast'
 
-import { Container, Row, Button } from "react-bootstrap";
+import { Container, Row, Button, Toast } from "react-bootstrap";
+import {CommentRounded} from '@material-ui/icons'
 import { HashRouter as Router, Route, Link } from "react-router-dom";
 
 class SplitText extends React.Component {
@@ -34,6 +36,7 @@ class SplitText extends React.Component {
     this.outf = this.outf.bind(this);
     this.builtinRead = this.builtinRead.bind(this);
     this.runCode = this.runCode.bind(this);
+    this.addToast = this.addToast.bind(this);
 
     this.state = {
       text: "print(3+5)",
@@ -45,8 +48,9 @@ class SplitText extends React.Component {
       cursors: {},
       selections: {},
       isPilot: true,
-      lines: ["Output:"],
-      userNumber: 1 //number based on order of subscription to channel
+      lines: [""],
+      userNumber: 1, //number based on order of subscription to channel,
+      toasts: [],
     };
 
     //////                                       //////
@@ -134,9 +138,12 @@ class SplitText extends React.Component {
     arr.push(text);
     // console.log(arr);
     //this.setState({lines:["Output"]});
-    this.setState(prevState => ({
-      lines: [...prevState.lines, text]
-    }));
+    if (/\S/.test(text)) {
+      console.log(text);
+      this.setState(prevState => ({
+        lines: [...prevState.lines, "pair-programming-session:~ $ run", text]
+      }));
+    }
   }
 
   builtinRead(x) {
@@ -258,6 +265,13 @@ class SplitText extends React.Component {
     );
   }
 
+  addToast(newToast) {
+    this.setState(prevState => ({
+      toasts: [newToast, ...(prevState.toasts || [])],
+    }));
+    console.log(this.state.toasts);
+  }
+
   componentWillUnmount() {
     this.PubNub.unsubscribeAll();
   }
@@ -293,9 +307,10 @@ class SplitText extends React.Component {
               //One side input, other side output, once we get app to run code?
               split="vertical"
               minSize={500}
-              defaultSize={500}
+              defaultSize={800}
               style={{ bottom: 0, top: 70, height: "auto" }} //window.innerHeight-80}}
-              pane2Style={{ overflow: "scroll", backgroundColor: "#240606" }}
+              pane2Style={{ overflow: "scroll", backgroundColor: "#292a2e" }}
+              resizerStyle={{border: '5px solid blue'}}
             >
               <TextInput
                 side="left"
@@ -311,6 +326,7 @@ class SplitText extends React.Component {
                 cursors={cursors}
                 selections={selections}
                 handleRun={this.runCode}
+                addToast={this.addToast}
               />
               <TextOutput
                 side="right"
@@ -320,7 +336,10 @@ class SplitText extends React.Component {
                 userID={userID}
               />
             </SplitPane>
-            <Button className="chat-btn">Chat</Button>
+            {/* <Button className="chat-btn">Chat</Button> */}
+           <div className='toasts-container'>
+             {this.state.toasts && this.state.toasts.map((toast, i) => (<MyToast toast={toast}/>))}
+           </div>
           </Row>
         </Container>
       </div>

@@ -5,6 +5,7 @@ button.chat-btn {
     right: 0px;
 }
 
+
 .toasts-container {
     position: absolute;
     right: 20px;
@@ -13,5 +14,23 @@ button.chat-btn {
     flex-direction: column-reverse;
     justify-content: flex-end;
     align-items: flex-end;
+    max-height: calc(100vh - 140px);
+    overflow: scroll;
+}
 
+.output-tag {
+    position: absolute;
+    top: 90px;
+    right: 20px;
+    border-radius: 2px;
+    background-color: #797fb99c;
+    padding: 10px;
+    color: white;
+}
+
+.comments-switch-group {
+    position: absolute;
+    top: 90px;
+    right: 20px;
+    color: white;
 }

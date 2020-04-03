@@ -11,11 +11,12 @@ import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
 import "./CSS/SplitText.css";
 import $ from "jquery";
-import MyToast from './MyToast'
+import MyToast from "./MyToast";
 
-import { Container, Row, Button, Toast } from "react-bootstrap";
-import {CommentRounded} from '@material-ui/icons'
+import { Container, Row, Button, Toast, Badge } from "react-bootstrap";
+import { CommentRounded } from "@material-ui/icons";
 import { HashRouter as Router, Route, Link } from "react-router-dom";
+import { Switch, FormControlLabel } from "@material-ui/core";
 
 class SplitText extends React.Component {
   //handles the state for both text boxes
@@ -53,8 +54,8 @@ class SplitText extends React.Component {
       userNumber: 1, //number based on order of subscription to channel,
       toasts: [],
       confusionStatus: {},
-      resolve: {}
-
+      resolve: {},
+      seeToasts: true,
     };
 
     //////                                       //////
@@ -83,26 +84,30 @@ class SplitText extends React.Component {
           this.setState({
             ...(this.state.cursors[message.Who] = message.What)
           });
-        }
-
-        else if ((message.Type === "text") & (message.Who != this.state.userID)) {
+        } else if (
+          (message.Type === "text") &
+          (message.Who != this.state.userID)
+        ) {
           this.setState({ text: message.What });
-        } 
-
-        else if ((message.Type === "selection") &(message.Who != this.state.userID)) {
+        } else if (
+          (message.Type === "selection") &
+          (message.Who != this.state.userID)
+        ) {
           //if message containing highlight change info comes in, update selection object in state
           this.setState({
             ...(this.state.selections[message.Who] = message.What)
           });
-        }
-
-        else if ((message.Type === "confused") & (message.Who != this.state.userID)){
-          this.setState({confusionStatus:message.What});
-        }
-
-        else if ((message.Type === "resolve") & (message.Who != this.state.userID)){
+        } else if (
+          (message.Type === "confused") &
+          (message.Who != this.state.userID)
+        ) {
+          this.setState({ confusionStatus: message.What });
+        } else if (
+          (message.Type === "resolve") &
+          (message.Who != this.state.userID)
+        ) {
           console.log(message);
-          this.setState({resolve:message.What})
+          this.setState({ resolve: message.What });
           //this.setState({confusionStatus:message.What});
         }
       }
@@ -154,7 +159,7 @@ class SplitText extends React.Component {
     if (/\S/.test(text)) {
       console.log(text);
       this.setState(prevState => ({
-        lines: [...prevState.lines, "pair-programming-session:~ $ run", text]
+        lines: [...prevState.lines, text]
       }));
     }
   }
@@ -170,7 +175,9 @@ class SplitText extends React.Component {
 
   runCode() {
     var input = this.state.text;
-
+    this.setState(prevState => ({
+      lines: [...prevState.lines, "pair-programming-session:~ $ run"]
+    }));
     Sk.configure({ output: this.outf, read: this.builtinRead });
 
     try {
@@ -212,7 +219,7 @@ class SplitText extends React.Component {
   componentDidUpdate() {}
 
   handleLeftChange(text) {
-    this.setState({ lines: ["Output"] });
+    // this.setState({ lines: ["Output"] });
     this.setState({ side: "left", text });
   }
 
@@ -280,10 +287,16 @@ class SplitText extends React.Component {
 
   addToast(newToast) {
     this.setState(prevState => ({
-      toasts: [newToast, ...(prevState.toasts || [])],
+      toasts: [...(prevState.toasts || []), newToast]
     }));
     console.log(this.state.toasts);
   }
+
+  removeToastForNow = index => {
+    let currToasts = this.state.toasts;
+    currToasts[index].show = false;
+    this.setState({ toasts: currToasts });
+  };
 
   componentWillUnmount() {
     this.PubNub.unsubscribeAll();
@@ -300,8 +313,8 @@ class SplitText extends React.Component {
     const userNumber = this.state.userNumber;
     const codeOutput = this.state.lines;
     const history = this.props.history;
-    const confusionStatus = this.state.confusionStatus
-    const resolve = this.state.resolve
+    const confusionStatus = this.state.confusionStatus;
+    const resolve = this.state.resolve;
 
     return (
       <div>
@@ -325,7 +338,7 @@ class SplitText extends React.Component {
               defaultSize={800}
               style={{ bottom: 0, top: 70, height: "auto" }} //window.innerHeight-80}}
               pane2Style={{ overflow: "scroll", backgroundColor: "#292a2e" }}
-              resizerStyle={{border: '5px solid blue'}}
+              resizerStyle={{ border: "5px solid blue" }}
             >
               <TextInput
                 side="left"
@@ -339,7 +352,7 @@ class SplitText extends React.Component {
                 onSendMessage={this.sendMessage}
                 userID={userID}
                 confusionStatus={confusionStatus}
-                resolve = {resolve}
+                resolve={resolve}
                 cursors={cursors}
                 selections={selections}
                 handleRun={this.runCode}
@@ -354,9 +367,40 @@ class SplitText extends React.Component {
               />
             </SplitPane>
             {/* <Button className="chat-btn">Chat</Button> */}
-           <div className='toasts-container'>
-             {this.state.toasts && this.state.toasts.map((toast, i) => (<MyToast toast={toast}/>))}
-           </div>
+            {this.state.seeToasts && 
+            // <div>
+              <div className="toasts-container">
+              {this.state.toasts &&
+                this.state.toasts
+                  .slice()
+                  .map(
+                    (toast, i) =>
+                      toast.show && (
+                        <MyToast
+                          key={i}
+                          index={i}
+                          removeToastForNow={this.removeToastForNow}
+                          toast={toast}
+                        />
+                      )
+                  )
+                  .reverse()}
+            {/* </div> */}
+            </div>
+            
+          }
+            {/* <Badge className="output-tag">
+              <h4>Output</h4>
+            </Badge> */}
+            <FormControlLabel 
+            className='comments-switch-group'
+            control={<Switch
+              checked={this.state.seeToasts}
+              onChange={() => this.setState({seeToasts: !this.state.seeToasts})}
+              color="primary"
+            />}
+            label="See comments"
+            />
           </Row>
         </Container>
       </div>

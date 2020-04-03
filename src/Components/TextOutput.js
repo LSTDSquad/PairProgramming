@@ -21,7 +21,8 @@ class TextOutput extends React.Component{
 
    
     return(
-      <div className='output-text'>{listItems}</div>
+      <div className='output-text'>
+        {listItems}</div>
     );
   }
 }

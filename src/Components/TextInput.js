@@ -208,22 +208,10 @@ class TextInput extends React.Component {
         this.packageMessage(cursorPosition, "cursor");
       }
 
-      //and instead use the cursor positions from the two event actions
-      else {
-        if (event.action === "insert") {
-          var cursorPosition = event.end;
-          this.packageMessage(cursorPosition, "cursor");
-        } else if (event.action === "remove") {
-          var cursorPosition = event.end;
-          cursorPosition.column--;
-          this.packageMessage(cursorPosition, "cursor");
-        }
-
-        this.props.onTextChange(e); //update text for everyone through state
-        this.packageMessage(e, "text"); //synch text through pubnub
-        this.handleTextChange(e);
-        //this.packageMessage(this.props.sessionID, 'textUpdate');} //use this line to synch text via dynamoDB pulls
-      }
+      this.props.onTextChange(e); //update text for everyone through state
+      this.packageMessage(e, "text"); //synch text through pubnub
+      this.handleTextChange(e);
+      //this.packageMessage(this.props.sessionID, 'textUpdate');} //use this line to synch text via dynamoDB pulls
     }
   }
 
@@ -365,7 +353,7 @@ class TextInput extends React.Component {
           defaultSize={100}
           style={{ width: "100%" }}
           resizerStyle={{ border: 10 }}
-          pane1Style={{color: '#ffffff', backgroundColor: '#170a30'}}
+          pane1Style={{ color: "#ffffff", backgroundColor: "#170a30" }}
           pane2Style={
             this.state.annotations && this.state.annotations.length > 0
               ? { border: "5px solid red" }
@@ -421,7 +409,11 @@ class TextInput extends React.Component {
             </Button>
           </OverlayTrigger>
         )}
-        <Button variant='success' className="run" onClick={this.props.handleRun}>
+        <Button
+          variant="success"
+          className="run"
+          onClick={this.props.handleRun}
+        >
           <PlayArrowRounded />
         </Button>
         {this.props.isPilot &&

@@ -48,9 +48,13 @@ class SplitText extends React.Component {
       cursors: {},
       selections: {},
       isPilot: true,
+
       lines: [""],
       userNumber: 1, //number based on order of subscription to channel,
       toasts: [],
+      confusionStatus: {},
+      resolve: {}
+
     };
 
     //////                                       //////
@@ -81,16 +85,25 @@ class SplitText extends React.Component {
           });
         }
 
-        if ((message.Type === "text") & (message.Who != this.state.userID)) {
+        else if ((message.Type === "text") & (message.Who != this.state.userID)) {
           this.setState({ text: message.What });
-        } else if (
-          (message.Type === "selection") &
-          (message.Who != this.state.userID)
-        ) {
+        } 
+
+        else if ((message.Type === "selection") &(message.Who != this.state.userID)) {
           //if message containing highlight change info comes in, update selection object in state
           this.setState({
             ...(this.state.selections[message.Who] = message.What)
           });
+        }
+
+        else if ((message.Type === "confused") & (message.Who != this.state.userID)){
+          this.setState({confusionStatus:message.What});
+        }
+
+        else if ((message.Type === "resolve") & (message.Who != this.state.userID)){
+          console.log(message);
+          this.setState({resolve:message.What})
+          //this.setState({confusionStatus:message.What});
         }
       }
     });
@@ -287,6 +300,8 @@ class SplitText extends React.Component {
     const userNumber = this.state.userNumber;
     const codeOutput = this.state.lines;
     const history = this.props.history;
+    const confusionStatus = this.state.confusionStatus
+    const resolve = this.state.resolve
 
     return (
       <div>
@@ -323,6 +338,8 @@ class SplitText extends React.Component {
                 sessionID={sessionID}
                 onSendMessage={this.sendMessage}
                 userID={userID}
+                confusionStatus={confusionStatus}
+                resolve = {resolve}
                 cursors={cursors}
                 selections={selections}
                 handleRun={this.runCode}

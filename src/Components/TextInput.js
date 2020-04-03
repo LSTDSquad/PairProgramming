@@ -55,7 +55,6 @@ class TextInput extends React.Component {
     };
 
     this.handleChange = this.handleChange.bind(this);
-    // this.handleSelectionChange = this.handleSelectionChange.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
 
@@ -100,10 +99,29 @@ class TextInput extends React.Component {
     this.selMgr.addSelection(this.props.userID, this.props.userID, "blue"); //add this window's selection to cursor manager
   }
 
-  componentDidUpdate() {
+  static getDerivedStateFromProps(nextProps, prevState){
+    if(nextProps.confusionStatus !== prevState.confusionStatus){
+      return { confusionStatus: nextProps.confusionStatus};
+      }
+    else if(nextProps.resolve !== prevState.resolve) {
+      return {resolve: nextProps.resolve}
+    }
+    else return null;
+  }
+
+  componentDidUpdate(prevProps, prevState) {
     //
     //Should we try to combine these sets for loops?...Maybe put selection and cursors in the same dictionary?
     //
+
+    if(prevState.confusionStatus !== this.props.confusionStatus){
+      this.receiveConfused()
+    }
+
+    if(prevState.resolve !== this.props.resolve) {
+      this.session.setAnnotations([]);
+      this.setState({annotations: []});
+    }
 
     for (const key of Object.keys(this.curMgr._cursors)) {
       //remove other user's cursors from previous session from the cursor manager on sessionID change
@@ -190,7 +208,9 @@ class TextInput extends React.Component {
         this.state.key === 40)
     ) {
       const selectionRange = e.getRange();
+
       selectionRange.code = this.selectionToCode(e);
+
       setTimeout(() => this.setState({ selected: selectionRange }), 500);
       // console.log(selectionRange);
       // this.editor.session.addDynamicMarker({
@@ -217,16 +237,10 @@ class TextInput extends React.Component {
         this.packageMessage(cursorPosition, "cursor");
       }
 
-      this.props.onTextChange(e); //update text for everyone through state
+      this.props.onTextChange(e); //update text for this through state
       this.packageMessage(e, "text"); //synch text through pubnub
-      this.handleTextChange(e);
-      //this.packageMessage(this.props.sessionID, 'textUpdate');} //use this line to synch text via dynamoDB pulls
+      this.handleTextChange(e); //save updated text to dynamoDB
     }
-  }
-
-  handleSelectionChange(e, selection) {
-    const selectionRange = e.getRange();
-    //this.packageMessage(selectionRange, "selection");
   }
 
   packageMessage(what, type) {
@@ -318,8 +332,47 @@ class TextInput extends React.Component {
         }
       ]
     });
+    this.packageMessage(this.state, 'confused');
   };
 
+
+   receiveConfused = () => {
+    //update other users window when question is asked
+    let currAnnotations = this.state.annotations || [];
+    let markers = this.state.markers || [];
+    let { start, end } = this.state.selected;
+    this.session.setAnnotations([
+      ...currAnnotations,
+      {
+        row: start.row,
+        html: `<div>${this.props.confusionStatus.confusedMsg}</div>`,
+        type: "error"
+      }
+    ]);
+    this.setState({
+      annotations: [
+        ...currAnnotations,
+        {
+          row: start.row,
+          html: `<div>${this.props.confusionStatus.confusedMsg}</div>`,
+          type: "error"
+        }
+      ],
+      showConfused: false,
+      markers: [
+        ...markers,
+        {
+          startRow: start.row,
+          endRow: end.row,
+          startCol: start.column,
+          endCol: end.column,
+          className: `confused-marker`,
+          type: "background"
+        }
+      ]
+    });
+  }
+    
   getConfusedPopover = () => (
     this.state.showConfused ? 
     <Popover className="confused-popover">
@@ -485,9 +538,13 @@ class TextInput extends React.Component {
             <Button
               variant="success"
               className="resolve-btn"
-              onClick={() => {
-                this.setState({ markers: [], annotations: [] });
+              onClick={ () => {
+                this.setState({ markers: [], annotations: [] }, () =>{
+                  var resolve = {markers: this.state.markers, annotations: this.state.annotations, showConfused:false}
+                  this.packageMessage(resolve,"resolve")
+                });
                 this.session.setAnnotations([]);
+                
               }}
             >
               <DoneRounded />

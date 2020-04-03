@@ -338,7 +338,8 @@ class TextInput extends React.Component {
     //update other users window when question is asked
     let currAnnotations = this.state.annotations || [];
     let markers = this.state.markers || [];
-    let { start, end } = this.state.selected;
+    console.log(this.props.confusionStatus);
+    let { start, end } = this.props.confusionStatus.selected;
     this.session.setAnnotations([
       ...currAnnotations,
       {

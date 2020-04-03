@@ -317,6 +317,7 @@ class SplitText extends React.Component {
               sessionID={sessionID}
               text={text}
               userNumber={userNumber}
+              history = {history}
               handleTextChange={this.handleLeftChange}
               handleIDChange={this.handleSessionIDChange}
               handleToggle={this.toggleRole}

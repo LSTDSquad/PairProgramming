@@ -11,14 +11,18 @@ class ToggleButton extends React.Component {
     this.requestToggle = this.requestToggle.bind(this);
   }
 
-  handleClick() {
+  handleClick(e) {
+    e.preventDefault()
     if (this.props.isPilot) {
       this.props.onToggle();
     }
   }
 
-  requestToggle() {
-    this.props.onToggle();
+  requestToggle(e) {
+    e.preventDefault();
+    if (!this.props.isPilot) {
+      this.props.onToggle();
+    }
   }
 
   render() {

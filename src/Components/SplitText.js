@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import SplitPane from "react-split-pane";
 import TextOutput from "./TextOutput";
 import TextInput from "./TextInput";
@@ -9,17 +9,11 @@ import axios from "axios";
 import Sk from "skulpt";
 import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
-import './CSS/SplitText.css'
-import $ from "jquery"
+import "./CSS/SplitText.css";
+import $ from "jquery";
 
 import { Container, Row, Button } from "react-bootstrap";
-import {
-  HashRouter as Router,
-  Route,
-  Link
-} from 'react-router-dom'
-
-
+import { HashRouter as Router, Route, Link } from "react-router-dom";
 
 class SplitText extends React.Component {
   //handles the state for both text boxes
@@ -168,35 +162,33 @@ class SplitText extends React.Component {
     }
   }
 
-
-    //////                                                    //////
-   //////   Functions that handle state changes/updates      //////
+  //////                                                    //////
+  //////   Functions that handle state changes/updates      //////
   //////                                                    //////
 
-  componentDidMount(){
-   // console.log(this.props);
-    if(this.props.match.path != '/'){
-        console.log(this.props.match.params.sessionID)
-        let session = this.props.match.params.sessionID
+  componentDidMount() {
+    // console.log(this.props);
+    if (this.props.match.path != "/") {
+      console.log(this.props.match.params.sessionID);
+      let session = this.props.match.params.sessionID;
 
-          const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/getData/'+session
-          var self = this     
+      const url =
+        "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/getData/" +
+        session;
+      var self = this;
 
-          axios.get(url)
-          .then(function(response){
-            //self.props.onTextChange(response.data);
-            self.handleLeftChange(response.data);
-          })
-          this.setState({sessionID: session});
-          this.handleSessionIDChange(session)
-      }
-      //event.preventDefault();
+      axios.get(url).then(function(response) {
+        //self.props.onTextChange(response.data);
+        self.handleLeftChange(response.data);
+      });
+      this.setState({ sessionID: session });
+      this.handleSessionIDChange(session);
+    }
+    //event.preventDefault();
 
-      //this.props.onSessionIDChange(session); //set session ID for app by calling SplitText.js handleSessionIDChange
-
+    //this.props.onSessionIDChange(session); //set session ID for app by calling SplitText.js handleSessionIDChange
   }
 
-  
   componentDidUpdate() {}
 
   handleLeftChange(text) {
@@ -280,63 +272,59 @@ class SplitText extends React.Component {
     const isPilot = this.state.isPilot;
     const userNumber = this.state.userNumber;
     const codeOutput = this.state.lines;
-    const history = this.props.history
+    const history = this.props.history;
 
     return (
-
       <div>
-        <Container  fluid style={{padding: 0, margin: 0}} >
-        <Row noGutters={true}>
-        <ToolBar
-          isPilot={isPilot}
-          sessionID = {sessionID}
-          text = {text}
-          userNumber={userNumber}
-          handleTextChange={this.handleLeftChange}
-          handleIDChange={this.handleSessionIDChange}
-          handleToggle={this.toggleRole}
-        />
-          </Row>
-        <Row noGutters={true} >
-          <SplitPane
-            //One side input, other side output, once we get app to run code?
-            split="vertical"
-            minSize={500}
-            defaultSize={500}
-            style={{bottom: 0, top: 70, height: 'auto'}}//window.innerHeight-80}}
-            pane2Style={{overflow: 'scroll'}}
-          >
-            <TextInput
-              side="left"
-              text={text}
-              ref="input"
+        <Container fluid style={{ padding: 0, margin: 0 }}>
+          <Row noGutters={true}>
+            <ToolBar
               isPilot={isPilot}
-              onTextChange={this.handleLeftChange}
-              onCursorChange={this.handleCursorChange}
-              onSelectionChange={this.handleSelectionChange}
               sessionID={sessionID}
-              onSendMessage={this.sendMessage}
-              userID={userID}
-              cursors={cursors}
-              selections={selections}
-              handleRun={this.runCode}
+              text={text}
+              userNumber={userNumber}
+              handleTextChange={this.handleLeftChange}
+              handleIDChange={this.handleSessionIDChange}
+              handleToggle={this.toggleRole}
             />
-            <TextOutput
-              side="right"
-              ref={this.outputRef}
-              text={codeOutput}
-              onTextChange={this.handleRightChange}
-              userID={userID}
- 
-     
-            />
-          </SplitPane>
-          <Button className='chat-btn' >Chat</Button>
+          </Row>
+          <Row noGutters={true}>
+            <SplitPane
+              //One side input, other side output, once we get app to run code?
+              split="vertical"
+              minSize={500}
+              defaultSize={500}
+              style={{ bottom: 0, top: 70, height: "auto" }} //window.innerHeight-80}}
+              pane2Style={{ overflow: "scroll", backgroundColor: "#240606" }}
+            >
+              <TextInput
+                side="left"
+                text={text}
+                ref="input"
+                isPilot={isPilot}
+                onTextChange={this.handleLeftChange}
+                onCursorChange={this.handleCursorChange}
+                onSelectionChange={this.handleSelectionChange}
+                sessionID={sessionID}
+                onSendMessage={this.sendMessage}
+                userID={userID}
+                cursors={cursors}
+                selections={selections}
+                handleRun={this.runCode}
+              />
+              <TextOutput
+                side="right"
+                ref={this.outputRef}
+                text={codeOutput}
+                onTextChange={this.handleRightChange}
+                userID={userID}
+              />
+            </SplitPane>
+            <Button className="chat-btn">Chat</Button>
           </Row>
         </Container>
       </div>
     );
-
   }
 }
 

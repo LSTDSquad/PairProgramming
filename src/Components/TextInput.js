@@ -151,8 +151,6 @@ class TextInput extends React.Component {
   }
 
   handleChange(e, event) {
-
-
     //If the cursor changes due to arrow key movement
     // 37-40 are the key codes corresponding to arrow keys
     // 0 corresponds to mouse click
@@ -210,29 +208,26 @@ class TextInput extends React.Component {
         this.packageMessage(cursorPosition, "cursor");
       }
 
-
-   //and instead use the cursor positions from the two event actions
-    else{
-        if(event.action === "insert"){
-            var cursorPosition = event.end
-            this.packageMessage(cursorPosition,'cursor');
+      //and instead use the cursor positions from the two event actions
+      else {
+        if (event.action === "insert") {
+          var cursorPosition = event.end;
+          this.packageMessage(cursorPosition, "cursor");
+        } else if (event.action === "remove") {
+          var cursorPosition = event.end;
+          cursorPosition.column--;
+          this.packageMessage(cursorPosition, "cursor");
         }
 
-        else if(event.action === "remove"){
-            var cursorPosition = event.end
-            cursorPosition.column --
-            this.packageMessage(cursorPosition,'cursor');
-        }
-
-         this.props.onTextChange(e); //update text for everyone through state
-         this.packageMessage(e,'text'); //synch text through pubnub
-         this.handleTextChange(e);
-         //this.packageMessage(this.props.sessionID, 'textUpdate');} //use this line to synch text via dynamoDB pulls
+        this.props.onTextChange(e); //update text for everyone through state
+        this.packageMessage(e, "text"); //synch text through pubnub
+        this.handleTextChange(e);
+        //this.packageMessage(this.props.sessionID, 'textUpdate');} //use this line to synch text via dynamoDB pulls
       }
+    }
   }
-}
 
-  handleSelectionChange(e,selection){
+  handleSelectionChange(e, selection) {
     const selectionRange = e.getRange();
     //this.packageMessage(selectionRange, "selection");
   }
@@ -254,26 +249,28 @@ class TextInput extends React.Component {
     //uses session ID from props to either update backend
     let data = { text: this.props.text };
     let sessionID = this.props.sessionID;
-     if(this.props.path != '/'){
-            //if this session exists already, update the entry in dynamoDB
-        const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateData/'+sessionID
-        console.log(url)
-        
-        axios.put(url,data)
-          .then(response => {
-            const message = response.data;
-            console.log(message)},
-          (error) => {
-            console.log(error);
-            }
-          );
-      }
-    
+    if (this.props.path != "/") {
+      //if this session exists already, update the entry in dynamoDB
+      const url =
+        "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateData/" +
+        sessionID;
+      console.log(url);
+
+      axios.put(url, data).then(
+        response => {
+          const message = response.data;
+          console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+    }
   }
 
   setAnnotations = annots => {
-    console.log('annots', annots);
-    console.log('state', this.state.annotations)
+    console.log("annots", annots);
+    console.log("state", this.state.annotations);
     //let annotations = [{ row: 0, column: 2, text: "annot", type: "error" }];
     //let nextAnnotations = [...annotations.filter(({ custom }) => !custom)];
     if (this.editor && this.session.$annotations != this.state.annotations) {
@@ -283,8 +280,6 @@ class TextInput extends React.Component {
       //this.session.$annotations = annotations;
     }
   };
-
-
 
   handleConfused = event => {
     event.preventDefault();
@@ -370,7 +365,12 @@ class TextInput extends React.Component {
           defaultSize={100}
           style={{ width: "100%" }}
           resizerStyle={{ border: 10 }}
-          pane2Style={this.state.annotations && this.state.annotations.length > 0 ? {border: '5px solid red'} : {} }
+          pane1Style={{color: '#ffffff', backgroundColor: '#170a30'}}
+          pane2Style={
+            this.state.annotations && this.state.annotations.length > 0
+              ? { border: "5px solid red" }
+              : {}
+          }
         >
           <div className="problem-desc">
             {`
@@ -404,7 +404,7 @@ class TextInput extends React.Component {
         </SplitPane>
         {!this.props.isPilot && (
           <OverlayTrigger
-            trigger={["click"]}
+            trigger={"click"}
             placement="top"
             overlay={this.getConfusedPopover()}
             rootClose={true}
@@ -421,8 +421,7 @@ class TextInput extends React.Component {
             </Button>
           </OverlayTrigger>
         )}
-        <Button className="run" onClick={this.props.handleRun}>
-          {" "}
+        <Button variant='success' className="run" onClick={this.props.handleRun}>
           <PlayArrowRounded />
         </Button>
         {this.props.isPilot &&

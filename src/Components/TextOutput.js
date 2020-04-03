@@ -1,5 +1,6 @@
 
 import React from 'react';
+import './CSS/TextOutput.css'
 
 class TextOutput extends React.Component{
   constructor(props) {
@@ -20,7 +21,7 @@ class TextOutput extends React.Component{
 
    
     return(
-      <div>{listItems}</div>
+      <div className='output-text'>{listItems}</div>
     );
   }
 }

@@ -10,11 +10,9 @@ import Sk from "skulpt";
 import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
 import "./CSS/SplitText.css";
-import $ from "jquery";
 import MyToast from "./MyToast";
 
-import { Container, Row, Button, Toast, Badge } from "react-bootstrap";
-import { CommentRounded } from "@material-ui/icons";
+import { Container, Row } from "react-bootstrap";
 import { HashRouter as Router, Route, Link } from "react-router-dom";
 import { Switch, FormControlLabel } from "@material-ui/core";
 
@@ -41,7 +39,6 @@ class SplitText extends React.Component {
 
     this.state = {
       text: "print(3+5)",
-      side: "left",
       sessionID: "unsaved", //new session will default to 'unsaved' as the session ID
       userID: Math.round(Math.random() * 1000000).toString(),
 
@@ -55,7 +52,7 @@ class SplitText extends React.Component {
       toasts: [],
       confusionStatus: {},
       resolve: {},
-      seeToasts: true,
+      seeToasts: true
     };
 
     //////                                       //////
@@ -152,9 +149,7 @@ class SplitText extends React.Component {
 
   outf(text) {
     var arr = [];
-    // console.log(text);
     arr.push(text);
-    // console.log(arr);
     //this.setState({lines:["Output"]});
     if (/\S/.test(text)) {
       console.log(text);
@@ -194,7 +189,6 @@ class SplitText extends React.Component {
   //////                                                    //////
 
   componentDidMount() {
-    // console.log(this.props);
     if (this.props.match.path != "/") {
       console.log(this.props.match.params.sessionID);
       let session = this.props.match.params.sessionID;
@@ -211,7 +205,6 @@ class SplitText extends React.Component {
       this.setState({ sessionID: session });
       this.handleSessionIDChange(session);
     }
-    //event.preventDefault();
 
     //this.props.onSessionIDChange(session); //set session ID for app by calling SplitText.js handleSessionIDChange
   }
@@ -220,11 +213,11 @@ class SplitText extends React.Component {
 
   handleLeftChange(text) {
     // this.setState({ lines: ["Output"] });
-    this.setState({ side: "left", text });
+    this.setState({ text });
   }
 
   handleRightChange(text) {
-    this.setState({ side: "right", text });
+    this.setState({ text });
   }
 
   handleCursorChange(user, cursor) {}
@@ -303,7 +296,6 @@ class SplitText extends React.Component {
   }
 
   render() {
-    const side = this.state.side;
     const text = this.state.text;
     const sessionID = this.state.sessionID;
     const userID = this.state.userID;
@@ -367,39 +359,42 @@ class SplitText extends React.Component {
               />
             </SplitPane>
             {/* <Button className="chat-btn">Chat</Button> */}
-            {this.state.seeToasts && 
-            // <div>
+            {this.state.seeToasts && (
+              // <div>
               <div className="toasts-container">
-              {this.state.toasts &&
-                this.state.toasts
-                  .slice()
-                  .map(
-                    (toast, i) =>
-                      toast.show && (
-                        <MyToast
-                          key={i}
-                          index={i}
-                          removeToastForNow={this.removeToastForNow}
-                          toast={toast}
-                        />
-                      )
-                  )
-                  .reverse()}
-            {/* </div> */}
-            </div>
-            
-          }
+                {this.state.toasts &&
+                  this.state.toasts
+                    .slice()
+                    .map(
+                      (toast, i) =>
+                        toast.show && (
+                          <MyToast
+                            key={i}
+                            index={i}
+                            removeToastForNow={this.removeToastForNow}
+                            toast={toast}
+                          />
+                        )
+                    )
+                    .reverse()}
+                {/* </div> */}
+              </div>
+            )}
             {/* <Badge className="output-tag">
               <h4>Output</h4>
             </Badge> */}
-            <FormControlLabel 
-            className='comments-switch-group'
-            control={<Switch
-              checked={this.state.seeToasts}
-              onChange={() => this.setState({seeToasts: !this.state.seeToasts})}
-              color="primary"
-            />}
-            label="See comments"
+            <FormControlLabel
+              className="comments-switch-group"
+              control={
+                <Switch
+                  checked={this.state.seeToasts}
+                  onChange={() =>
+                    this.setState({ seeToasts: !this.state.seeToasts })
+                  }
+                  color="primary"
+                />
+              }
+              label="See comments"
             />
           </Row>
         </Container>

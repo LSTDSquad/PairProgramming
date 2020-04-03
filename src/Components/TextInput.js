@@ -13,7 +13,6 @@ import "ace-builds/src-noconflict/theme-cobalt";
 import "@convergencelabs/ace-collab-ext/css/ace-collab-ext.css";
 import {
   Container,
-  Row,
   Button,
   Popover,
   OverlayTrigger,
@@ -29,17 +28,12 @@ import {
   DoneRounded,
   CommentRounded
 } from "@material-ui/icons";
-// import ace from "react-ace";
 
 import $ from "jquery";
-// import MarkerPopup from './MarkerPopup'
-// import ReactDOM from 'react-dom'
-// const RANGE = ace.require('ace/range').Range;
 
 class TextInput extends React.Component {
   //individual text boxes that send state to split view
   constructor(props) {
-    // console.log(ace.edit('editor'));
     super(props);
 
     this.state = {
@@ -208,20 +202,14 @@ class TextInput extends React.Component {
         this.state.key === 40)
     ) {
       const selectionRange = e.getRange();
-
-      selectionRange.code = this.selectionToCode(e);
-
-      setTimeout(() => this.setState({ selected: selectionRange }), 500);
-      // console.log(selectionRange);
-      // this.editor.session.addDynamicMarker({
-      //   update: customUpdateWithOverlay('confused-marker', selectionRange, 'right', 'this is a popover', 'popover content', false)
-      // });
-      // let annotations = [{ row: 0, column: 2, text: "annot", type: "error" }];
-      // //let nextAnnotations = [...annotations.filter(({ custom }) => !custom)];
-      // if (this.editor) {
-      //   console.log(this.session);
-      //   this.session.$annotations = annotations;
-      // }
+      let {start, end} = selectionRange;
+      if (end.row > start.row || end.column > start.column) {
+        selectionRange.code = this.selectionToCode(e);
+        setTimeout(() => this.setState({ selected: selectionRange }), 500);
+      } else {
+        setTimeout(() => this.setState({ selected: null }), 500);
+      }
+      
       this.packageMessage(selectionRange, "selection");
     } else if (event.type === "changeSelection") {
     }
@@ -280,10 +268,6 @@ class TextInput extends React.Component {
   }
 
   setAnnotations = annots => {
-    console.log("annots", annots);
-    console.log("state", this.state.annotations);
-    //let annotations = [{ row: 0, column: 2, text: "annot", type: "error" }];
-    //let nextAnnotations = [...annotations.filter(({ custom }) => !custom)];
     if (this.editor && this.session.$annotations != this.state.annotations) {
       console.log(this.state.annotations);
       let currAnnotations = this.state.annotations || [];
@@ -521,7 +505,6 @@ class TextInput extends React.Component {
             //annotations={this.state.annotations}
           />
         </SplitPane>
-        {/* {!this.props.isPilot && ( */}
         <OverlayTrigger
           trigger={"click"}
           placement="right"
@@ -534,11 +517,9 @@ class TextInput extends React.Component {
             className="confused-btn"
             onClick={() => this.setState({ showConfused: true })}
           >
-            {/* ? */}
             <HelpOutlineRounded />
           </Button>
         </OverlayTrigger>
-        {/* )} */}
         <OverlayTrigger
           trigger={"click"}
           placement="top"

@@ -69,15 +69,12 @@ class SplitText extends React.Component {
     //add PubNub listener to handle messages
     this.PubNub.addListener({
       message: ({ channel, message }) => {
-        // console.log(
-        //   `Message received in channel: ${channel}`,
-        //   message.What,
-        //   message.Who
-        // );
 
-        if ((message.Type === "cursor") & (message.Who != this.state.userID)) {
+        if (
+        (message.Type === "cursor") & 
+        (message.Who != this.state.userID)
+        ) {
           //if message containing cursor change info comes in, update cursor object in setState
-
           this.setState({
             ...(this.state.cursors[message.Who] = message.What)
           });
@@ -103,9 +100,7 @@ class SplitText extends React.Component {
           (message.Type === "resolve") &
           (message.Who != this.state.userID)
         ) {
-          console.log(message);
           this.setState({ resolve: message.What });
-          //this.setState({confusionStatus:message.What});
         }
       }
     });
@@ -150,7 +145,6 @@ class SplitText extends React.Component {
   outf(text) {
     var arr = [];
     arr.push(text);
-    //this.setState({lines:["Output"]});
     if (/\S/.test(text)) {
       console.log(text);
       this.setState(prevState => ({
@@ -199,9 +193,9 @@ class SplitText extends React.Component {
       var self = this;
 
       axios.get(url).then(function(response) {
-        //self.props.onTextChange(response.data);
         self.handleLeftChange(response.data);
       });
+
       this.setState({ sessionID: session });
       this.handleSessionIDChange(session);
     }
@@ -212,7 +206,6 @@ class SplitText extends React.Component {
   componentDidUpdate() {}
 
   handleLeftChange(text) {
-    // this.setState({ lines: ["Output"] });
     this.setState({ text });
   }
 
@@ -273,7 +266,6 @@ class SplitText extends React.Component {
       },
       function(status, response) {
         currentComponent.setState({ userNumber: response.totalOccupancy });
-        //currentComponent.assignRole();
       }
     );
   }

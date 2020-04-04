@@ -48,13 +48,12 @@ class TextInput extends React.Component {
       showComment: false,
       commentError: false,
       confusedError: false,
+      key: 0 // reference to key that was most recently pressed
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
-
-    this.state = { key: 0 }; // reference to key that was most recently pressed
 
     this.editor = React.createRef(); //will reference Ace Editor
     this.session = Object;
@@ -96,6 +95,7 @@ class TextInput extends React.Component {
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
+    //check if confusionStatus has changed since last update
     if (nextProps.confusionStatus !== prevState.confusionStatus) {
       return { confusionStatus: nextProps.confusionStatus };
     } else if (nextProps.resolve !== prevState.resolve) {
@@ -109,10 +109,12 @@ class TextInput extends React.Component {
     //
 
     if (prevState.confusionStatus !== this.props.confusionStatus) {
+      //add confusion markers if props update with confusion
       this.receiveConfused();
     }
 
     if (prevState.resolve !== this.props.resolve) {
+      //remove confusion markers if props update with resolved confusion
       this.session.setAnnotations([]);
       this.setState({ annotations: [] });
     }
@@ -172,6 +174,7 @@ class TextInput extends React.Component {
   }
 
   handleChange(e, event) {
+
     //If the cursor changes due to arrow key movement
     // 37-40 are the key codes corresponding to arrow keys
     // 0 corresponds to mouse click
@@ -185,10 +188,6 @@ class TextInput extends React.Component {
     ) {
       var cursorPosition = e.getCursor();
       this.packageMessage(cursorPosition, "cursor");
-    }
-
-    //ignore the cursor change events that emerge with typing...
-    else if (event.type === "changeCursor") {
     }
 
     //only send selection messages after mouseclick or typing, not with every change in text
@@ -211,11 +210,11 @@ class TextInput extends React.Component {
       }
       
       this.packageMessage(selectionRange, "selection");
-    } else if (event.type === "changeSelection") {
-    }
+    } 
 
+    //ignore the cursor change events that emerge with typing...
     //and instead use the cursor positions from the two event actions
-    else {
+    else if (event.action === "insert" || event.action === "remove"){
       if (event.action === "insert") {
         var cursorPosition = event.end;
         this.packageMessage(cursorPosition, "cursor");

@@ -176,6 +176,27 @@ class SplitText extends React.Component {
         lines: [...prevState.lines, e.toString()]
       }));
     }
+
+    let sessionID = this.state.sessionID;
+    if (this.props.path != "/") {
+      //if this session exists already, update the entry in dynamoDB
+      const url =
+        "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateRunCount/" +
+        sessionID;
+      console.log(url);
+
+      axios.put(url).then(
+        response => {
+          console.log(response);
+          const message = response.data;
+          console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+    }
+
   }
 
   //////                                                    //////

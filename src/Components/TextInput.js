@@ -256,6 +256,7 @@ class TextInput extends React.Component {
 
       axios.put(url, data).then(
         response => {
+          console.log(response);
           const message = response.data;
           console.log(message);
         },

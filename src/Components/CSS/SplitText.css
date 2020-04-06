@@ -5,18 +5,57 @@ button.chat-btn {
     right: 0px;
 }
 
-
-.toasts-container {
-    position: absolute;
-    right: 20px;
-    bottom: 20px;
+.meta-toast-container {
+    height: calc(100vh - 150px);
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
     justify-content: flex-end;
     align-items: flex-end;
-    max-height: calc(100vh - 140px);
-    overflow: scroll;
+
 }
+
+.toasts-container {
+    /* position: absolute; */
+    /* right: 20px;
+    bottom: 20px; */
+    /* display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    align-items: flex-end; */
+    overflow: auto;
+}
+
+.fade-toasts {
+    position: absolute;
+    top: 0;
+    height: 200px;
+    width: 100%;
+    background: -webkit-linear-gradient(
+        #292a2e 0%,
+        #292a2e00 100%
+    ); 
+    background-image: -moz-linear-gradient(
+        #292a2e 0%,
+        #292a2e00 100%
+    );
+    background-image: -o-linear-gradient(
+        #292a2e 0%,
+        #292a2e00 100%
+    );
+    background-image: linear-gradient(
+        #292a2e 0%,
+        #292a2e00 100%
+    );
+    background-image: -ms-linear-gradient(
+        #292a2e 0%,
+        #292a2e00 100%
+    );
+}
+
+
 
 .output-tag {
     position: absolute;

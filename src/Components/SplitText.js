@@ -52,7 +52,7 @@ class SplitText extends React.Component {
       toasts: [],
       confusionStatus: {},
       resolve: {},
-      seeToasts: true
+      seeToasts: true,
     };
 
     //////                                       //////
@@ -200,7 +200,6 @@ class SplitText extends React.Component {
       this.handleSessionIDChange(session);
     }
 
-    //this.props.onSessionIDChange(session); //set session ID for app by calling SplitText.js handleSessionIDChange
   }
 
   componentDidUpdate() {}
@@ -272,9 +271,8 @@ class SplitText extends React.Component {
 
   addToast(newToast) {
     this.setState(prevState => ({
-      toasts: [...(prevState.toasts || []), newToast]
+      toasts: [...(prevState.toasts || []), newToast],
     }));
-    console.log(this.state.toasts);
   }
 
   removeToastForNow = index => {
@@ -299,6 +297,11 @@ class SplitText extends React.Component {
     const history = this.props.history;
     const confusionStatus = this.state.confusionStatus;
     const resolve = this.state.resolve;
+
+    let container = document.getElementById('toasts-container');
+    if (container) {
+      setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+    }
 
     return (
       <div>
@@ -353,8 +356,8 @@ class SplitText extends React.Component {
             </SplitPane>
             {/* <Button className="chat-btn">Chat</Button> */}
             {this.state.seeToasts && (
-              // <div>
-              <div className="toasts-container">
+              <div className='meta-toast-container'>
+              <div className="toasts-container" id='toasts-container' >
                 {this.state.toasts &&
                   this.state.toasts
                     .slice()
@@ -369,8 +372,10 @@ class SplitText extends React.Component {
                           />
                         )
                     )
-                    .reverse()}
-                {/* </div> */}
+                    // .reverse()
+                    }
+                </div>
+                <div className='fade-toasts'/>
               </div>
             )}
             {/* <Badge className="output-tag">

@@ -73,3 +73,7 @@ button.chat-btn {
     right: 20px;
     color: white;
 }
+
+.comments-switch, .Mui-checked + span.MuiSwitch-track.comments-switch-track {
+    background-color: #007bff !important;
+}

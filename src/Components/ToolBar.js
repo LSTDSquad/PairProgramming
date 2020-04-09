@@ -46,6 +46,7 @@ class ToolBar extends React.Component {
         variant="light"
         bg={this.props.isPilot ? "primary" : "warning"}
         className="top-bar"
+        style={this.props.isPilot ? {color: 'white', fontSize: '1.5em'} : {fontSize : '1.5em'}}
       >
         <Button variant="light" onClick={() => this.toggleDrawer(true)}>
           <Menu />
@@ -66,11 +67,11 @@ class ToolBar extends React.Component {
           userNumber={this.props.userNumber}
           isPilot={this.props.isPilot}
         />
-        <LoadButton
+        {/* <LoadButton
           //component to reload session from session ID
           onTextChange={this.handleTextChange}
           onSessionIDChange={this.handleIDChange}
-        />
+        /> */}
         <CopyButton
           //component to save session to backend
           text={this.props.text}

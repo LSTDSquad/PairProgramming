@@ -22,6 +22,7 @@ class SplitText extends React.Component {
   constructor(props) {
     super(props);
 
+
     this.handleLeftChange = this.handleLeftChange.bind(this);
     this.handleRightChange = this.handleRightChange.bind(this);
     this.handleSessionIDChange = this.handleSessionIDChange.bind(this);
@@ -53,6 +54,7 @@ class SplitText extends React.Component {
       confusionStatus: {},
       resolve: {},
       seeToasts: true,
+      onMobile: false,
     };
 
     //////                                       //////
@@ -204,6 +206,9 @@ class SplitText extends React.Component {
   //////                                                    //////
 
   componentDidMount() {
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      this.setState({onMobile: true})
+    }
     if (this.props.match.path != "/") {
       console.log(this.props.match.params.sessionID);
       let session = this.props.match.params.sessionID;
@@ -220,6 +225,7 @@ class SplitText extends React.Component {
       this.setState({ sessionID: session });
       this.handleSessionIDChange(session);
     }
+
 
   }
 
@@ -321,10 +327,16 @@ class SplitText extends React.Component {
 
     let container = document.getElementById('toasts-container');
     if (container) {
+      //delay the scrolling by .1 seconds so that it has time to account for the new toast
       setTimeout(() => container.scrollTop = container.scrollHeight, 100);
     }
 
-    return (
+
+
+    return (this.state.onMobile ? 
+      <div>
+        Oy! Looks like you're trying to code on a mobile device. Please try accessing this programming tool with a tablet or computer. 
+      </div> : 
       <div>
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true}>
@@ -399,9 +411,6 @@ class SplitText extends React.Component {
                 <div className='fade-toasts'/>
               </div>
             )}
-            {/* <Badge className="output-tag">
-              <h4>Output</h4>
-            </Badge> */}
             <FormControlLabel
               className="comments-switch-group"
               control={
@@ -410,7 +419,7 @@ class SplitText extends React.Component {
                   onChange={() =>
                     this.setState({ seeToasts: !this.state.seeToasts })
                   }
-                  color="primary"
+                  classes={{track: 'comments-switch-track', thumb: 'comments-switch'}}
                 />
               }
               label="See comments"

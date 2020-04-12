@@ -292,14 +292,14 @@ class TextInput extends React.Component {
     let { start, end } = this.state.selected;
     console.log("start", start);
     console.log("end", end);
-    this.session.setAnnotations([
-      ...currAnnotations,
-      {
-        row: start.row,
-        html: `<div>${this.state.confusedMsg}</div>`,
-        type: "error"
-      }
-    ]);
+    // this.session.setAnnotations([
+    //   ...currAnnotations,
+    //   {
+    //     row: start.row,
+    //     html: `<div>${this.state.confusedMsg}</div>`,
+    //     type: "error"
+    //   }
+    // ]);
     let newToast = {
       type: "confused",
       msg: this.state.confusedMsg,

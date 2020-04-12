@@ -4,6 +4,7 @@ import ToggleButton from "./ToggleButton";
 import { Navbar, Button, ListGroup } from "react-bootstrap";
 import { Menu } from "@material-ui/icons";
 import { Drawer } from "@material-ui/core";
+import {AmplifySignOut} from '@aws-amplify/ui-react';
 
 import CopyButton from "./CopyButton";
 
@@ -79,6 +80,7 @@ class ToolBar extends React.Component {
           sessionID={this.props.sessionID}
           onSessionIDChange={this.handleIDChange}
         />
+        <AmplifySignOut/>
       </Navbar>
     );
   }

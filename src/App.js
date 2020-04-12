@@ -12,7 +12,8 @@ import {
 } from 'react-router-dom'
 import Amplify from 'aws-amplify';
 import awsconfig from './aws-exports';
-import { withAuthenticator } from 'aws-amplify-react'; // or 'aws-amplify-react-native';
+import { withAuthenticator} from 'aws-amplify-react'; // or 'aws-amplify-react-native';
+// import {AmplifySignOut} from '@aws-amplify/ui-react';
 import '@aws-amplify/ui/dist/style.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 Amplify.configure(awsconfig);
@@ -23,6 +24,7 @@ function App() {
   return (
   	
   		<Router>
+			  
   			<div>
   				<Switch>
   					<Route exact path="/" render={(routeProps) => <SplitText {...routeProps}/>} />

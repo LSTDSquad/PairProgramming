@@ -14,10 +14,8 @@ import Amplify from 'aws-amplify';
 import awsconfig from './aws-exports';
 import { withAuthenticator } from 'aws-amplify-react'; // or 'aws-amplify-react-native';
 import '@aws-amplify/ui/dist/style.css';
-Amplify.configure(awsconfig);
-
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+Amplify.configure(awsconfig);
 
 
 

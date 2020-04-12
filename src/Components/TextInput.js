@@ -348,6 +348,13 @@ class TextInput extends React.Component {
         type: "error"
       }
     ]);
+    let newToast = {
+      type: "confused",
+      msg: this.props.confusionStatus.confusedMsg,
+      show: true,
+      ...this.props.confusionStatus.selected
+    };
+    this.props.addToast(newToast);
     this.setState({
       annotations: [
         ...currAnnotations,

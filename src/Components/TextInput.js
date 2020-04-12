@@ -267,14 +267,14 @@ class TextInput extends React.Component {
     }
   }
 
-  setAnnotations = annots => {
-    if (this.editor && this.session.$annotations != this.state.annotations) {
-      console.log(this.state.annotations);
-      let currAnnotations = this.state.annotations || [];
-      // this.session.setAnnotations([...currAnnotations]);
-      //this.session.$annotations = annotations;
-    }
-  };
+  // setAnnotations = annots => {
+  //   if (this.editor && this.session.$annotations != this.state.annotations) {
+  //     console.log(this.state.annotations);
+  //     let currAnnotations = this.state.annotations || [];
+  //     // this.session.setAnnotations([...currAnnotations]);
+  //     //this.session.$annotations = annotations;
+  //   }
+  // };
 
   handleConfused = event => {
     event.preventDefault();

@@ -14,6 +14,12 @@
         "categories": {
             "auth": {
                 "pairprogrammingc4b3a75a": {}
+            },
+            "hosting": {
+                "amplifyhosting": {
+                    "appId": "d1tkneodyg1kgq",
+                    "type": "cicd"
+                }
             }
         }
     }

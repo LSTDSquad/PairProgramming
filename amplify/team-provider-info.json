@@ -1,0 +1,20 @@
+{
+    "env": {
+        "awscloudformation": {
+            "AuthRoleName": "amplify-pairprogramming-env-124720-authRole",
+            "UnauthRoleArn": "arn:aws:iam::102195872554:role/amplify-pairprogramming-env-124720-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::102195872554:role/amplify-pairprogramming-env-124720-authRole",
+            "Region": "us-east-2",
+            "DeploymentBucketName": "amplify-pairprogramming-env-124720-deployment",
+            "UnauthRoleName": "amplify-pairprogramming-env-124720-unauthRole",
+            "StackName": "amplify-pairprogramming-env-124720",
+            "StackId": "arn:aws:cloudformation:us-east-2:102195872554:stack/amplify-pairprogramming-env-124720/aa497fc0-7ce5-11ea-b361-0247ef85be9c",
+            "AmplifyAppId": "d1tkneodyg1kgq"
+        },
+        "categories": {
+            "auth": {
+                "pairprogrammingc4b3a75a": {}
+            }
+        }
+    }
+}

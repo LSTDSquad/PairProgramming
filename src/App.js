@@ -66,7 +66,9 @@ const signUpConfig = {
   
   export default withAuthenticator(App, {
 	signUpConfig,
-	usernameAttributes
+	includeGreetings: false,
+	usernameAttributes,
+	//theme: {myCustomTheme}
   });
 
 // export default withAuthenticator(App, true);

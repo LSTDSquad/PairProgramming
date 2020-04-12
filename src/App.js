@@ -69,7 +69,7 @@ const signUpConfig = {
   export default withAuthenticator(App, {
 	signUpConfig,
 	includeGreetings: false,
-	usernameAttributes,
+	usernameAttributes: 'email',
 	//theme: {myCustomTheme}
   });
 

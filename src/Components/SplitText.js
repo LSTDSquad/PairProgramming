@@ -37,10 +37,12 @@ class SplitText extends React.Component {
     this.builtinRead = this.builtinRead.bind(this);
     this.runCode = this.runCode.bind(this);
     this.addToast = this.addToast.bind(this);
+    this.packageMessage = this.packageMessage.bind(this);
+    this.unsubscribeChannel = this.unsubscribeChannel.bind(this);
 
     this.state = {
       text: "print(3+5)",
-      sessionID: "unsaved", //new session will default to 'unsaved' as the session ID
+      sessionID: this.props.match.params.sessionID, //new session will default to 'unsaved' as the session ID
       userID: Math.round(Math.random() * 1000000).toString(),
 
       //these two items operate like dictionaries key: userID, value: cursor/highlight coordinates
@@ -49,13 +51,15 @@ class SplitText extends React.Component {
       isPilot: true,
 
       lines: [""],
-      userNumber: 1, //number based on order of subscription to channel,
+      userNumber: Number, //number based on order of subscription to channel,
       toasts: [],
       confusionStatus: {},
       resolve: {},
       seeToasts: true,
       onMobile: false,
     };
+
+    this.baseState = this.state
 
     //////                                       //////
     //////      Initial Pubnub setup             //////
@@ -65,13 +69,58 @@ class SplitText extends React.Component {
       subscribe_key: "sub-c-76b1e8e8-6988-11ea-94ed-e20534093ea4",
       publish_key: "pub-c-94dff15e-b743-4157-a74e-c7270627723b",
       uuid: this.state.userID,
-      presenceTimeout: 120
+      state: [],
+      presenceTimeout: 20
     });
 
+
+    let currentComponent = this
     //add PubNub listener to handle messages
     this.PubNub.addListener({
-      message: ({ channel, message }) => {
+      presence: function(p){
+        //allows for dynamic user numbers/toggling depending on when 
+        //users come and go
+        var userNumber = Object
 
+        if(p.action == 'leave' || p.action=='timeout'){
+          //if a user leaves or times out, adjust other numbers
+          if(p.state != undefined){
+            console.log(p.state.userNumber, currentComponent.state.userNumber)
+            if(p.state.userNumber === 1 & currentComponent.state.userNumber === 2){
+              console.log("new pilot")
+              userNumber = {userNumber: 1}
+              currentComponent.setState({userNumber:1, isPilot:true})
+            }
+            else if (p.state.userNumber === 2 & currentComponent.state.userNumber === 3){
+              userNumber = {userNumber: 2}
+              currentComponent.setState({userNumber:2})
+            }
+            else if (p.state.userNumber <= currentComponent.state.userNumber ){
+              userNumber = {userNumber:currentComponent.state.userNumber-1}
+              currentComponent.setState({userNumber: (currentComponent.state.userNumber-1)})
+            }
+          }
+        }
+        else if(p.action === 'join'){
+          //set pubnub state to include usernumber on join
+          
+          if(p.uuid === currentComponent.state.userID){
+            currentComponent.assignUserNumber()
+          }
+
+          var userNumber = {userNumber: currentComponent.state.userNumber}
+        }
+          
+        currentComponent.PubNub.setState({ 
+          //sync PubNub state with current user state
+              state: userNumber,
+              channels: [currentComponent.state.sessionID]}, 
+              function (status) {
+                console.log(status);
+        });
+      },
+      message: ({ channel, message }) => {
+       // console.log(message);
         if (
         (message.Type === "cursor") & 
         (message.Who != this.state.userID)
@@ -85,6 +134,7 @@ class SplitText extends React.Component {
           (message.Who != this.state.userID)
         ) {
           this.setState({ text: message.What });
+          console.log(this.state.userID,this.state.userNumber);
         } else if (
           (message.Type === "selection") &
           (message.Who != this.state.userID)
@@ -103,6 +153,46 @@ class SplitText extends React.Component {
           (message.Who != this.state.userID)
         ) {
           this.setState({ resolve: message.What });
+        } else if(
+          (message.Type === "toggleRequest") &
+          (message.Who != this.state.userID) &
+          (this.state.isPilot === true)
+        ) {
+            if(window.confirm( message.Who + " requests pilot role")){
+              console.log("toggle")
+              this.setState({isPilot: false, userNumber:2});
+              this.packageMessage([this.state.isPilot,this.state.userNumber],"pilotHandoff")
+
+              //sync PubNub state with current user state
+              var userNumber = {userNumber: 2}
+              this.PubNub.setState({ 
+                  state: userNumber,
+                  channels: [this.state.sessionID]}, 
+                  function (status) {
+                    console.log(status);
+                  }
+              );
+            }
+            else {
+              console.log("remain")
+            }
+        } else if(
+          (message.Type === "pilotHandoff") &
+          (message.Who != this.state.userID) &
+          (this.state.userNumber === 2)) {
+
+            this.setState({isPilot: true, userNumber:1})
+
+            //sync PubNub state with current user state
+            var userNumber = {userNumber: 1}
+            
+            this.PubNub.setState({ 
+                  state: userNumber,
+                  channels: [this.state.sessionID]}, 
+                  function (status) {
+                    console.log(status);
+                  }
+            );
         }
       }
     });
@@ -112,22 +202,6 @@ class SplitText extends React.Component {
       channels: [this.state.sessionID],
       withPresence: true
     });
-
-    let currentComponent = this;
-    //to reference state in callback function
-
-    this.PubNub.hereNow(
-      {
-        channels: [this.state.sessionID],
-        includeUUIDs: true,
-        includeState: true
-      },
-      function(status, response) {
-        //set this window's userNumber to the current number of users on the channel
-        currentComponent.setState({ userNumber: response.totalOccupancy });
-        currentComponent.assignRole();
-      }
-    );
   }
 
   sendMessage(message, type) {
@@ -135,9 +209,26 @@ class SplitText extends React.Component {
     this.PubNub.publish(
       { channel: this.state.sessionID, message: message },
       function(status, response) {
-        // console.log("Publish Result: ", status, message);
+        //console.log("Publish Result: ", status, message);
       }
     );
+  }
+
+  packageMessage(what, type) {
+    //package either cursor or selection change into message
+    //object and send it in SplitText.js sendMessage function
+    const messageObj = {
+      Who: this.state.userID,
+      Type: type,
+      What: what,
+      When: new Date().valueOf()
+    };
+
+    this.sendMessage(messageObj);
+  }
+
+  unsubscribeChannel(){
+    this.PubNub.unsubscribeAll();
   }
 
   //////                                       //////
@@ -206,6 +297,11 @@ class SplitText extends React.Component {
   //////                                                    //////
 
   componentDidMount() {
+
+    window.addEventListener('beforeunload', this.unsubscribeChannel);
+    console.log(this.props.match.params.sessionID)
+
+
     if (window.matchMedia("(max-width: 767px)").matches) {
       this.setState({onMobile: true})
     }
@@ -225,14 +321,15 @@ class SplitText extends React.Component {
       this.setState({ sessionID: session });
       this.handleSessionIDChange(session);
     }
-
-
   }
 
-  componentDidUpdate() {}
+
+
+  componentDidUpdate(prevProps, prevState) {}
 
   handleLeftChange(text) {
     this.setState({ text });
+    console.log(this.state.userNumber);
   }
 
   handleRightChange(text) {
@@ -244,8 +341,11 @@ class SplitText extends React.Component {
   handleSelectionChange() {}
 
   handleSessionIDChange(id) {
+
     //on sessionID change (session was loaded), unsubscribe
     this.PubNub.unsubscribe({ channels: [this.state.sessionID] });
+
+    this.state = this.baseState
 
     //clear cursors/highlights from state
     this.setState({ cursors: {}, selections: {} });
@@ -257,13 +357,18 @@ class SplitText extends React.Component {
         channels: [this.state.sessionID],
         withPresence: true
       });
-      this.assignUserNumber();
       this.assignRole();
+
+      let currentComponent=this;
     });
   }
 
   toggleRole() {
-    console.log(this.state.userNumber);
+
+    if(this.state.userNumber===1){
+      this.setState({userNumber: 2});
+    }
+
     this.setState({ isPilot: !this.state.isPilot });
   }
 
@@ -271,7 +376,9 @@ class SplitText extends React.Component {
     //assign role based on userNumber
     //only person with number 1 will start as pilot
     // console.log("userNumber", this.state.userNumber);
-    if (this.state.userNumber <= 1) {
+    console.log(this.state.userID,this.state.userNumber);
+
+    if (this.state.userNumber === 1) {
       this.setState({ isPilot: true });
     } else {
       this.setState({ isPilot: false });
@@ -291,7 +398,13 @@ class SplitText extends React.Component {
         includeState: true
       },
       function(status, response) {
-        currentComponent.setState({ userNumber: response.totalOccupancy });
+        console.log(response,currentComponent.state.userNumber);
+        if(response.totalOccupancy===0){
+          //for some reason when the first person joins Occupancy shows up as 0
+          currentComponent.setState({ userNumber: response.totalOccupancy+1}, () => currentComponent.assignRole());}
+        else{
+          //otherwise it shows up as the true occupancy
+          currentComponent.setState({ userNumber: response.totalOccupancy}, () => currentComponent.assignRole());}
       }
     );
   }
@@ -309,7 +422,9 @@ class SplitText extends React.Component {
   };
 
   componentWillUnmount() {
-    this.PubNub.unsubscribeAll();
+    //mostly removes users from PubNub channels on browserclose/refresh (not 100% successful)
+    this.unsubscribeChannel();
+    window.removeEventListener('beforeunload', this.unsubscribeChannel);
   }
 
   render() {
@@ -342,10 +457,12 @@ class SplitText extends React.Component {
           <Row noGutters={true}>
             <ToolBar
               isPilot={isPilot}
+              userID = {userID}
               sessionID={sessionID}
               text={text}
               userNumber={userNumber}
               history = {history}
+              onSendMessage={this.sendMessage}
               handleTextChange={this.handleLeftChange}
               handleIDChange={this.handleSessionIDChange}
               handleToggle={this.toggleRole}

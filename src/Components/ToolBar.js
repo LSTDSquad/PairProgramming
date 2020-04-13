@@ -20,6 +20,7 @@ class ToolBar extends React.Component {
     this.handleTextChange = this.handleTextChange.bind(this);
     this.handleIDChange = this.handleIDChange.bind(this);
     this.handleToggle = this.handleToggle.bind(this);
+    this.sendMessage = this.sendMessage.bind(this);
     //this.handleRun = this.handleRun.bind(this);
   }
 
@@ -32,8 +33,11 @@ class ToolBar extends React.Component {
   }
 
   handleToggle() {
-    console.log(this.props.isPilot);
     this.props.handleToggle();
+  }
+
+  sendMessage(e) {
+  	this.props.onSendMessage(e);
   }
 
   toggleDrawer = open => {
@@ -65,7 +69,9 @@ class ToolBar extends React.Component {
         <ToggleButton
           onToggle={this.handleToggle}
           userNumber={this.props.userNumber}
+          userID = {this.props.userID}
           isPilot={this.props.isPilot}
+          sendMessage={this.sendMessage}
         />
         {/* <LoadButton
           //component to reload session from session ID

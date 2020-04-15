@@ -260,7 +260,12 @@ class SplitText extends React.Component {
     this.setState(prevState => ({
       lines: [...prevState.lines, "pair-programming-session:~ $ run"]
     }));
-    Sk.configure({ output: this.outf, read: this.builtinRead });
+    Sk.configure({ output: this.outf, 
+                   read: this.builtinRead,
+                   inputfun: function (prompt) {
+                                return window.prompt(prompt);
+                              },
+                    inputfunTakesPrompt: true});
 
     try {
       Sk.importMainWithBody("<stdin>", false, input, true);

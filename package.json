@@ -23,7 +23,6 @@
     "react-ace": "^8.1.0",
     "react-bootstrap": "^1.0.0",
     "react-confirm-alert": "^2.6.1",
-    "react-confirm-bootstrap": "^5.3.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.1.2",
     "react-scripts": "^3.4.1",

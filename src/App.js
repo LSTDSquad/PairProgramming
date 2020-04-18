@@ -19,7 +19,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 Amplify.configure(awsconfig);
 
 
-
 function App() {
   return (
   	

@@ -22,5 +22,30 @@
                 }
             }
         }
+    },
+    "dev": {
+        "awscloudformation": {
+            "AuthRoleName": "amplify-pairprogramming-dev-164331-authRole",
+            "UnauthRoleArn": "arn:aws:iam::102195872554:role/amplify-pairprogramming-dev-164331-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::102195872554:role/amplify-pairprogramming-dev-164331-authRole",
+            "Region": "us-west-2",
+            "DeploymentBucketName": "amplify-pairprogramming-dev-164331-deployment",
+            "UnauthRoleName": "amplify-pairprogramming-dev-164331-unauthRole",
+            "StackName": "amplify-pairprogramming-dev-164331",
+            "StackId": "arn:aws:cloudformation:us-west-2:102195872554:stack/amplify-pairprogramming-dev-164331/c20df990-7ea9-11ea-a0ef-0a5fa98e8810",
+            "AmplifyAppId": "d7qh82pmsgpdx"
+        },
+        "categories": {
+            "auth": {
+                "pairprogrammingc4b3a75a": {},
+                "userPoolGroups": {}
+            },
+            "hosting": {
+                "amplifyhosting": {
+                    "appId": "d7qh82pmsgpdx",
+                    "type": "cicd"
+                }
+            }
+        }
     }
 }

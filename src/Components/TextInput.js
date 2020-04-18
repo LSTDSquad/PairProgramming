@@ -332,6 +332,25 @@ class TextInput extends React.Component {
       ]
     });
     this.packageMessage(this.state, "confused");
+
+    let sessionID = this.props.sessionID;
+                if (this.props.path != "/") {
+                  //if this session exists already, update the entry in dynamoDB
+                  const url =
+                    "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateConfusionCount/" +
+                    sessionID;
+
+                  axios.put(url).then(
+                    response => {
+                      console.log(response);
+                      const message = response.data;
+                      console.log(message);
+                    },
+                    error => {
+                      console.log(error);
+                    }
+                  );
+                }
   };
 
   receiveConfused = () => {
@@ -430,6 +449,26 @@ class TextInput extends React.Component {
     this.props.addToast(newToast);
     this.setState({ showComment: false, commentMsg: '' });
     // console.log(this.state.toasts);
+
+    let sessionID = this.props.sessionID;
+                if (this.props.path != "/") {
+                  //if this session exists already, update the entry in dynamoDB
+                  const url =
+                    "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateCommentCount/" +
+                    sessionID;
+
+                  axios.put(url).then(
+                    response => {
+                      console.log(response);
+                      const message = response.data;
+                      console.log(message);
+                    },
+                    error => {
+                      console.log(error);
+                    }
+                  );
+                }
+
   };
 
   getCommentPopover = () =>
@@ -566,6 +605,7 @@ class TextInput extends React.Component {
                   this.packageMessage(resolve, "resolve");
                 });
                 this.session.setAnnotations([]);
+
               }}
             >
               <DoneRounded />

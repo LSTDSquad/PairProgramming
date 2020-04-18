@@ -295,9 +295,11 @@ class SplitText extends React.Component {
       const url =
         "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateRunCount/" +
         sessionID;
-      console.log(url);
 
-      axios.put(url).then(
+      let data = { timeStamp: String(new Date()) }
+      console.log(data)
+
+      axios.put(url, data).then(
         response => {
           console.log(response);
           const message = response.data;
@@ -342,8 +344,6 @@ class SplitText extends React.Component {
     }
   }
 
-
-
   componentDidUpdate(prevProps, prevState) {}
 
   handleLeftChange(text) {
@@ -387,8 +387,26 @@ class SplitText extends React.Component {
     if(this.state.userNumber===1){
       this.setState({userNumber: 2});
     }
-
     this.setState({ isPilot: !this.state.isPilot });
+
+    let sessionID = this.state.sessionID;
+    if (this.props.path != "/") {
+      //if this session exists already, update the entry in dynamoDB
+      const url =
+        "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateToggleCount/" +
+        sessionID;
+
+      axios.put(url).then(
+        response => {
+          console.log(response);
+          const message = response.data;
+          console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+    }
   }
 
   assignRole() {

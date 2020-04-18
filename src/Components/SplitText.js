@@ -11,6 +11,8 @@ import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
 import "./CSS/SplitText.css";
 import MyToast from "./MyToast";
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css'; 
 
 import { Container, Row } from "react-bootstrap";
 import { HashRouter as Router, Route, Link } from "react-router-dom";
@@ -158,24 +160,9 @@ class SplitText extends React.Component {
           (message.Who != this.state.userID) &
           (this.state.isPilot === true)
         ) {
-            if(window.confirm( message.Who + " requests pilot role")){
-              console.log("toggle")
-              this.setState({isPilot: false, userNumber:2});
-              this.packageMessage([this.state.isPilot,this.state.userNumber],"pilotHandoff")
 
-              //sync PubNub state with current user state
-              var userNumber = {userNumber: 2}
-              this.PubNub.setState({ 
-                  state: userNumber,
-                  channels: [this.state.sessionID]}, 
-                  function (status) {
-                    console.log(status);
-                  }
-              );
-            }
-            else {
-              console.log("remain")
-            }
+            this.toggleAlert(message.Who)
+
         } else if(
           (message.Type === "pilotHandoff") &
           (message.Who != this.state.userID) &
@@ -201,6 +188,33 @@ class SplitText extends React.Component {
     this.PubNub.subscribe({
       channels: [this.state.sessionID],
       withPresence: true
+    });
+  }
+
+  toggleAlert = (who) => {
+    //function to bypass Chrome blocking alerts on background windows
+    console.log("hi")
+    let currentComponent = this
+    confirmAlert({
+      title: 'Toggle Role Request',
+      message: who + " requests pilot role",
+      buttons: [{label: 'Yes', onClick: () => {
+
+                  console.log("toggle")
+                  this.setState({isPilot: false, userNumber:2});
+                  this.packageMessage([this.state.isPilot,this.state.userNumber],"pilotHandoff")
+
+                  //sync PubNub state with current user state
+                  var userNumber = {userNumber: 2}
+                  this.PubNub.setState({ 
+                      state: userNumber,
+                      channels: [this.state.sessionID]}, 
+                      function (status) {
+                        console.log(status);
+                      }
+                  )}
+                },
+                {label: 'No',onClick: () => console.log("remain")}]
     });
   }
 

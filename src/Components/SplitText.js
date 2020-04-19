@@ -80,15 +80,18 @@ class SplitText extends React.Component {
     //add PubNub listener to handle messages
     this.PubNub.addListener({
       presence: function(p){
+        console.log(p);
         //allows for dynamic user numbers/toggling depending on when 
         //users come and go
         var userNumber = Object
 
         if(p.action == 'leave' || p.action=='timeout'){
           //if a user leaves or times out, adjust other numbers
+          console.log("USER LEFT")
           if(p.state != undefined){
             console.log(p.state.userNumber, currentComponent.state.userNumber)
-            if(p.state.userNumber === 1 & currentComponent.state.userNumber === 2){
+            if((p.state.userNumber === 1 || p.state.userNumber === 0) & 
+                (currentComponent.state.userNumber === 1 || currentComponent.state.userNumber === 2)){
               console.log("new pilot")
               userNumber = {userNumber: 1}
               currentComponent.setState({userNumber:1, isPilot:true})
@@ -102,6 +105,24 @@ class SplitText extends React.Component {
               currentComponent.setState({userNumber: (currentComponent.state.userNumber-1)})
             }
           }
+
+          currentComponent.PubNub.setState({ 
+          //sync PubNub state with current user state
+              state: userNumber,
+              channels: [currentComponent.state.sessionID]}, 
+              function (status) {
+                console.log(status);
+          });
+
+          const copyCursors= {...currentComponent.state.cursors}
+          delete copyCursors[p.uuid]
+          //console.log("cursors",currentComponent.state.cursors,copyCursors)
+          currentComponent.setState({cursors: copyCursors})
+          
+          const copySelections= {...currentComponent.state.selections}
+          delete copySelections[p.uuid]
+          currentComponent.setState({selections: copySelections})
+ 
         }
         else if(p.action === 'join'){
           //set pubnub state to include usernumber on join
@@ -110,16 +131,19 @@ class SplitText extends React.Component {
             currentComponent.assignUserNumber()
           }
 
-          var userNumber = {userNumber: currentComponent.state.userNumber}
-        }
-          
-        currentComponent.PubNub.setState({ 
+          userNumber = {userNumber: currentComponent.state.userNumber}
+
+          currentComponent.PubNub.setState({ 
           //sync PubNub state with current user state
               state: userNumber,
               channels: [currentComponent.state.sessionID]}, 
               function (status) {
                 console.log(status);
         });
+
+        }
+          
+        
       },
       message: ({ channel, message }) => {
        // console.log(message);
@@ -193,7 +217,6 @@ class SplitText extends React.Component {
 
   toggleAlert = (who) => {
     //function to bypass Chrome blocking alerts on background windows
-    console.log("hi")
     let currentComponent = this
     confirmAlert({
       title: 'Toggle Role Request',

@@ -11,3 +11,12 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* for amplify authentication */
+:root{
+
+  --amplify-primary-color: #002240;
+  --amplify-primary-tint: #002240;
+  --amplify-primary-shade: #002240;
+
+  }

@@ -436,6 +436,9 @@ class SplitText extends React.Component {
       },
       function(status, response) {
         console.log(response,currentComponent.state.userNumber);
+        if (!response) {
+          return;
+        }
         if(response.totalOccupancy===0){
           //for some reason when the first person joins Occupancy shows up as 0
           currentComponent.setState({ userNumber: response.totalOccupancy+1}, () => currentComponent.assignRole());}

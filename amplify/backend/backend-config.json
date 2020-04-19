@@ -5,22 +5,6 @@
             "providerPlugin": "awscloudformation",
             "dependsOn": [],
             "customAuth": false
-        },
-        "userPoolGroups": {
-            "service": "Cognito-UserPool-Groups",
-            "providerPlugin": "awscloudformation",
-            "dependsOn": [
-                {
-                    "category": "auth",
-                    "resourceName": "pairprogrammingc4b3a75a",
-                    "attributes": [
-                        "UserPoolId",
-                        "AppClientIDWeb",
-                        "AppClientID",
-                        "IdentityPoolId"
-                    ]
-                }
-            ]
         }
     },
     "hosting": {

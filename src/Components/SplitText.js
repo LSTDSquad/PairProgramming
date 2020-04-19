@@ -11,8 +11,8 @@ import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
 import "./CSS/SplitText.css";
 import MyToast from "./MyToast";
-import { confirmAlert } from 'react-confirm-alert';
-import 'react-confirm-alert/src/react-confirm-alert.css'; 
+import { confirmAlert } from "react-confirm-alert";
+import "react-confirm-alert/src/react-confirm-alert.css";
 
 import { Container, Row } from "react-bootstrap";
 import { HashRouter as Router, Route, Link } from "react-router-dom";
@@ -23,7 +23,6 @@ class SplitText extends React.Component {
   //state gets managed here (for now?)
   constructor(props) {
     super(props);
-
 
     this.handleLeftChange = this.handleLeftChange.bind(this);
     this.handleRightChange = this.handleRightChange.bind(this);
@@ -58,10 +57,10 @@ class SplitText extends React.Component {
       confusionStatus: {},
       resolve: {},
       seeToasts: true,
-      onMobile: false,
+      onMobile: false
     };
 
-    this.baseState = this.state
+    this.baseState = this.state;
 
     //////                                       //////
     //////      Initial Pubnub setup             //////
@@ -75,58 +74,66 @@ class SplitText extends React.Component {
       presenceTimeout: 20
     });
 
-
-    let currentComponent = this
+    let currentComponent = this;
     //add PubNub listener to handle messages
     this.PubNub.addListener({
-      presence: function(p){
-        //allows for dynamic user numbers/toggling depending on when 
+      presence: function(p) {
+        //allows for dynamic user numbers/toggling depending on when
         //users come and go
-        var userNumber = Object
+        var userNumber = Object;
 
-        if(p.action == 'leave' || p.action=='timeout'){
+        if (p.action == "leave" || p.action == "timeout") {
           //if a user leaves or times out, adjust other numbers
-          if(p.state != undefined){
-            console.log(p.state.userNumber, currentComponent.state.userNumber)
-            if(p.state.userNumber === 1 & currentComponent.state.userNumber === 2){
-              console.log("new pilot")
-              userNumber = {userNumber: 1}
-              currentComponent.setState({userNumber:1, isPilot:true})
-            }
-            else if (p.state.userNumber === 2 & currentComponent.state.userNumber === 3){
-              userNumber = {userNumber: 2}
-              currentComponent.setState({userNumber:2})
-            }
-            else if (p.state.userNumber <= currentComponent.state.userNumber ){
-              userNumber = {userNumber:currentComponent.state.userNumber-1}
-              currentComponent.setState({userNumber: (currentComponent.state.userNumber-1)})
+          if (p.state != undefined) {
+            console.log(p.state.userNumber, currentComponent.state.userNumber);
+            if (
+              (p.state.userNumber === 1) &
+              (currentComponent.state.userNumber === 2)
+            ) {
+              console.log("new pilot");
+              userNumber = { userNumber: 1 };
+              currentComponent.setState({ userNumber: 1, isPilot: true });
+            } else if (
+              (p.state.userNumber === 2) &
+              (currentComponent.state.userNumber === 3)
+            ) {
+              userNumber = { userNumber: 2 };
+              currentComponent.setState({ userNumber: 2 });
+            } else if (
+              p.state.userNumber <= currentComponent.state.userNumber
+            ) {
+              userNumber = {
+                userNumber: currentComponent.state.userNumber - 1
+              };
+              currentComponent.setState({
+                userNumber: currentComponent.state.userNumber - 1
+              });
             }
           }
-        }
-        else if(p.action === 'join'){
+        } else if (p.action === "join") {
           //set pubnub state to include usernumber on join
-          
-          if(p.uuid === currentComponent.state.userID){
-            currentComponent.assignUserNumber()
+
+          if (p.uuid === currentComponent.state.userID) {
+            currentComponent.assignUserNumber();
           }
 
-          var userNumber = {userNumber: currentComponent.state.userNumber}
+          var userNumber = { userNumber: currentComponent.state.userNumber };
         }
-          
-        currentComponent.PubNub.setState({ 
-          //sync PubNub state with current user state
-              state: userNumber,
-              channels: [currentComponent.state.sessionID]}, 
-              function (status) {
-                console.log(status);
-        });
+
+        currentComponent.PubNub.setState(
+          {
+            //sync PubNub state with current user state
+            state: userNumber,
+            channels: [currentComponent.state.sessionID]
+          },
+          function(status) {
+            console.log(status);
+          }
+        );
       },
       message: ({ channel, message }) => {
-       // console.log(message);
-        if (
-        (message.Type === "cursor") & 
-        (message.Who != this.state.userID)
-        ) {
+        // console.log(message);
+        if ((message.Type === "cursor") & (message.Who != this.state.userID)) {
           //if message containing cursor change info comes in, update cursor object in setState
           this.setState({
             ...(this.state.cursors[message.Who] = message.What)
@@ -136,7 +143,7 @@ class SplitText extends React.Component {
           (message.Who != this.state.userID)
         ) {
           this.setState({ text: message.What });
-          console.log(this.state.userID,this.state.userNumber);
+          console.log(this.state.userID, this.state.userNumber);
         } else if (
           (message.Type === "selection") &
           (message.Who != this.state.userID)
@@ -155,31 +162,31 @@ class SplitText extends React.Component {
           (message.Who != this.state.userID)
         ) {
           this.setState({ resolve: message.What });
-        } else if(
+        } else if (
           (message.Type === "toggleRequest") &
           (message.Who != this.state.userID) &
           (this.state.isPilot === true)
         ) {
-
-            this.toggleAlert(message.Who)
-
-        } else if(
+          this.toggleAlert(message.Who);
+        } else if (
           (message.Type === "pilotHandoff") &
           (message.Who != this.state.userID) &
-          (this.state.userNumber === 2)) {
+          (this.state.userNumber === 2)
+        ) {
+          this.setState({ isPilot: true, userNumber: 1 });
 
-            this.setState({isPilot: true, userNumber:1})
+          //sync PubNub state with current user state
+          var userNumber = { userNumber: 1 };
 
-            //sync PubNub state with current user state
-            var userNumber = {userNumber: 1}
-            
-            this.PubNub.setState({ 
-                  state: userNumber,
-                  channels: [this.state.sessionID]}, 
-                  function (status) {
-                    console.log(status);
-                  }
-            );
+          this.PubNub.setState(
+            {
+              state: userNumber,
+              channels: [this.state.sessionID]
+            },
+            function(status) {
+              console.log(status);
+            }
+          );
         }
       }
     });
@@ -191,32 +198,41 @@ class SplitText extends React.Component {
     });
   }
 
-  toggleAlert = (who) => {
+  toggleAlert = who => {
     //function to bypass Chrome blocking alerts on background windows
-    console.log("hi")
-    let currentComponent = this
+    console.log("hi");
+    let currentComponent = this;
     confirmAlert({
-      title: 'Toggle Role Request',
+      title: "Toggle Role Request",
       message: who + " requests pilot role",
-      buttons: [{label: 'Yes', onClick: () => {
+      buttons: [
+        {
+          label: "Yes",
+          onClick: () => {
+            console.log("toggle");
+            this.setState({ isPilot: false, userNumber: 2 });
+            this.packageMessage(
+              [this.state.isPilot, this.state.userNumber],
+              "pilotHandoff"
+            );
 
-                  console.log("toggle")
-                  this.setState({isPilot: false, userNumber:2});
-                  this.packageMessage([this.state.isPilot,this.state.userNumber],"pilotHandoff")
-
-                  //sync PubNub state with current user state
-                  var userNumber = {userNumber: 2}
-                  this.PubNub.setState({ 
-                      state: userNumber,
-                      channels: [this.state.sessionID]}, 
-                      function (status) {
-                        console.log(status);
-                      }
-                  )}
-                },
-                {label: 'No',onClick: () => console.log("remain")}]
+            //sync PubNub state with current user state
+            var userNumber = { userNumber: 2 };
+            this.PubNub.setState(
+              {
+                state: userNumber,
+                channels: [this.state.sessionID]
+              },
+              function(status) {
+                console.log(status);
+              }
+            );
+          }
+        },
+        { label: "No", onClick: () => console.log("remain") }
+      ]
     });
-  }
+  };
 
   sendMessage(message, type) {
     //send cursor/selection message on sessionID channel
@@ -241,7 +257,7 @@ class SplitText extends React.Component {
     this.sendMessage(messageObj);
   }
 
-  unsubscribeChannel(){
+  unsubscribeChannel() {
     this.PubNub.unsubscribeAll();
   }
 
@@ -274,12 +290,14 @@ class SplitText extends React.Component {
     this.setState(prevState => ({
       lines: [...prevState.lines, "pair-programming-session:~ $ run"]
     }));
-    Sk.configure({ output: this.outf, 
-                   read: this.builtinRead,
-                   inputfun: function (prompt) {
-                                return window.prompt(prompt);
-                              },
-                    inputfunTakesPrompt: true});
+    Sk.configure({
+      output: this.outf,
+      read: this.builtinRead,
+      inputfun: function(prompt) {
+        return window.prompt(prompt, "");
+      },
+      inputfunTakesPrompt: true
+    });
 
     try {
       Sk.importMainWithBody("<stdin>", false, input, true);
@@ -296,8 +314,8 @@ class SplitText extends React.Component {
         "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateRunCount/" +
         sessionID;
 
-      let data = { timeStamp: String(new Date()) }
-      console.log(data)
+      let data = { timeStamp: String(new Date()) };
+      console.log(data);
 
       axios.put(url, data).then(
         response => {
@@ -310,7 +328,6 @@ class SplitText extends React.Component {
         }
       );
     }
-
   }
 
   //////                                                    //////
@@ -318,13 +335,11 @@ class SplitText extends React.Component {
   //////                                                    //////
 
   componentDidMount() {
-
-    window.addEventListener('beforeunload', this.unsubscribeChannel);
-    console.log(this.props.match.params.sessionID)
-
+    window.addEventListener("beforeunload", this.unsubscribeChannel);
+    console.log(this.props.match.params.sessionID);
 
     if (window.matchMedia("(max-width: 767px)").matches) {
-      this.setState({onMobile: true})
+      this.setState({ onMobile: true });
     }
     if (this.props.match.path != "/") {
       console.log(this.props.match.params.sessionID);
@@ -360,11 +375,10 @@ class SplitText extends React.Component {
   handleSelectionChange() {}
 
   handleSessionIDChange(id) {
-
     //on sessionID change (session was loaded), unsubscribe
     this.PubNub.unsubscribe({ channels: [this.state.sessionID] });
 
-    this.state = this.baseState
+    this.state = this.baseState;
 
     //clear cursors/highlights from state
     this.setState({ cursors: {}, selections: {} });
@@ -378,14 +392,13 @@ class SplitText extends React.Component {
       });
       this.assignRole();
 
-      let currentComponent=this;
+      let currentComponent = this;
     });
   }
 
   toggleRole() {
-
-    if(this.state.userNumber===1){
-      this.setState({userNumber: 2});
+    if (this.state.userNumber === 1) {
+      this.setState({ userNumber: 2 });
     }
     this.setState({ isPilot: !this.state.isPilot });
 
@@ -413,7 +426,7 @@ class SplitText extends React.Component {
     //assign role based on userNumber
     //only person with number 1 will start as pilot
     // console.log("userNumber", this.state.userNumber);
-    console.log(this.state.userID,this.state.userNumber);
+    console.log(this.state.userID, this.state.userNumber);
 
     if (this.state.userNumber === 1) {
       this.setState({ isPilot: true });
@@ -435,23 +448,30 @@ class SplitText extends React.Component {
         includeState: true
       },
       function(status, response) {
-        console.log(response,currentComponent.state.userNumber);
+        console.log(response, currentComponent.state.userNumber);
         if (!response) {
           return;
         }
-        if(response.totalOccupancy===0){
+        if (response.totalOccupancy === 0) {
           //for some reason when the first person joins Occupancy shows up as 0
-          currentComponent.setState({ userNumber: response.totalOccupancy+1}, () => currentComponent.assignRole());}
-        else{
+          currentComponent.setState(
+            { userNumber: response.totalOccupancy + 1 },
+            () => currentComponent.assignRole()
+          );
+        } else {
           //otherwise it shows up as the true occupancy
-          currentComponent.setState({ userNumber: response.totalOccupancy}, () => currentComponent.assignRole());}
+          currentComponent.setState(
+            { userNumber: response.totalOccupancy },
+            () => currentComponent.assignRole()
+          );
+        }
       }
     );
   }
 
   addToast(newToast) {
     this.setState(prevState => ({
-      toasts: [...(prevState.toasts || []), newToast],
+      toasts: [...(prevState.toasts || []), newToast]
     }));
   }
 
@@ -464,7 +484,7 @@ class SplitText extends React.Component {
   componentWillUnmount() {
     //mostly removes users from PubNub channels on browserclose/refresh (not 100% successful)
     this.unsubscribeChannel();
-    window.removeEventListener('beforeunload', this.unsubscribeChannel);
+    window.removeEventListener("beforeunload", this.unsubscribeChannel);
   }
 
   render() {
@@ -480,28 +500,28 @@ class SplitText extends React.Component {
     const confusionStatus = this.state.confusionStatus;
     const resolve = this.state.resolve;
 
-    let container = document.getElementById('toasts-container');
+    let container = document.getElementById("toasts-container");
     if (container) {
       //delay the scrolling by .1 seconds so that it has time to account for the new toast
-      setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+      setTimeout(() => (container.scrollTop = container.scrollHeight), 100);
     }
 
-
-
-    return (this.state.onMobile ? 
+    return this.state.onMobile ? (
       <div>
-        Oy! Looks like you're trying to code on a mobile device. Please try accessing this programming tool with a tablet or computer. 
-      </div> : 
+        Oy! Looks like you're trying to code on a mobile device. Please try
+        accessing this programming tool with a tablet or computer.
+      </div>
+    ) : (
       <div>
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true}>
             <ToolBar
               isPilot={isPilot}
-              userID = {userID}
+              userID={userID}
               sessionID={sessionID}
               text={text}
               userNumber={userNumber}
-              history = {history}
+              history={history}
               onSendMessage={this.sendMessage}
               handleTextChange={this.handleLeftChange}
               handleIDChange={this.handleSessionIDChange}
@@ -546,26 +566,26 @@ class SplitText extends React.Component {
             </SplitPane>
             {/* <Button className="chat-btn">Chat</Button> */}
             {this.state.seeToasts && (
-              <div className='meta-toast-container'>
-              <div className="toasts-container" id='toasts-container' >
-                {this.state.toasts &&
-                  this.state.toasts
-                    .slice()
-                    .map(
-                      (toast, i) =>
-                        toast.show && (
-                          <MyToast
-                            key={i}
-                            index={i}
-                            removeToastForNow={this.removeToastForNow}
-                            toast={toast}
-                          />
-                        )
-                    )
-                    // .reverse()
-                    }
+              <div className="meta-toast-container">
+                <div className="toasts-container" id="toasts-container">
+                  {this.state.toasts &&
+                    this.state.toasts
+                      .slice()
+                      .map(
+                        (toast, i) =>
+                          toast.show && (
+                            <MyToast
+                              key={i}
+                              index={i}
+                              removeToastForNow={this.removeToastForNow}
+                              toast={toast}
+                            />
+                          )
+                      )
+                  // .reverse()
+                  }
                 </div>
-                <div className='fade-toasts'/>
+                <div className="fade-toasts" />
               </div>
             )}
             <FormControlLabel
@@ -576,7 +596,10 @@ class SplitText extends React.Component {
                   onChange={() =>
                     this.setState({ seeToasts: !this.state.seeToasts })
                   }
-                  classes={{track: 'comments-switch-track', thumb: 'comments-switch'}}
+                  classes={{
+                    track: "comments-switch-track",
+                    thumb: "comments-switch"
+                  }}
                 />
               }
               label="See past questions"

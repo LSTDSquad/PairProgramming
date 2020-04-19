@@ -91,7 +91,7 @@ class TextInput extends React.Component {
     this.curMgr.addCursor(this.props.userID, this.props.userID, "orange"); //add this window's curser to the cursor manager
 
     this.selMgr = new AceMultiSelectionManager(this.editor.getSession()); //setup selection manager in reference to editor
-    this.selMgr.addSelection(this.props.userID, this.props.userID, "blue"); //add this window's selection to cursor manager
+    this.selMgr.addSelection(this.props.userID, this.props.userID, "yellow"); //add this window's selection to cursor manager
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
@@ -150,7 +150,7 @@ class TextInput extends React.Component {
     for (const [key, value] of Object.entries(this.props.selections)) {
       //if another user's selection not in this selection manager, add it
       if (Object.keys(this.selMgr._selections).includes(key) === false) {
-        this.selMgr.addSelection(key, key, "blue");
+        this.selMgr.addSelection(key, key, "yellow");
       }
 
       //if another user updates their selection another window, move their selection on this window

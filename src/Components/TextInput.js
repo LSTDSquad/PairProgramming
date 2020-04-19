@@ -567,7 +567,7 @@ class TextInput extends React.Component {
             <HelpOutlineRounded />
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger
+        {/* <OverlayTrigger
           trigger={"click"}
           placement="top"
           overlay={this.getCommentPopover()}
@@ -581,7 +581,7 @@ class TextInput extends React.Component {
           >
             <CommentRounded />
           </Button>
-        </OverlayTrigger>
+        </OverlayTrigger> */}
         <Button
           variant="success"
           className="run"
@@ -589,7 +589,7 @@ class TextInput extends React.Component {
         >
           <PlayArrowRounded />
         </Button>
-        {this.props.isPilot &&
+        {
           this.state.annotations &&
           this.state.annotations.length > 0 && (
             <Button

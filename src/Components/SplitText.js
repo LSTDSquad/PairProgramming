@@ -579,7 +579,7 @@ class SplitText extends React.Component {
                   classes={{track: 'comments-switch-track', thumb: 'comments-switch'}}
                 />
               }
-              label="See comments"
+              label="See past questions"
             />
           </Row>
         </Container>

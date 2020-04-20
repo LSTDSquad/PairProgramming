@@ -135,8 +135,9 @@ class SplitText extends React.Component {
         // console.log(message);
         if ((message.Type === "cursor") & (message.Who != this.state.userID)) {
           //if message containing cursor change info comes in, update cursor object in setState
+          let what = {msg: message.What, name: message.UserName};
           this.setState({
-            ...(this.state.cursors[message.Who] = message.What)
+            ...(this.state.cursors[message.Who] = what)
           });
         } else if (
           (message.Type === "text") &
@@ -149,8 +150,9 @@ class SplitText extends React.Component {
           (message.Who != this.state.userID)
         ) {
           //if message containing highlight change info comes in, update selection object in state
+          let what = {msg: message.What, name: message.UserName};
           this.setState({
-            ...(this.state.selections[message.Who] = message.What)
+            ...(this.state.selections[message.Who] = what)
           });
         } else if (
           (message.Type === "confused") &

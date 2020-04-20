@@ -5,7 +5,7 @@ import {
   AceMultiSelectionManager
 } from "@convergencelabs/ace-collab-ext";
 import { Range } from "ace-builds/";
-
+import { Auth} from 'aws-amplify'
 import axios from "axios";
 
 import "ace-builds/src-noconflict/mode-python";
@@ -37,6 +37,7 @@ class TextInput extends React.Component {
     super(props);
 
     this.state = {
+      user_name: "",
       selected: null,
       annotations: [],
       cursor: null,
@@ -51,6 +52,8 @@ class TextInput extends React.Component {
       key: 0 // reference to key that was most recently pressed
     };
 
+    
+
     this.handleChange = this.handleChange.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
@@ -64,6 +67,8 @@ class TextInput extends React.Component {
   }
 
   componentDidMount() {
+    Auth.currentAuthenticatedUser().then(user=> this.setState({user_name: user.attributes.name}))
+    .catch(err => console.log(err));
     this.editor = this.refs.editor.editor; //set reference to ace editor
 
     this.session = this.editor.getSession();
@@ -135,10 +140,13 @@ class TextInput extends React.Component {
 
     // run this loop when other window changes, not when it itself changes
     // i.e cursors gets updated when message is sent
-    for (const [key, value] of Object.entries(this.props.cursors)) {
+    for (const [key, {msg: value, name}] of Object.entries(this.props.cursors)) {
       //if another user's cursor not in this of cursor manager, add it
+      // key = JSON.parse(key);
+      console.log(value);
       if (Object.keys(this.curMgr._cursors).includes(key) === false) {
-        this.curMgr.addCursor(key, key, "orange");
+        
+        this.curMgr.addCursor(key, name, "orange");
       }
 
       //if another user updates their cursor another window, move their cursor on this window
@@ -147,10 +155,10 @@ class TextInput extends React.Component {
       }
     }
 
-    for (const [key, value] of Object.entries(this.props.selections)) {
+    for (const [key, {msg: value, name}] of Object.entries(this.props.selections)) {
       //if another user's selection not in this selection manager, add it
       if (Object.keys(this.selMgr._selections).includes(key) === false) {
-        this.selMgr.addSelection(key, key, "yellow");
+        this.selMgr.addSelection(key, name, "yellow");
       }
 
       //if another user updates their selection another window, move their selection on this window
@@ -204,9 +212,11 @@ class TextInput extends React.Component {
       let {start, end} = selectionRange;
       if (end.row > start.row || end.column > start.column) {
         selectionRange.code = this.selectionToCode(e);
+        // this.setState({selected: selectionRange});
         setTimeout(() => this.setState({ selected: selectionRange }), 500);
       } else {
-        setTimeout(() => this.setState({ selected: null }), 500);
+        this.setState({selected: null})
+        // setTimeout(() => this.setState({ selected: null }), 500);
       }
       
       this.packageMessage(selectionRange, "selection");
@@ -235,6 +245,7 @@ class TextInput extends React.Component {
     //object and send it in SplitText.js sendMessage function
     const messageObj = {
       Who: this.props.userID,
+      UserName: this.state.user_name,
       Type: type,
       What: what,
       When: new Date().valueOf()

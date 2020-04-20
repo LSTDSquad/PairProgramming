@@ -169,6 +169,12 @@ class SplitText extends React.Component {
             ...(this.state.selections[message.Who] = what)
           });
         } else if (
+          (message.Type === "codeOutput") &
+          (message.Who != this.state.userID)
+        ) {
+          console.log(message.What);
+          this.setState({lines: message.What})
+        } else if (
           (message.Type === "confused") &
           (message.Who != this.state.userID)
         ) {
@@ -285,11 +291,14 @@ class SplitText extends React.Component {
     var arr = [];
     arr.push(text);
     if (/\S/.test(text)) {
-      console.log(text);
+      //console.log(text);
       this.setState(prevState => ({
         lines: [...prevState.lines, text]
-      }));
+      }),() => 
+      this.packageMessage(this.state.lines,"codeOutput")); 
     }
+
+    console.log("codeRan")
   }
 
   builtinRead(x) {
@@ -318,10 +327,12 @@ class SplitText extends React.Component {
     try {
       Sk.importMainWithBody("<stdin>", false, input, true);
     } catch (e) {
-      this.setState(prevState => ({
-        lines: [...prevState.lines, e.toString()]
-      }));
-    }
+        this.setState(prevState => ({
+          lines: [...prevState.lines, e.toString()]
+        }));  
+      }
+
+      
 
     let sessionID = this.state.sessionID;
     if (this.props.path != "/") {

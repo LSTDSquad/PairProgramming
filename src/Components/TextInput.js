@@ -125,7 +125,6 @@ class TextInput extends React.Component {
       this.setState({ annotations: [] });
       //console.log(this.state.markers)
       this.setState({ markers: [] });
-      
     }
 
     for (const key of Object.keys(this.curMgr._cursors)) {
@@ -553,6 +552,7 @@ class TextInput extends React.Component {
             ref="editor"
             mode="python"
             theme="cobalt"
+            fontSize={16}
             highlightActiveLine={false}
             onChange={this.handleChange}
             readOnly={!isPilot} //if user is not the pilot, editor is readOnly

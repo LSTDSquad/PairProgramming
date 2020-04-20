@@ -93,7 +93,7 @@ class SplitText extends React.Component {
                 (currentComponent.state.userNumber === 1 || currentComponent.state.userNumber === 2)){
               console.log("new pilot")
               userNumber = {userNumber: 1}
-              currentComponent.setState({userNumber:1, isPilot:true})
+              currentComponent.setState({userNumber:1, isPilot: true})
             }
             else if (p.state.userNumber === 2 & currentComponent.state.userNumber === 3){
               userNumber = {userNumber: 2}
@@ -183,7 +183,7 @@ class SplitText extends React.Component {
           (message.Who != this.state.userID) &
           (this.state.isPilot === true)
         ) {
-          this.toggleAlert(message.Who);
+          this.toggleAlert(message.Who, message.UserName);
         } else if (
           (message.Type === "pilotHandoff") &
           (message.Who != this.state.userID) &
@@ -214,13 +214,13 @@ class SplitText extends React.Component {
     });
   }
 
-  toggleAlert = who => {
+  toggleAlert = (who, name) => {
     //function to bypass Chrome blocking alerts on background windows
 
-    let currentComponent = this
+    let currentComponent = this;
     confirmAlert({
       title: "Toggle Role Request",
-      message: who + " requests pilot role",
+      message: name + " requests pilot role",
       buttons: [
         {
           label: "Yes",
@@ -549,7 +549,7 @@ class SplitText extends React.Component {
               //One side input, other side output, once we get app to run code?
               split="vertical"
               minSize={500}
-              defaultSize={800}
+              defaultSize={window.innerWidth/2}
               style={{ bottom: 0, top: 70, height: "auto" }} //window.innerHeight-80}}
               pane2Style={{ overflow: "scroll", backgroundColor: "#292a2e" }}
               resizerStyle={{ border: "5px solid blue" }}

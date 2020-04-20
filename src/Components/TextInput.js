@@ -149,7 +149,7 @@ class TextInput extends React.Component {
     for (const [key, {msg: value, name}] of Object.entries(this.props.cursors)) {
       //if another user's cursor not in this of cursor manager, add it
       // key = JSON.parse(key);
-      console.log(value);
+      // console.log(value);
       if (Object.keys(this.curMgr._cursors).includes(key) === false) {
         
         this.curMgr.addCursor(key, name, "orange");
@@ -269,13 +269,13 @@ class TextInput extends React.Component {
       const url =
         "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateData/" +
         sessionID;
-      console.log(url);
+      // console.log(url);
 
       axios.put(url, data).then(
         response => {
-          console.log(response);
+          // console.log(response);
           const message = response.data;
-          console.log(message);
+          // console.log(message);
         },
         error => {
           console.log(error);
@@ -307,8 +307,8 @@ class TextInput extends React.Component {
     let markers = this.state.markers || [];
     //console.log(currAnnotations);
     let { start, end } = this.state.selected;
-    console.log("start", start);
-    console.log("end", end);
+    // console.log("start", start);
+    // console.log("end", end);
     // this.session.setAnnotations([
     //   ...currAnnotations,
     //   {
@@ -359,9 +359,9 @@ class TextInput extends React.Component {
 
                   axios.put(url).then(
                     response => {
-                      console.log(response);
+                      // console.log(response);
                       const message = response.data;
-                      console.log(message);
+                      // console.log(message);
                     },
                     error => {
                       console.log(error);
@@ -455,7 +455,7 @@ class TextInput extends React.Component {
     }
     this.setState({commentError: false});
     //TODO: SEND TO THE BACKEND.
-    console.log(this.state.selected);
+    // console.log(this.state.selected);
     // let { start, end } = this.state.selected;
     let newToast = {
       type: "comment",
@@ -476,9 +476,9 @@ class TextInput extends React.Component {
 
                   axios.put(url).then(
                     response => {
-                      console.log(response);
+                      // console.log(response);
                       const message = response.data;
-                      console.log(message);
+                      // console.log(message);
                     },
                     error => {
                       console.log(error);

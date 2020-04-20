@@ -13,6 +13,7 @@ import "./CSS/SplitText.css";
 import MyToast from "./MyToast";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
+import { Auth } from "aws-amplify";
 
 import { Container, Row } from "react-bootstrap";
 import { HashRouter as Router, Route, Link } from "react-router-dom";
@@ -57,7 +58,8 @@ class SplitText extends React.Component {
       confusionStatus: {},
       resolve: {},
       seeToasts: true,
-      onMobile: false
+      onMobile: false,
+      user_name: ""
     };
 
     this.baseState = this.state;
@@ -74,11 +76,15 @@ class SplitText extends React.Component {
       presenceTimeout: 20
     });
 
+    Auth.currentAuthenticatedUser()
+      .then(user => this.setState({ user_name: user.attributes.name }))
+      .catch(err => console.log(err));
+
     let currentComponent = this;
     //add PubNub listener to handle messages
     this.PubNub.addListener({
-
       presence: function(p) {
+        console.log('p', p);
         //allows for dynamic user numbers/toggling depending on when
         //users come and go
         var userNumber = Object;
@@ -86,70 +92,80 @@ class SplitText extends React.Component {
         if (p.action == "leave" || p.action == "timeout") {
           //if a user leaves or times out, adjust other numbers
 
-          console.log("USER LEFT")
-          if(p.state != undefined){
-            console.log(p.state.userNumber, currentComponent.state.userNumber)
-            if((p.state.userNumber === 1 || p.state.userNumber === 0) & 
-                (currentComponent.state.userNumber === 1 || currentComponent.state.userNumber === 2)){
-              console.log("new pilot")
-              userNumber = {userNumber: 1}
-              currentComponent.setState({userNumber:1, isPilot: true})
-            }
-            else if (p.state.userNumber === 2 & currentComponent.state.userNumber === 3){
-              userNumber = {userNumber: 2}
-              currentComponent.setState({userNumber:2})
-            }
-            else if (p.state.userNumber <= currentComponent.state.userNumber ){
-              userNumber = {userNumber:currentComponent.state.userNumber-1}
-              currentComponent.setState({userNumber: (currentComponent.state.userNumber-1)})
+          console.log("USER LEFT");
+          if (p.state != undefined) {
+            console.log(p.state.userNumber, currentComponent.state.userNumber);
+            if (
+              (p.state.userNumber === 1 || p.state.userNumber === 0) &
+              (currentComponent.state.userNumber === 1 ||
+                currentComponent.state.userNumber === 2)
+            ) {
+              console.log("new pilot");
+              userNumber = { userNumber: 1 };
+              currentComponent.setState({ userNumber: 1, isPilot: true });
+            } else if (
+              (p.state.userNumber === 2) &
+              (currentComponent.state.userNumber === 3)
+            ) {
+              userNumber = { userNumber: 2 };
+              currentComponent.setState({ userNumber: 2 });
+            } else if (
+              p.state.userNumber <= currentComponent.state.userNumber
+            ) {
+              userNumber = {
+                userNumber: currentComponent.state.userNumber - 1
+              };
+              currentComponent.setState({
+                userNumber: currentComponent.state.userNumber - 1
+              });
             }
           }
 
-          currentComponent.PubNub.setState({ 
-          //sync PubNub state with current user state
+          currentComponent.PubNub.setState(
+            {
+              //sync PubNub state with current user state
               state: userNumber,
-              channels: [currentComponent.state.sessionID]}, 
-              function (status) {
-                console.log(status);
-          });
+              channels: [currentComponent.state.sessionID]
+            },
+            function(status) {
+              // console.log(status);
+            }
+          );
 
-          const copyCursors= {...currentComponent.state.cursors}
-          delete copyCursors[p.uuid]
+          const copyCursors = { ...currentComponent.state.cursors };
+          delete copyCursors[p.uuid];
           //console.log("cursors",currentComponent.state.cursors,copyCursors)
-          currentComponent.setState({cursors: copyCursors})
-          
-          const copySelections= {...currentComponent.state.selections}
-          delete copySelections[p.uuid]
-          currentComponent.setState({selections: copySelections})
- 
-        }
-        else if(p.action === 'join'){
+          currentComponent.setState({ cursors: copyCursors });
 
+          const copySelections = { ...currentComponent.state.selections };
+          delete copySelections[p.uuid];
+          currentComponent.setState({ selections: copySelections });
+        } else if (p.action === "join") {
           //set pubnub state to include usernumber on join
 
           if (p.uuid === currentComponent.state.userID) {
             currentComponent.assignUserNumber();
           }
 
-          userNumber = {userNumber: currentComponent.state.userNumber}
+          userNumber = { userNumber: currentComponent.state.userNumber };
 
-          currentComponent.PubNub.setState({ 
-          //sync PubNub state with current user state
+          currentComponent.PubNub.setState(
+            {
+              //sync PubNub state with current user state
               state: userNumber,
-              channels: [currentComponent.state.sessionID]}, 
-              function (status) {
-                console.log(status);
-        });
-
+              channels: [currentComponent.state.sessionID]
+            },
+            function(status) {
+              // console.log(status);
+            }
+          );
         }
-          
-      
       },
       message: ({ channel, message }) => {
         // console.log(message);
         if ((message.Type === "cursor") & (message.Who != this.state.userID)) {
           //if message containing cursor change info comes in, update cursor object in setState
-          let what = {msg: message.What, name: message.UserName};
+          let what = { msg: message.What, name: message.UserName };
           this.setState({
             ...(this.state.cursors[message.Who] = what)
           });
@@ -158,13 +174,13 @@ class SplitText extends React.Component {
           (message.Who != this.state.userID)
         ) {
           this.setState({ text: message.What });
-          console.log(this.state.userID, this.state.userNumber);
+          // console.log(this.state.userID, this.state.userNumber);
         } else if (
           (message.Type === "selection") &
           (message.Who != this.state.userID)
         ) {
           //if message containing highlight change info comes in, update selection object in state
-          let what = {msg: message.What, name: message.UserName};
+          let what = { msg: message.What, name: message.UserName };
           this.setState({
             ...(this.state.selections[message.Who] = what)
           });
@@ -172,8 +188,8 @@ class SplitText extends React.Component {
           (message.Type === "codeOutput") &
           (message.Who != this.state.userID)
         ) {
-          console.log(message.What);
-          this.setState({lines: message.What})
+          // console.log(message.What);
+          this.setState({ lines: message.What });
         } else if (
           (message.Type === "confused") &
           (message.Who != this.state.userID)
@@ -206,7 +222,7 @@ class SplitText extends React.Component {
               channels: [this.state.sessionID]
             },
             function(status) {
-              console.log(status);
+              // console.log(status);
             }
           );
         }
@@ -231,7 +247,7 @@ class SplitText extends React.Component {
         {
           label: "Yes",
           onClick: () => {
-            console.log("toggle");
+            // console.log("toggle");
             this.setState({ isPilot: false, userNumber: 2 });
             this.packageMessage(
               [this.state.isPilot, this.state.userNumber],
@@ -246,7 +262,7 @@ class SplitText extends React.Component {
                 channels: [this.state.sessionID]
               },
               function(status) {
-                console.log(status);
+                // console.log(status);
               }
             );
           }
@@ -271,6 +287,7 @@ class SplitText extends React.Component {
     //object and send it in SplitText.js sendMessage function
     const messageObj = {
       Who: this.state.userID,
+      UserName: this.state.user_name,
       Type: type,
       What: what,
       When: new Date().valueOf()
@@ -292,13 +309,15 @@ class SplitText extends React.Component {
     arr.push(text);
     if (/\S/.test(text)) {
       //console.log(text);
-      this.setState(prevState => ({
-        lines: [...prevState.lines, text]
-      }),() => 
-      this.packageMessage(this.state.lines,"codeOutput")); 
+      this.setState(
+        prevState => ({
+          lines: [...prevState.lines, text]
+        }),
+        () => this.packageMessage(this.state.lines, "codeOutput")
+      );
     }
 
-    console.log("codeRan")
+    // console.log("codeRan");
   }
 
   builtinRead(x) {
@@ -327,12 +346,10 @@ class SplitText extends React.Component {
     try {
       Sk.importMainWithBody("<stdin>", false, input, true);
     } catch (e) {
-        this.setState(prevState => ({
-          lines: [...prevState.lines, e.toString()]
-        }));  
-      }
-
-      
+      this.setState(prevState => ({
+        lines: [...prevState.lines, e.toString()]
+      }));
+    }
 
     let sessionID = this.state.sessionID;
     if (this.props.path != "/") {
@@ -342,13 +359,13 @@ class SplitText extends React.Component {
         sessionID;
 
       let data = { timeStamp: String(new Date()) };
-      console.log(data);
+      // console.log(data);
 
       axios.put(url, data).then(
         response => {
-          console.log(response);
+          // console.log(response);
           const message = response.data;
-          console.log(message);
+          // console.log(message);
         },
         error => {
           console.log(error);
@@ -363,13 +380,13 @@ class SplitText extends React.Component {
 
   componentDidMount() {
     window.addEventListener("beforeunload", this.unsubscribeChannel);
-    console.log(this.props.match.params.sessionID);
+    // console.log(this.props.match.params.sessionID);
 
     if (window.matchMedia("(max-width: 767px)").matches) {
       this.setState({ onMobile: true });
     }
     if (this.props.match.path != "/") {
-      console.log(this.props.match.params.sessionID);
+      // console.log(this.props.match.params.sessionID);
       let session = this.props.match.params.sessionID;
 
       const url =
@@ -390,7 +407,7 @@ class SplitText extends React.Component {
 
   handleLeftChange(text) {
     this.setState({ text });
-    console.log(this.state.userNumber);
+    // console.log(this.state.userNumber);
   }
 
   handleRightChange(text) {
@@ -438,9 +455,9 @@ class SplitText extends React.Component {
 
       axios.put(url).then(
         response => {
-          console.log(response);
+          // console.log(response);
           const message = response.data;
-          console.log(message);
+          // console.log(message);
         },
         error => {
           console.log(error);
@@ -453,7 +470,7 @@ class SplitText extends React.Component {
     //assign role based on userNumber
     //only person with number 1 will start as pilot
     // console.log("userNumber", this.state.userNumber);
-    console.log(this.state.userID, this.state.userNumber);
+    // console.log(this.state.userID, this.state.userNumber);
 
     if (this.state.userNumber === 1) {
       this.setState({ isPilot: true });
@@ -560,7 +577,7 @@ class SplitText extends React.Component {
               //One side input, other side output, once we get app to run code?
               split="vertical"
               minSize={500}
-              defaultSize={window.innerWidth/2}
+              defaultSize={window.innerWidth / 2}
               style={{ bottom: 0, top: 70, height: "auto" }} //window.innerHeight-80}}
               pane2Style={{ overflow: "scroll", backgroundColor: "#292a2e" }}
               resizerStyle={{ border: "5px solid blue" }}

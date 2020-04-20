@@ -96,6 +96,7 @@ class TextInput extends React.Component {
     this.curMgr.addCursor(this.props.userID, this.props.userID, "orange"); //add this window's curser to the cursor manager
 
     this.selMgr = new AceMultiSelectionManager(this.editor.getSession()); //setup selection manager in reference to editor
+
     this.selMgr.addSelection(this.props.userID, this.props.userID, "yellow"); //add this window's selection to cursor manager
   }
 
@@ -122,11 +123,17 @@ class TextInput extends React.Component {
       //remove confusion markers if props update with resolved confusion
       this.session.setAnnotations([]);
       this.setState({ annotations: [] });
+      //console.log(this.state.markers)
+      this.setState({ markers: [] });
+      
     }
 
     for (const key of Object.keys(this.curMgr._cursors)) {
+         // console.log(this.props.cursors,key,Object.keys(this.props.cursors).includes(key) === false)
+
       //remove other user's cursors from previous session from the cursor manager on sessionID change
       if (Object.keys(this.props.cursors).includes(key) === false) {
+        console.log("removed cursor")
         this.curMgr.removeCursor(key);
       }
     }

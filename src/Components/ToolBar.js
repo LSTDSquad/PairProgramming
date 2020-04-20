@@ -4,7 +4,7 @@ import ToggleButton from "./ToggleButton";
 import { Navbar, Button, ListGroup } from "react-bootstrap";
 import { Menu } from "@material-ui/icons";
 import { Drawer } from "@material-ui/core";
-import {AmplifySignOut} from '@aws-amplify/ui-react';
+import { AmplifySignOut } from "@aws-amplify/ui-react";
 
 import CopyButton from "./CopyButton";
 
@@ -38,7 +38,7 @@ class ToolBar extends React.Component {
   }
 
   sendMessage(e) {
-  	this.props.onSendMessage(e);
+    this.props.onSendMessage(e);
   }
 
   toggleDrawer = open => {
@@ -51,9 +51,13 @@ class ToolBar extends React.Component {
         variant="light"
         bg={this.props.isPilot ? "primary" : "warning"}
         className="top-bar"
-        style={this.props.isPilot ? {color: 'white', fontSize: '1.5em'} : {fontSize : '1.5em'}}
+        style={
+          this.props.isPilot
+            ? { color: "white", fontSize: "1.5em" }
+            : { fontSize: "1.5em" }
+        }
       >
-        <Button variant="light" onClick={() => this.toggleDrawer(true)}>
+        {/* <Button variant="light" onClick={() => this.toggleDrawer(true)}>
           <Menu />
         </Button>
         <Drawer
@@ -65,12 +69,18 @@ class ToolBar extends React.Component {
             <ListGroup.Item>Profile</ListGroup.Item>
             <ListGroup.Item>Pair Programming Tips</ListGroup.Item>
           </ListGroup>
-        </Drawer>
-
+        </Drawer> */}
+        <CopyButton
+          //component to save session to backend
+          text={this.props.text}
+          history={this.props.history}
+          sessionID={this.props.sessionID}
+          onSessionIDChange={this.handleIDChange}
+        />
         <ToggleButton
           onToggle={this.handleToggle}
           userNumber={this.props.userNumber}
-          userID = {this.props.userID}
+          userID={this.props.userID}
           isPilot={this.props.isPilot}
           sendMessage={this.sendMessage}
         />
@@ -79,14 +89,8 @@ class ToolBar extends React.Component {
           onTextChange={this.handleTextChange}
           onSessionIDChange={this.handleIDChange}
         /> */}
-        <CopyButton
-          //component to save session to backend
-          text={this.props.text}
-          history={this.props.history}
-          sessionID={this.props.sessionID}
-          onSessionIDChange={this.handleIDChange}
-        />
-        <AmplifySignOut/>
+
+        <AmplifySignOut />
       </Navbar>
     );
   }

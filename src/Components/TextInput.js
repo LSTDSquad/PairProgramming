@@ -91,7 +91,8 @@ class TextInput extends React.Component {
     this.curMgr.addCursor(this.props.userID, this.props.userID, "orange"); //add this window's curser to the cursor manager
 
     this.selMgr = new AceMultiSelectionManager(this.editor.getSession()); //setup selection manager in reference to editor
-    this.selMgr.addSelection(this.props.userID, this.props.userID, "red"); //add this window's selection to cursor manager
+
+    this.selMgr.addSelection(this.props.userID, this.props.userID, "yellow"); //add this window's selection to cursor manager
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
@@ -156,7 +157,9 @@ class TextInput extends React.Component {
     for (const [key, value] of Object.entries(this.props.selections)) {
       //if another user's selection not in this selection manager, add it
       if (Object.keys(this.selMgr._selections).includes(key) === false) {
-        this.selMgr.addSelection(key, key, "red");
+
+        this.selMgr.addSelection(key, key, "yellow");
+
       }
 
       //if another user updates their selection another window, move their selection on this window
@@ -573,7 +576,7 @@ class TextInput extends React.Component {
             <HelpOutlineRounded />
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger
+        {/* <OverlayTrigger
           trigger={"click"}
           placement="top"
           overlay={this.getCommentPopover()}
@@ -587,7 +590,7 @@ class TextInput extends React.Component {
           >
             <CommentRounded />
           </Button>
-        </OverlayTrigger>
+        </OverlayTrigger> */}
         <Button
           variant="success"
           className="run"
@@ -595,7 +598,7 @@ class TextInput extends React.Component {
         >
           <PlayArrowRounded />
         </Button>
-        {this.props.isPilot &&
+        {
           this.state.annotations &&
           this.state.annotations.length > 0 && (
             <Button

@@ -83,6 +83,7 @@ class ToolBar extends React.Component {
           userID={this.props.userID}
           isPilot={this.props.isPilot}
           sendMessage={this.sendMessage}
+          disabled={this.props.numUsers <= 1}
         />
         {/* <LoadButton
           //component to reload session from session ID

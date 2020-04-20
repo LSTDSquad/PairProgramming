@@ -51,7 +51,7 @@ class SplitText extends React.Component {
       cursors: {},
       selections: {},
       isPilot: true,
-
+      userArray: [],
       lines: [""],
       userNumber: Number, //number based on order of subscription to channel,
       toasts: [],
@@ -73,6 +73,7 @@ class SplitText extends React.Component {
       publish_key: "pub-c-94dff15e-b743-4157-a74e-c7270627723b",
       uuid: this.state.userID,
       state: [],
+      // userArray: [],
       presenceTimeout: 20
     });
 
@@ -84,7 +85,9 @@ class SplitText extends React.Component {
     //add PubNub listener to handle messages
     this.PubNub.addListener({
       presence: function(p) {
-        console.log('p', p);
+        console.log("p", p);
+        console.log("uuid", p.uuid);
+
         //allows for dynamic user numbers/toggling depending on when
         //users come and go
         var userNumber = Object;
@@ -94,7 +97,7 @@ class SplitText extends React.Component {
 
           console.log("USER LEFT");
           if (p.state != undefined) {
-            console.log(p.state.userNumber, currentComponent.state.userNumber);
+            console.log(p.state, currentComponent.state.userNumber);
             if (
               (p.state.userNumber === 1 || p.state.userNumber === 0) &
               (currentComponent.state.userNumber === 1 ||
@@ -142,23 +145,61 @@ class SplitText extends React.Component {
           currentComponent.setState({ selections: copySelections });
         } else if (p.action === "join") {
           //set pubnub state to include usernumber on join
+          // console.log('compare', p.state.userNumber, currentComponent.state.userNumber);
 
           if (p.uuid === currentComponent.state.userID) {
-            currentComponent.assignUserNumber();
+            currentComponent
+              .assignUserNumber()
+              .then(userNumber => {
+                console.log("currUser", userNumber);
+                // let newState = p.state;
+                // if (newState === undefined) newState = { userArray: [] };
+                // if (this.state.userArray.indexOf(p.uuid) !== -1) return;
+                // // userNumber = { userNumber: currentComponent.state.userNumber };
+                // console.log("user doesn't exist yet");
+                // newState.userArray.push(p.uuid);
+                // currentComponent.setState({
+                //   numUsers: currentComponent.state.numUsers + 1
+                // });
+                currentComponent.PubNub.setState(
+                  {
+                    //sync PubNub state with current user state
+                    state: userNumber,
+                    // userArray: p.userArray,
+                    channels: [currentComponent.state.sessionID]
+                  },
+                  function(status) {
+                    // console.log(status);
+                    console.log(status);
+                    console.log(p.state);
+                  }
+                );
+              })
+              .catch(err => console.log(err));
           }
+          // let playerList = currentComponent.state.userArray;
+          // for (let i = 0; i < p.occupancy; i++) {
+          //   if (p.uuid !== undefined) {
+          //     var uuidMatchJoin = playerList.indexOf(p.uuid);
+          //     console.log(
+          //       "UUID ARRAY INDEX: ",
+          //       uuidMatchJoin,
+          //       "UUID: ",
+          //       p.uuid
+          //     );
+          //     if (uuidMatchJoin === -1) {
+          //       playerList[playerList.length] = p.uuid;
+          //       console.log("Insert ", p.uuid, "in array");
+          //     } else {
+          //       console.log("UUID: ", p.uuid, "is already in the array");
+          //     }
+          //   }
+          // }
+          // currentComponent.setState({ userArray: playerList });
+          // console.log(playerList);
+          console.log(p);
 
-          userNumber = { userNumber: currentComponent.state.userNumber };
-
-          currentComponent.PubNub.setState(
-            {
-              //sync PubNub state with current user state
-              state: userNumber,
-              channels: [currentComponent.state.sessionID]
-            },
-            function(status) {
-              // console.log(status);
-            }
-          );
+          //
         }
       },
       message: ({ channel, message }) => {
@@ -468,11 +509,11 @@ class SplitText extends React.Component {
 
   assignRole() {
     //assign role based on userNumber
-    //only person with number 1 will start as pilot
+    //only person with number 0 will start as pilot
     // console.log("userNumber", this.state.userNumber);
     // console.log(this.state.userID, this.state.userNumber);
 
-    if (this.state.userNumber === 1) {
+    if (this.state.userNumber === 0) {
       this.setState({ isPilot: true });
     } else {
       this.setState({ isPilot: false });
@@ -484,33 +525,46 @@ class SplitText extends React.Component {
     //i.e the 7th user to subscribe will get number 7
     let currentComponent = this;
 
-    this.PubNub.hereNow(
-      //set this window's userNumber to the current number of users on the channel
-      {
-        channels: [this.state.sessionID],
-        includeUUIDs: true,
-        includeState: true
-      },
-      function(status, response) {
-        console.log(response, currentComponent.state.userNumber);
-        if (!response) {
-          return;
-        }
-        if (response.totalOccupancy === 0) {
+    return new Promise((resolution, rejection) => {
+      this.PubNub.hereNow(
+        //set this window's userNumber to the current number of users on the channel
+        {
+          channels: [this.state.sessionID],
+          includeUUIDs: true,
+          includeState: true
+        },
+        function(status, response) {
+          console.log(response, currentComponent.state.userNumber);
+          if (!response) {
+            resolution();
+          }
+          // if (response.totalOccupancy === 0) {
           //for some reason when the first person joins Occupancy shows up as 0
-          currentComponent.setState(
-            { userNumber: response.totalOccupancy + 1 },
-            () => currentComponent.assignRole()
-          );
-        } else {
-          //otherwise it shows up as the true occupancy
           currentComponent.setState(
             { userNumber: response.totalOccupancy },
             () => currentComponent.assignRole()
           );
+          resolution(response.totalOccupancy);
+          // console.log("hereNow Response: ", response);
+          // console.log(response.channels[currentComponent.state.sessionID]);
+          // let playerList = [];
+          // for (let i = 0; i < response.totalOccupancy; i++) {
+          //   playerList[i] =
+          //     response.channels[currentComponent.state.sessionID].occupants[i].uuid;
+          // }
+          // currentComponent.setState({ userArray: playerList });
+          // console.log("hereNow UUIDs: ", playerList);
+
+          // } else {
+          //   //otherwise it shows up as the true occupancy
+          //   currentComponent.setState(
+          //     { userNumber: response.totalOccupancy },
+          //     () => currentComponent.assignRole()
+          //   );
+          // }
         }
-      }
-    );
+      );
+    });
   }
 
   addToast(newToast) {
@@ -570,6 +624,7 @@ class SplitText extends React.Component {
               handleTextChange={this.handleLeftChange}
               handleIDChange={this.handleSessionIDChange}
               handleToggle={this.toggleRole}
+              numUsers={this.state.numUsers}
             />
           </Row>
           <Row noGutters={true}>

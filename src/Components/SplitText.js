@@ -311,8 +311,7 @@ class SplitText extends React.Component {
       this.setState(
         prevState => ({
           lines: [...prevState.lines, text]
-        }),
-        () => this.packageMessage(this.state.lines, "codeOutput")
+        }), () => this.packageMessage(this.state.lines, "codeOutput")
       );
     }
 
@@ -347,7 +346,8 @@ class SplitText extends React.Component {
     } catch (e) {
       this.setState(prevState => ({
         lines: [...prevState.lines, e.toString()]
-      }));
+      }), () => this.packageMessage(this.state.lines, "codeOutput")
+      );
     }
 
     let sessionID = this.state.sessionID;

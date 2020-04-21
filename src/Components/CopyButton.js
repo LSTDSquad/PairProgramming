@@ -3,6 +3,7 @@ import axios from "axios";
 import { Button, Modal } from "react-bootstrap";
 import { SwapHoriz } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
+import {ENDPOINT} from "./endpoints"
 
 class CopyButton extends React.Component {
   constructor(props) {
@@ -23,7 +24,7 @@ class CopyButton extends React.Component {
     //if(sessionID==='unsaved'){
     //if this is a new session, write new session to dynamoDB
     const url =
-      "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/setData";
+      ENDPOINT + "setData";
     this.setState({ copyMsg: true });
     axios.post(url, data).then(
       response => {

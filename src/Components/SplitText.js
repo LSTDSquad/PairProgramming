@@ -19,6 +19,8 @@ import { Container, Row } from "react-bootstrap";
 import { HashRouter as Router, Route, Link } from "react-router-dom";
 import { Switch, FormControlLabel } from "@material-ui/core";
 
+import {ENDPOINT} from './endpoints'
+
 class SplitText extends React.Component {
   //handles the state for both text boxes
   //state gets managed here (for now?)
@@ -355,7 +357,7 @@ class SplitText extends React.Component {
     if (this.props.path != "/") {
       //if this session exists already, update the entry in dynamoDB
       const url =
-        "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateRunCount/" +
+        ENDPOINT + "updateRunCount/" +
         sessionID;
 
       let data = { timeStamp: String(new Date()) };
@@ -390,7 +392,7 @@ class SplitText extends React.Component {
       let session = this.props.match.params.sessionID;
 
       const url =
-        "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/getData/" +
+        ENDPOINT + "getData/" +
         session;
       var self = this;
 
@@ -450,7 +452,7 @@ class SplitText extends React.Component {
     if (this.props.path != "/") {
       //if this session exists already, update the entry in dynamoDB
       const url =
-        "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateToggleCount/" +
+        ENDPOINT + "updateToggleCount/" +
         sessionID;
 
       axios.put(url).then(
@@ -599,6 +601,7 @@ class SplitText extends React.Component {
                 selections={selections}
                 handleRun={this.runCode}
                 addToast={this.addToast}
+                
               />
               <TextOutput
                 side="right"

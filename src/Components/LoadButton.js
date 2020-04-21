@@ -1,6 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import {Button, Form } from 'react-bootstrap'
+import {ENDPOINT} from './endpoints'
 
 class LoadButton extends React.Component{
 	
@@ -20,7 +21,7 @@ class LoadButton extends React.Component{
 
   		//uses session ID from props to use backend 'getData' function to reload session
 
-	  	const url = 'https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/getData/'+this.state.value
+	  	const url = ENDPOINT + 'getData/'+this.state.value
 		  var self = this	  	
 
 	  	axios.get(url)

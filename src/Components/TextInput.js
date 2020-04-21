@@ -5,7 +5,7 @@ import {
   AceMultiSelectionManager
 } from "@convergencelabs/ace-collab-ext";
 import { Range } from "ace-builds/";
-import { Auth} from 'aws-amplify'
+import { Auth } from "aws-amplify";
 import axios from "axios";
 
 import "ace-builds/src-noconflict/mode-python";
@@ -28,6 +28,7 @@ import {
   DoneRounded,
   CommentRounded
 } from "@material-ui/icons";
+import {ENDPOINT} from './endpoints';
 
 import $ from "jquery";
 
@@ -52,8 +53,6 @@ class TextInput extends React.Component {
       key: 0 // reference to key that was most recently pressed
     };
 
-    
-
     this.handleChange = this.handleChange.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
@@ -67,8 +66,9 @@ class TextInput extends React.Component {
   }
 
   componentDidMount() {
-    Auth.currentAuthenticatedUser().then(user=> this.setState({user_name: user.attributes.name}))
-    .catch(err => console.log(err));
+    Auth.currentAuthenticatedUser()
+      .then(user => this.setState({ user_name: user.attributes.name }))
+      .catch(err => console.log(err));
     this.editor = this.refs.editor.editor; //set reference to ace editor
 
     this.session = this.editor.getSession();
@@ -128,11 +128,11 @@ class TextInput extends React.Component {
     }
 
     for (const key of Object.keys(this.curMgr._cursors)) {
-         // console.log(this.props.cursors,key,Object.keys(this.props.cursors).includes(key) === false)
+      // console.log(this.props.cursors,key,Object.keys(this.props.cursors).includes(key) === false)
 
       //remove other user's cursors from previous session from the cursor manager on sessionID change
       if (Object.keys(this.props.cursors).includes(key) === false) {
-        console.log("removed cursor")
+        console.log("removed cursor");
         this.curMgr.removeCursor(key);
       }
     }
@@ -146,12 +146,13 @@ class TextInput extends React.Component {
 
     // run this loop when other window changes, not when it itself changes
     // i.e cursors gets updated when message is sent
-    for (const [key, {msg: value, name}] of Object.entries(this.props.cursors)) {
+    for (const [key, { msg: value, name }] of Object.entries(
+      this.props.cursors
+    )) {
       //if another user's cursor not in this of cursor manager, add it
       // key = JSON.parse(key);
       // console.log(value);
       if (Object.keys(this.curMgr._cursors).includes(key) === false) {
-        
         this.curMgr.addCursor(key, name, "orange");
       }
 
@@ -161,7 +162,9 @@ class TextInput extends React.Component {
       }
     }
 
-    for (const [key, {msg: value, name}] of Object.entries(this.props.selections)) {
+    for (const [key, { msg: value, name }] of Object.entries(
+      this.props.selections
+    )) {
       //if another user's selection not in this selection manager, add it
       if (Object.keys(this.selMgr._selections).includes(key) === false) {
         this.selMgr.addSelection(key, name, "yellow");
@@ -188,7 +191,6 @@ class TextInput extends React.Component {
   }
 
   handleChange(e, event) {
-
     //If the cursor changes due to arrow key movement
     // 37-40 are the key codes corresponding to arrow keys
     // 0 corresponds to mouse click
@@ -215,22 +217,22 @@ class TextInput extends React.Component {
         this.state.key === 40)
     ) {
       const selectionRange = e.getRange();
-      let {start, end} = selectionRange;
+      let { start, end } = selectionRange;
       if (end.row > start.row || end.column > start.column) {
         selectionRange.code = this.selectionToCode(e);
         // this.setState({selected: selectionRange});
         setTimeout(() => this.setState({ selected: selectionRange }), 500);
       } else {
-        this.setState({selected: null})
+        this.setState({ selected: null });
         // setTimeout(() => this.setState({ selected: null }), 500);
       }
-      
+
       this.packageMessage(selectionRange, "selection");
-    } 
+    }
 
     //ignore the cursor change events that emerge with typing...
     //and instead use the cursor positions from the two event actions
-    else if (event.action === "insert" || event.action === "remove"){
+    else if (event.action === "insert" || event.action === "remove") {
       if (event.action === "insert") {
         var cursorPosition = event.end;
         this.packageMessage(cursorPosition, "cursor");
@@ -267,7 +269,7 @@ class TextInput extends React.Component {
     if (this.props.path != "/") {
       //if this session exists already, update the entry in dynamoDB
       const url =
-        "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateData/" +
+        ENDPOINT + "updateData/" +
         sessionID;
       // console.log(url);
 
@@ -297,10 +299,10 @@ class TextInput extends React.Component {
     event.preventDefault();
     if (!/\S/.test(this.state.confusedMsg)) {
       //only white space
-      this.setState({confusedError: true});
+      this.setState({ confusedError: true });
       return;
     }
-    this.setState({confusedError: false});
+    this.setState({ confusedError: false });
     //this.state.selected is in this form: {start: {row:, column:}, end{row:, column:}}
     //let currAnnotations = this.session.$annotations;
     let currAnnotations = this.state.annotations || [];
@@ -324,7 +326,7 @@ class TextInput extends React.Component {
       ...this.state.selected
     };
     this.props.addToast(newToast);
-    
+
     this.setState({
       annotations: [
         ...currAnnotations,
@@ -335,7 +337,7 @@ class TextInput extends React.Component {
         }
       ],
       showConfused: false,
-      confusedMsg: '',
+      confusedMsg: "",
       markers: [
         ...markers,
         {
@@ -351,23 +353,23 @@ class TextInput extends React.Component {
     this.packageMessage(this.state, "confused");
 
     let sessionID = this.props.sessionID;
-                if (this.props.path != "/") {
-                  //if this session exists already, update the entry in dynamoDB
-                  const url =
-                    "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateConfusionCount/" +
-                    sessionID;
+    if (this.props.path != "/") {
+      //if this session exists already, update the entry in dynamoDB
+      const url =
+        ENDPOINT + "updateConfusionCount/" +
+        sessionID;
 
-                  axios.put(url).then(
-                    response => {
-                      // console.log(response);
-                      const message = response.data;
-                      // console.log(message);
-                    },
-                    error => {
-                      console.log(error);
-                    }
-                  );
-                }
+      axios.put(url).then(
+        response => {
+          // console.log(response);
+          const message = response.data;
+          // console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+    }
   };
 
   receiveConfused = () => {
@@ -421,9 +423,9 @@ class TextInput extends React.Component {
         {this.state && this.state.selected ? (
           <Form onSubmit={this.handleConfused}>
             <Form.Label>Briefly describe your confusion.</Form.Label>
-            {this.state.confusedError  && <Alert variant="danger">
-            Please enter a note.
-          </Alert>}
+            {this.state.confusedError && (
+              <Alert variant="danger">Please enter a note.</Alert>
+            )}
             <Form.Control
               onChange={event => {
                 this.setState({ confusedMsg: event.target.value });
@@ -450,10 +452,10 @@ class TextInput extends React.Component {
     event.preventDefault();
     if (!/\S/.test(this.state.commentMsg)) {
       //only white space
-      this.setState({commentError: true});
+      this.setState({ commentError: true });
       return;
     }
-    this.setState({commentError: false});
+    this.setState({ commentError: false });
     //TODO: SEND TO THE BACKEND.
     // console.log(this.state.selected);
     // let { start, end } = this.state.selected;
@@ -464,28 +466,27 @@ class TextInput extends React.Component {
       ...this.state.selected
     };
     this.props.addToast(newToast);
-    this.setState({ showComment: false, commentMsg: '' });
+    this.setState({ showComment: false, commentMsg: "" });
     // console.log(this.state.toasts);
 
     let sessionID = this.props.sessionID;
-                if (this.props.path != "/") {
-                  //if this session exists already, update the entry in dynamoDB
-                  const url =
-                    "https://4rvuv13ge5.execute-api.us-west-2.amazonaws.com/dev/updateCommentCount/" +
-                    sessionID;
+    if (this.props.path != "/") {
+      //if this session exists already, update the entry in dynamoDB
+      const url =
+        ENDPOINT + "updateCommentCount/" +
+        sessionID;
 
-                  axios.put(url).then(
-                    response => {
-                      // console.log(response);
-                      const message = response.data;
-                      // console.log(message);
-                    },
-                    error => {
-                      console.log(error);
-                    }
-                  );
-                }
-
+      axios.put(url).then(
+        response => {
+          // console.log(response);
+          const message = response.data;
+          // console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+    }
   };
 
   getCommentPopover = () =>
@@ -494,9 +495,9 @@ class TextInput extends React.Component {
         {this.state && this.state.selected ? (
           <Form onSubmit={this.handleComment}>
             <Form.Label>Enter your comment:</Form.Label>
-            {this.state.commentError  && <Alert variant="danger">
-            Please enter a comment. 
-          </Alert>}
+            {this.state.commentError && (
+              <Alert variant="danger">Please enter a comment.</Alert>
+            )}
             <Form.Control
               onChange={event => {
                 this.setState({ commentMsg: event.target.value });
@@ -607,28 +608,25 @@ class TextInput extends React.Component {
         >
           <PlayArrowRounded />
         </Button>
-        {
-          this.state.annotations &&
-          this.state.annotations.length > 0 && (
-            <Button
-              variant="success"
-              className="resolve-btn"
-              onClick={() => {
-                this.setState({ markers: [], annotations: [] }, () => {
-                  var resolve = {
-                    markers: this.state.markers,
-                    annotations: this.state.annotations,
-                    showConfused: false
-                  };
-                  this.packageMessage(resolve, "resolve");
-                });
-                this.session.setAnnotations([]);
-
-              }}
-            >
-              <DoneRounded />
-            </Button>
-          )}
+        {this.state.annotations && this.state.annotations.length > 0 && (
+          <Button
+            variant="success"
+            className="resolve-btn"
+            onClick={() => {
+              this.setState({ markers: [], annotations: [] }, () => {
+                var resolve = {
+                  markers: this.state.markers,
+                  annotations: this.state.annotations,
+                  showConfused: false
+                };
+                this.packageMessage(resolve, "resolve");
+              });
+              this.session.setAnnotations([]);
+            }}
+          >
+            <DoneRounded />
+          </Button>
+        )}
       </Container>
     );
   }

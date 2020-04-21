@@ -4,7 +4,6 @@ import TextOutput from "./TextOutput";
 import TextInput from "./TextInput";
 import ToolBar from "./ToolBar";
 import PubNub from "pubnub";
-import { PubNubProvider, usePubNub } from "pubnub-react";
 import axios from "axios";
 import Sk from "skulpt";
 import "skulpt/dist/skulpt.min.js";
@@ -16,7 +15,6 @@ import "react-confirm-alert/src/react-confirm-alert.css";
 import { Auth } from "aws-amplify";
 
 import { Container, Row } from "react-bootstrap";
-import { HashRouter as Router, Route, Link } from "react-router-dom";
 import { Switch, FormControlLabel } from "@material-ui/core";
 
 import {ENDPOINT} from './endpoints'
@@ -74,7 +72,7 @@ class SplitText extends React.Component {
       subscribe_key: "sub-c-76b1e8e8-6988-11ea-94ed-e20534093ea4",
       publish_key: "pub-c-94dff15e-b743-4157-a74e-c7270627723b",
       uuid: this.state.userID,
-      state: [],
+      state: [], //we are no longer using this? 
       presenceTimeout: 20
     });
 
@@ -123,6 +121,7 @@ class SplitText extends React.Component {
             }
           }
 
+          //to send a message? 
           currentComponent.PubNub.setState(
             {
               //sync PubNub state with current user state
@@ -130,13 +129,11 @@ class SplitText extends React.Component {
               channels: [currentComponent.state.sessionID]
             },
             function(status) {
-              // console.log(status);
             }
           );
 
           const copyCursors = { ...currentComponent.state.cursors };
           delete copyCursors[p.uuid];
-          //console.log("cursors",currentComponent.state.cursors,copyCursors)
           currentComponent.setState({ cursors: copyCursors });
 
           const copySelections = { ...currentComponent.state.selections };
@@ -209,12 +206,12 @@ class SplitText extends React.Component {
         ) {
           this.toggleAlert(message.Who, message.UserName);
         } else if (
-          (message.Type === "pilotHandoff") &
+          (message.Type === "pilotHandoff") & //no longer a message type, go through axios instead 
           (message.Who != this.state.userID) &
           (this.state.userNumber === 2)
         ) {
           this.setState({ isPilot: true, userNumber: 1 });
-
+          
           //sync PubNub state with current user state
           var userNumber = { userNumber: 1 };
 

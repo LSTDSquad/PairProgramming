@@ -390,7 +390,7 @@ class SplitText extends React.Component {
     if (this.props.match.path != "/") {
       // console.log(this.props.match.params.sessionID);
       let session = this.props.match.params.sessionID;
-
+      console.log("session", session);
       const url =
         ENDPOINT + "getData/" +
         session;

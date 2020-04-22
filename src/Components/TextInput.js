@@ -5,7 +5,6 @@ import {
   AceMultiSelectionManager
 } from "@convergencelabs/ace-collab-ext";
 import { Range } from "ace-builds/";
-import { Auth } from "aws-amplify";
 import axios from "axios";
 
 import "ace-builds/src-noconflict/mode-python";
@@ -28,33 +27,39 @@ import {
   DoneRounded,
   CommentRounded
 } from "@material-ui/icons";
-import {ENDPOINT} from './endpoints';
+import { ENDPOINT } from "./endpoints";
 
-import $ from "jquery";
+/*
+Props:
+cursors: in the form {10392: cursorPositionObject, }
 
+
+*/
 class TextInput extends React.Component {
   //individual text boxes that send state to split view
   constructor(props) {
     super(props);
 
     this.state = {
-      user_name: "",
       selected: null,
+      //must keep track of annotations in state in case there's multiple annotaitons
       annotations: [],
+
       cursor: null,
       confusedMsg: "", //
       markers: [],
       commentMsg: "",
-      toasts: [],
+      //showign the confusion popup for entering the confusion
       showConfused: false,
       showComment: false,
       commentError: false,
       confusedError: false,
+      confusionStatus: {}, //object with fields 'selected' and 'confusedMsg', confusionPresent (liek in state)
+      resolve: {}, //object with fields 'markers' and 'showConfused' (like in state)
       key: 0 // reference to key that was most recently pressed
     };
 
     this.handleChange = this.handleChange.bind(this);
-    this.packageMessage = this.packageMessage.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
 
     this.editor = React.createRef(); //will reference Ace Editor
@@ -66,19 +71,11 @@ class TextInput extends React.Component {
   }
 
   componentDidMount() {
-    Auth.currentAuthenticatedUser()
-      .then(user => this.setState({ user_name: user.attributes.name }))
-      .catch(err => console.log(err));
     this.editor = this.refs.editor.editor; //set reference to ace editor
 
     this.session = this.editor.getSession();
     this.session.$useWorker = false;
     this.doc = this.session.getDocument();
-
-    this.input = this.editor.textInput.getElement();
-    this.input.addEventListener("keydown", this.handleKey);
-    this.input.addEventListener("onclick", this.handleClick);
-
     let currentComponent = this;
 
     //add keyboard listener to ace editor to record which key was pressed
@@ -93,11 +90,11 @@ class TextInput extends React.Component {
     });
 
     this.curMgr = new AceMultiCursorManager(this.session); //setup cursor manager in reference to editor
-    this.curMgr.addCursor(this.props.userID, this.props.userID, "orange"); //add this window's curser to the cursor manager
+    // this.curMgr.addCursor(this.props.userID, this.props.userID, "orange"); //add this window's curser to the cursor manager
 
     this.selMgr = new AceMultiSelectionManager(this.editor.getSession()); //setup selection manager in reference to editor
 
-    this.selMgr.addSelection(this.props.userID, this.props.userID, "yellow"); //add this window's selection to cursor manager
+    // this.selMgr.addSelection(this.props.userID, this.props.userID, "yellow"); //add this window's selection to cursor manager
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
@@ -110,10 +107,6 @@ class TextInput extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    //
-    //Should we try to combine these sets for loops?...Maybe put selection and cursors in the same dictionary?
-    //
-
     if (prevState.confusionStatus !== this.props.confusionStatus) {
       //add confusion markers if props update with confusion
       this.receiveConfused();
@@ -122,25 +115,22 @@ class TextInput extends React.Component {
     if (prevState.resolve !== this.props.resolve) {
       //remove confusion markers if props update with resolved confusion
       this.session.setAnnotations([]);
-      this.setState({ annotations: [] });
-      //console.log(this.state.markers)
-      this.setState({ markers: [] });
+      this.setState({ annotations: [], markers: [] });
     }
 
-    for (const key of Object.keys(this.curMgr._cursors)) {
-      // console.log(this.props.cursors,key,Object.keys(this.props.cursors).includes(key) === false)
-
+    //should stay the same even after changing from listener to packageMessage
+    for (const userID of Object.keys(this.curMgr._cursors)) {
       //remove other user's cursors from previous session from the cursor manager on sessionID change
-      if (Object.keys(this.props.cursors).includes(key) === false) {
+      if (Object.keys(this.props.cursors).includes(userID) === false) {
         console.log("removed cursor");
-        this.curMgr.removeCursor(key);
+        this.curMgr.removeCursor(userID);
       }
     }
 
-    for (const key of Object.keys(this.selMgr._selections)) {
+    for (const userID of Object.keys(this.selMgr._selections)) {
       //remove other user's selection from previous session from the selection manager on sessionID change
-      if (Object.keys(this.props.selections).includes(key) === false) {
-        this.selMgr.removeSelection(key);
+      if (Object.keys(this.props.selections).includes(userID) === false) {
+        this.selMgr.removeSelection(userID);
       }
     }
 
@@ -150,14 +140,19 @@ class TextInput extends React.Component {
       this.props.cursors
     )) {
       //if another user's cursor not in this of cursor manager, add it
-      // key = JSON.parse(key);
-      // console.log(value);
       if (Object.keys(this.curMgr._cursors).includes(key) === false) {
         this.curMgr.addCursor(key, name, "orange");
       }
 
-      //if another user updates their cursor another window, move their cursor on this window
-      if (key !== this.props.userID) {
+      //if another user updates their cursor another window,
+      if (
+        key !== this.props.userID &&
+        //and there's a new position that is different from what we have on our window,
+        JSON.stringify(value) !==
+          JSON.stringify(this.curMgr._cursors[key]._position)
+      ) {
+        //move their cursor on this window
+        console.log("setting cursor", key, value, this.curMgr._cursors[key]);
         this.curMgr.setCursor(key, { row: value.row, column: value.column });
       }
     }
@@ -169,7 +164,6 @@ class TextInput extends React.Component {
       if (Object.keys(this.selMgr._selections).includes(key) === false) {
         this.selMgr.addSelection(key, name, "yellow");
       }
-
       //if another user updates their selection another window, move their selection on this window
       if (key !== this.props.userID) {
         this.selMgr.setSelection(
@@ -185,15 +179,15 @@ class TextInput extends React.Component {
     }
   }
 
-  selectionToCode(sel) {
-    const { start, end } = sel.getRange();
-    return sel.doc.$lines.slice(start.row, end.row + 1);
-  }
-
   handleChange(e, event) {
+    function selectionToCode(sel) {
+      const { start, end } = sel.getRange();
+      return sel.doc.$lines.slice(start.row, end.row + 1);
+    }
+
     //If the cursor changes due to arrow key movement
     // 37-40 are the key codes corresponding to arrow keys
-    // 0 corresponds to mouse click
+    // 0 corresponds to mouse click //actually i dont' think it does
     if (
       event.type === "changeCursor" &&
       (this.state.key === 37 ||
@@ -202,8 +196,14 @@ class TextInput extends React.Component {
         this.state.key === 40 ||
         this.state.key === 0)
     ) {
+      //it genuinely thinks it's changing the cursor. event type stays as changeCursor.
+      console.log(e, event);
+      event.preventDefault();
       var cursorPosition = e.getCursor();
-      this.packageMessage(cursorPosition, "cursor");
+      //current issue: somehow it thinks there are mouse clicks when there really arent'
+      // this.setState({cursor: cursorPosition})
+      console.log("changeCursor", this.state.key, cursorPosition);
+      this.props.packageMessage(cursorPosition, "cursor");
     }
 
     //only send selection messages after mouseclick or typing, not with every change in text
@@ -217,17 +217,19 @@ class TextInput extends React.Component {
         this.state.key === 40)
     ) {
       const selectionRange = e.getRange();
-      let { start, end } = selectionRange;
-      if (end.row > start.row || end.column > start.column) {
-        selectionRange.code = this.selectionToCode(e);
-        // this.setState({selected: selectionRange});
-        setTimeout(() => this.setState({ selected: selectionRange }), 500);
-      } else {
-        this.setState({ selected: null });
-        // setTimeout(() => this.setState({ selected: null }), 500);
-      }
+      // let { start, end } = selectionRange;
+      // // if (end.row > start.row || end.column > start.column) {
+      selectionRange.code = selectionToCode(e);
+      //   selectionRange.start.column = 0;
+      //   selectionRange.end = {row: end.row+1, column:0};
+      // this.setState({selected: selectionRange});
+      setTimeout(() => this.setState({ selected: selectionRange }), 400);
+      // } else {
+      //   this.setState({ selected: null });
+      //   // setTimeout(() => this.setState({ selected: null }), 500);
+      // }
 
-      this.packageMessage(selectionRange, "selection");
+      this.props.packageMessage(selectionRange, "selection");
     }
 
     //ignore the cursor change events that emerge with typing...
@@ -235,31 +237,17 @@ class TextInput extends React.Component {
     else if (event.action === "insert" || event.action === "remove") {
       if (event.action === "insert") {
         var cursorPosition = event.end;
-        this.packageMessage(cursorPosition, "cursor");
+        // this.props.packageMessage(cursorPosition, "cursor");
       } else if (event.action === "remove") {
         var cursorPosition = event.end;
         cursorPosition.column--;
-        this.packageMessage(cursorPosition, "cursor");
+        // this.props.packageMessage(cursorPosition, "cursor");
       }
 
       this.props.onTextChange(e); //update text for this through state
-      this.packageMessage(e, "text"); //synch text through pubnub
+      this.props.packageMessage(e, "text"); //synch text through pubnub
       this.handleTextChange(e); //save updated text to dynamoDB
     }
-  }
-
-  packageMessage(what, type) {
-    //package either cursor or selection change into message
-    //object and send it in SplitText.js sendMessage function
-    const messageObj = {
-      Who: this.props.userID,
-      UserName: this.state.user_name,
-      Type: type,
-      What: what,
-      When: new Date().valueOf()
-    };
-
-    this.props.onSendMessage(messageObj);
   }
 
   handleTextChange(e) {
@@ -268,16 +256,12 @@ class TextInput extends React.Component {
     let sessionID = this.props.sessionID;
     if (this.props.path != "/") {
       //if this session exists already, update the entry in dynamoDB
-      const url =
-        ENDPOINT + "updateData/" +
-        sessionID;
-      // console.log(url);
+      const url = ENDPOINT + "updateData/" + sessionID;
 
       axios.put(url, data).then(
         response => {
-          // console.log(response);
           const message = response.data;
-          // console.log(message);
+          console.log(message);
         },
         error => {
           console.log(error);
@@ -285,15 +269,6 @@ class TextInput extends React.Component {
       );
     }
   }
-
-  // setAnnotations = annots => {
-  //   if (this.editor && this.session.$annotations != this.state.annotations) {
-  //     console.log(this.state.annotations);
-  //     let currAnnotations = this.state.annotations || [];
-  //     // this.session.setAnnotations([...currAnnotations]);
-  //     //this.session.$annotations = annotations;
-  //   }
-  // };
 
   handleConfused = event => {
     event.preventDefault();
@@ -304,66 +279,23 @@ class TextInput extends React.Component {
     }
     this.setState({ confusedError: false });
     //this.state.selected is in this form: {start: {row:, column:}, end{row:, column:}}
-    //let currAnnotations = this.session.$annotations;
-    let currAnnotations = this.state.annotations || [];
-    let markers = this.state.markers || [];
-    //console.log(currAnnotations);
-    let { start, end } = this.state.selected;
-    // console.log("start", start);
-    // console.log("end", end);
-    // this.session.setAnnotations([
-    //   ...currAnnotations,
-    //   {
-    //     row: start.row,
-    //     html: `<div>${this.state.confusedMsg}</div>`,
-    //     type: "error"
-    //   }
-    // ]);
-    let newToast = {
-      type: "confused",
-      msg: this.state.confusedMsg,
-      show: true,
-      ...this.state.selected
-    };
-    this.props.addToast(newToast);
-
-    this.setState({
-      annotations: [
-        ...currAnnotations,
-        {
-          row: start.row,
-          html: `<div>${this.state.confusedMsg}</div>`,
-          type: "error"
-        }
-      ],
-      showConfused: false,
-      confusedMsg: "",
-      markers: [
-        ...markers,
-        {
-          startRow: start.row,
-          endRow: end.row,
-          startCol: start.column,
-          endCol: end.column,
-          className: `confused-marker`,
-          type: "background"
-        }
-      ]
-    });
-    this.packageMessage(this.state, "confused");
+    this.processConfused(this.state);
+    const { selected, confusedMsg } = this.state;
+    let { start, end } = selected;
+    selected.start.column = 0;
+    selected.end = { row: end.row + 1, column: 0 };
+    this.props.packageMessage({ selected, confusedMsg }, "confused");
 
     let sessionID = this.props.sessionID;
     if (this.props.path != "/") {
       //if this session exists already, update the entry in dynamoDB
-      const url =
-        ENDPOINT + "updateConfusionCount/" +
-        sessionID;
+      const url = ENDPOINT + "updateConfusionCount/" + sessionID;
 
       axios.put(url).then(
         response => {
           // console.log(response);
           const message = response.data;
-          // console.log(message);
+          console.log(message);
         },
         error => {
           console.log(error);
@@ -372,25 +304,26 @@ class TextInput extends React.Component {
     }
   };
 
-  receiveConfused = () => {
+  processConfused = ({ selected, confusedMsg }) => {
+    let { start, end } = selected;
+    selected.start.column = 0;
+    selected.end = { row: end.row, column: 0 };
     //update other users window when question is asked
     let currAnnotations = this.state.annotations || [];
     let markers = this.state.markers || [];
-    console.log(this.props.confusionStatus);
-    let { start, end } = this.props.confusionStatus.selected;
     this.session.setAnnotations([
       ...currAnnotations,
       {
         row: start.row,
-        html: `<div>${this.props.confusionStatus.confusedMsg}</div>`,
+        html: `<div>${confusedMsg}</div>`,
         type: "error"
       }
     ]);
     let newToast = {
       type: "confused",
-      msg: this.props.confusionStatus.confusedMsg,
+      msg: confusedMsg,
       show: true,
-      ...this.props.confusionStatus.selected
+      ...selected
     };
     this.props.addToast(newToast);
     this.setState({
@@ -398,7 +331,7 @@ class TextInput extends React.Component {
         ...currAnnotations,
         {
           row: start.row,
-          html: `<div>${this.props.confusionStatus.confusedMsg}</div>`,
+          html: `<div>${confusedMsg}</div>`,
           type: "error"
         }
       ],
@@ -411,10 +344,15 @@ class TextInput extends React.Component {
           startCol: start.column,
           endCol: end.column,
           className: `confused-marker`,
-          type: "background"
+          type: "text"
         }
       ]
     });
+  };
+
+  receiveConfused = () => {
+    // const {selected, confusedMsg} = this.props.confusionStatus;
+    this.processConfused(this.props.confusionStatus);
   };
 
   getConfusedPopover = () =>
@@ -456,7 +394,6 @@ class TextInput extends React.Component {
       return;
     }
     this.setState({ commentError: false });
-    //TODO: SEND TO THE BACKEND.
     // console.log(this.state.selected);
     // let { start, end } = this.state.selected;
     let newToast = {
@@ -467,14 +404,11 @@ class TextInput extends React.Component {
     };
     this.props.addToast(newToast);
     this.setState({ showComment: false, commentMsg: "" });
-    // console.log(this.state.toasts);
 
     let sessionID = this.props.sessionID;
     if (this.props.path != "/") {
       //if this session exists already, update the entry in dynamoDB
-      const url =
-        ENDPOINT + "updateCommentCount/" +
-        sessionID;
+      const url = ENDPOINT + "updateCommentCount/" + sessionID;
 
       axios.put(url).then(
         response => {
@@ -521,6 +455,7 @@ class TextInput extends React.Component {
     );
 
   render() {
+    console.log("key", this.state.key);
     const text = this.props.text;
     const isPilot = this.props.isPilot;
     return (
@@ -561,14 +496,9 @@ class TextInput extends React.Component {
             onSelectionChange={this.handleChange}
             name="UNIQUE_ID_OF_DIV"
             value={text}
-            //onValidate={this.setAnnotations}
             editorProps={{ $blockScrolling: true, $useWorker: false }}
             setOptions={{ useWorker: false }}
-            //onCursorChange={} //sel.cursor.row, sel.cursor.col
-            //markers={[{startRow:0, endRow: 1, className: `confused-marker`, type: 'selection'}]}
             markers={this.state.markers}
-            //annotations can either have html or text.
-            //annotations={this.state.annotations}
           />
         </SplitPane>
         <OverlayTrigger
@@ -608,6 +538,7 @@ class TextInput extends React.Component {
         >
           <PlayArrowRounded />
         </Button>
+
         {this.state.annotations && this.state.annotations.length > 0 && (
           <Button
             variant="success"
@@ -619,7 +550,7 @@ class TextInput extends React.Component {
                   annotations: this.state.annotations,
                   showConfused: false
                 };
-                this.packageMessage(resolve, "resolve");
+                this.props.packageMessage(resolve, "resolve");
               });
               this.session.setAnnotations([]);
             }}

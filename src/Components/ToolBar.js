@@ -1,49 +1,57 @@
 import React from "react";
-import LoadButton from "./LoadButton";
-import ToggleButton from "./ToggleButton";
 import { Navbar, Button, ListGroup } from "react-bootstrap";
-import { Menu } from "@material-ui/icons";
+import { Menu, SwapHoriz} from "@material-ui/icons";
 import { Drawer } from "@material-ui/core";
+
 import { AmplifySignOut } from "@aws-amplify/ui-react";
 
 import CopyButton from "./CopyButton";
 
 import "./CSS/ToolBar.css";
 
+
+/////     props:
+/////     isPilot
+/////     userID
+/////     sessionID
+/////     text
+/////     userNumber
+/////     history
+/////     packageMessage
+/////     handleIDChange
+/////     userArray
+///
 class ToolBar extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
+      //used for the hamburger menu
       drawerOpen: false
     };
 
-    this.handleTextChange = this.handleTextChange.bind(this);
-    this.handleIDChange = this.handleIDChange.bind(this);
-    this.handleToggle = this.handleToggle.bind(this);
-    this.sendMessage = this.sendMessage.bind(this);
-    //this.handleRun = this.handleRun.bind(this);
   }
 
-  handleTextChange(e) {
-    this.props.handleTextChange(e);
-  }
-
-  handleIDChange(e) {
-    this.props.handleIDChange(e);
-  }
-
-  handleToggle() {
-    this.props.handleToggle();
-  }
-
-  sendMessage(e) {
-    this.props.onSendMessage(e);
-  }
-
+  ///// for the hamburger menu
   toggleDrawer = open => {
     this.setState({ drawerOpen: open });
   };
+
+  /////     handles the actual toggling for the pilot -> copilot
+  handleToggleClick = (e) => {
+    e.preventDefault()
+    if (this.props.isPilot) {
+      this.props.pilotHandoff()
+    }
+  }
+
+  /////     handles the toggling for copilot -> pilot
+  requestToggle = (e) => {
+    e.preventDefault();
+    if (!this.props.isPilot) {
+      this.props.packageMessage(this.state, "toggleRequest")
+    }
+  }
 
   render() {
     return (
@@ -57,6 +65,11 @@ class ToolBar extends React.Component {
             : { fontSize: "1.5em" }
         }
       >
+        {/* Hamburger Menu
+
+
+
+         */}
         {/* <Button variant="light" onClick={() => this.toggleDrawer(true)}>
           <Menu />
         </Button>
@@ -75,21 +88,36 @@ class ToolBar extends React.Component {
           text={this.props.text}
           history={this.props.history}
           sessionID={this.props.sessionID}
-          onSessionIDChange={this.handleIDChange}
+          onSessionIDChange={this.props.handleIDChange}
         />
-        <ToggleButton
-          onToggle={this.handleToggle}
-          userNumber={this.props.userNumber}
-          userID={this.props.userID}
-          isPilot={this.props.isPilot}
-          sendMessage={this.sendMessage}
-        />
-        {/* <LoadButton
-          //component to reload session from session ID
-          onTextChange={this.handleTextChange}
-          onSessionIDChange={this.handleIDChange}
-        /> */}
 
+        {this.props.isPilot ? (
+          <label>
+            {" "}
+            Role: Pilot{" "}
+            <Button
+              className="swap-button"
+              variant="warning"
+              type="button"
+              onClick={this.handleToggleClick}
+              disabled={this.props.userArray.length <= 1}
+            >
+              <SwapHoriz />
+            </Button>
+          </label>
+        ) : (
+          <label>
+            Role: Copilot{" "}
+            <Button
+              className="swap-button"
+              variant="primary"
+              type="button"
+              onClick={this.requestToggle}
+            >
+              <SwapHoriz />
+            </Button>
+          </label>
+        )}
         <AmplifySignOut />
       </Navbar>
     );

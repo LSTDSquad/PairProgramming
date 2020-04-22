@@ -13,8 +13,7 @@ class TextOutput extends React.Component {
 
   render() {
     const text = this.props.text;
-    const numbers = this.props.text;
-    const listItems = numbers.map((numbers, i) => <div key={i} style={numbers.indexOf('Error: ') >= 0 ? {color: 'red'} : {}}>{numbers}</div>);
+    const listItems = text.map((text, i) => <div key={i} style={text.indexOf('Error: ') >= 0 ? {color: 'red'} : {}}>{text}</div>);
 
     return <div className="output-text">{listItems}</div>;
   }

@@ -17,43 +17,34 @@ import { Auth } from "aws-amplify";
 import { Container, Row } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
 
-import {ENDPOINT} from './endpoints'
+import { ENDPOINT } from "./endpoints";
 
 class SplitText extends React.Component {
-  //handles the state for both text boxes
-  //state gets managed here (for now?)
   constructor(props) {
     super(props);
-
-    this.handleLeftChange = this.handleLeftChange.bind(this);
-    this.handleRightChange = this.handleRightChange.bind(this);
-    this.handleSessionIDChange = this.handleSessionIDChange.bind(this);
-    this.handleCursorChange = this.handleCursorChange.bind(this);
-    this.handleSelectionChange = this.handleSelectionChange.bind(this);
-    this.sendMessage = this.sendMessage.bind(this);
-    this.toggleRole = this.toggleRole.bind(this);
-    this.assignUserNumber = this.assignUserNumber.bind(this);
-    this.assignRole = this.assignRole.bind(this);
+    //used for splitPane, i think. (textOutput)
     this.outputRef = React.createRef();
-    this.outf = this.outf.bind(this);
-    this.builtinRead = this.builtinRead.bind(this);
+
+    //BINDINGS
+    this.handleTextChange = this.handleTextChange.bind(this);
+    this.handleSessionIDChange = this.handleSessionIDChange.bind(this);
     this.runCode = this.runCode.bind(this);
     this.addToast = this.addToast.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
-    this.unsubscribeChannel = this.unsubscribeChannel.bind(this);
-
+    this.pilotHandoff = this.pilotHandoff.bind(this);
+    const userID = Math.round(Math.random() * 1000000).toString();
+    
     this.state = {
       text: "print(3+5)",
       sessionID: this.props.match.params.sessionID, //new session will default to 'unsaved' as the session ID
-      userID: Math.round(Math.random() * 1000000).toString(),
+      userID,
 
       //these two items operate like dictionaries key: userID, value: cursor/highlight coordinates
       cursors: {},
       selections: {},
       isPilot: true,
-
+      userArray: [{id: userID}], //in format: [{id, name}...]
       lines: [""],
-      userNumber: Number, //number based on order of subscription to channel,
       toasts: [],
       confusionStatus: {},
       resolve: {},
@@ -72,98 +63,40 @@ class SplitText extends React.Component {
       subscribe_key: "sub-c-76b1e8e8-6988-11ea-94ed-e20534093ea4",
       publish_key: "pub-c-94dff15e-b743-4157-a74e-c7270627723b",
       uuid: this.state.userID,
-      state: [], //we are no longer using this? 
+      state: [], //we are no longer using this?
       presenceTimeout: 20
     });
-
-    Auth.currentAuthenticatedUser()
-      .then(user => this.setState({ user_name: user.attributes.name }))
-      .catch(err => console.log(err));
 
     let currentComponent = this;
     //add PubNub listener to handle messages
     this.PubNub.addListener({
-      presence: function(p) {
-        console.log('p', p);
-        //allows for dynamic user numbers/toggling depending on when
-        //users come and go
-        var userNumber = Object;
-
-        if (p.action == "leave" || p.action == "timeout") {
-          //if a user leaves or times out, adjust other numbers
-
-          console.log("USER LEFT");
-          if (p.state != undefined) {
-            console.log(p.state.userNumber, currentComponent.state.userNumber);
-            if (
-              (p.state.userNumber === 1 || p.state.userNumber === 0) &
-              (currentComponent.state.userNumber === 1 ||
-                currentComponent.state.userNumber === 2)
-            ) {
-              console.log("new pilot");
-              userNumber = { userNumber: 1 };
-              currentComponent.setState({ userNumber: 1, isPilot: true });
-            } else if (
-              (p.state.userNumber === 2) &
-              (currentComponent.state.userNumber === 3)
-            ) {
-              userNumber = { userNumber: 2 };
-              currentComponent.setState({ userNumber: 2 });
-            } else if (
-              p.state.userNumber <= currentComponent.state.userNumber
-            ) {
-              userNumber = {
-                userNumber: currentComponent.state.userNumber - 1
-              };
-              currentComponent.setState({
-                userNumber: currentComponent.state.userNumber - 1
-              });
-            }
-          }
-
-          //to send a message? 
-          currentComponent.PubNub.setState(
-            {
-              //sync PubNub state with current user state
-              state: userNumber,
-              channels: [currentComponent.state.sessionID]
-            },
-            function(status) {
-            }
-          );
-
-          const copyCursors = { ...currentComponent.state.cursors };
-          delete copyCursors[p.uuid];
-          currentComponent.setState({ cursors: copyCursors });
-
-          const copySelections = { ...currentComponent.state.selections };
-          delete copySelections[p.uuid];
-          currentComponent.setState({ selections: copySelections });
-        } else if (p.action === "join") {
-          //set pubnub state to include usernumber on join
-
-          if (p.uuid === currentComponent.state.userID) {
-            currentComponent.assignUserNumber();
-          }
-
-          userNumber = { userNumber: currentComponent.state.userNumber };
-
-          currentComponent.PubNub.setState(
-            {
-              //sync PubNub state with current user state
-              state: userNumber,
-              channels: [currentComponent.state.sessionID]
-            },
-            function(status) {
-              // console.log(status);
-            }
-          );
-        }
-      },
       message: ({ channel, message }) => {
         // console.log(message);
-        if ((message.Type === "cursor") & (message.Who != this.state.userID)) {
+        if (message.Type === "join" && message.Who !== this.state.userID) {
+          console.log(message.Who, "joining");
+          //notify everyone besides the person who joined
+          let userArr = this.state.userArray;
+          userArr.push({id: message.Who, name: message.UserName})
+          //send out the actual updated new queue
+          this.setState({userArray: userArr});
+          this.packageMessage(userArr, "userArray");
+        } else if (message.Type === "userArray") {
+          console.log(message.What, "user Array");
+          //after the first person joins, they will get this package 
+          this.setState({userArray: message.What}, () => this.assignRole());
+        } else if (message.Type === "leave" && message.Who !== this.state.userID) {
+          console.log(message.Who, "leaving");
+          let userArr = this.state.userArray;
+          const i = userArr.map(user => user.id).indexOf(message.Who);
+          if (i !== -1) {
+            userArr.splice(i, 1);
+          }
+          this.setState({userArray: userArr}, () => this.assignRole());
+          delete this.state.cursors[message.Who];
+        }
+        else if ((message.Type === "cursor") && (message.Who !== this.state.userID)) {
           //if message containing cursor change info comes in, update cursor object in setState
+          console.log("cursor message", "curr user", this.state.userID, "origin:", message.Who)
           let what = { msg: message.What, name: message.UserName };
           this.setState({
             ...(this.state.cursors[message.Who] = what)
@@ -173,7 +106,6 @@ class SplitText extends React.Component {
           (message.Who != this.state.userID)
         ) {
           this.setState({ text: message.What });
-          // console.log(this.state.userID, this.state.userNumber);
         } else if (
           (message.Type === "selection") &
           (message.Who != this.state.userID)
@@ -192,7 +124,7 @@ class SplitText extends React.Component {
         } else if (
           (message.Type === "confused") &
           (message.Who != this.state.userID)
-        ) {
+        ) { 
           this.setState({ confusionStatus: message.What });
         } else if (
           (message.Type === "resolve") &
@@ -202,28 +134,9 @@ class SplitText extends React.Component {
         } else if (
           (message.Type === "toggleRequest") &
           (message.Who != this.state.userID) &
-          (this.state.isPilot === true)
+          (this.state.isPilot)
         ) {
           this.toggleAlert(message.Who, message.UserName);
-        } else if (
-          (message.Type === "pilotHandoff") & //no longer a message type, go through axios instead 
-          (message.Who != this.state.userID) &
-          (this.state.userNumber === 2)
-        ) {
-          this.setState({ isPilot: true, userNumber: 1 });
-          
-          //sync PubNub state with current user state
-          var userNumber = { userNumber: 1 };
-
-          this.PubNub.setState(
-            {
-              state: userNumber,
-              channels: [this.state.sessionID]
-            },
-            function(status) {
-              // console.log(status);
-            }
-          );
         }
       }
     });
@@ -235,10 +148,9 @@ class SplitText extends React.Component {
     });
   }
 
-  toggleAlert = (who, name) => {
+  toggleAlert = (id, name) => {
     //function to bypass Chrome blocking alerts on background windows
 
-    let currentComponent = this;
     confirmAlert({
       title: "Toggle Role Request",
       message: name + " requests pilot role",
@@ -246,40 +158,18 @@ class SplitText extends React.Component {
         {
           label: "Yes",
           onClick: () => {
-            // console.log("toggle");
-            this.setState({ isPilot: false, userNumber: 2 });
-            this.packageMessage(
-              [this.state.isPilot, this.state.userNumber],
-              "pilotHandoff"
-            );
-
-            //sync PubNub state with current user state
-            var userNumber = { userNumber: 2 };
-            this.PubNub.setState(
-              {
-                state: userNumber,
-                channels: [this.state.sessionID]
-              },
-              function(status) {
-                // console.log(status);
-              }
-            );
+            //swap id and current
+            let userArr = this.state.userArray;
+            const requester = userArr.map(user => user.id).indexOf(id);
+            userArr[0] = {id, name};
+            userArr[requester] = {id: this.state.userID, name: this.state.user_name};
+            this.setState({ isPilot: false, userArray: userArr}, () => this.packageMessage(this.state.userArray, "userArray"));
           }
         },
         { label: "No", onClick: () => console.log("remain") }
       ]
     });
   };
-
-  sendMessage(message, type) {
-    //send cursor/selection message on sessionID channel
-    this.PubNub.publish(
-      { channel: this.state.sessionID, message: message },
-      function(status, response) {
-        //console.log("Publish Result: ", status, message);
-      }
-    );
-  }
 
   packageMessage(what, type) {
     //package either cursor or selection change into message
@@ -292,10 +182,16 @@ class SplitText extends React.Component {
       When: new Date().valueOf()
     };
 
-    this.sendMessage(messageObj);
+    //send cursor/selection message on sessionID channel
+    this.PubNub.publish(
+      { channel: this.state.sessionID, message: messageObj },
+      function(status, response) {
+      }
+    );
   }
 
-  unsubscribeChannel() {
+  unsubscribeChannel = () => {
+    this.packageMessage("", "leave");
     this.PubNub.unsubscribeAll();
   }
 
@@ -303,38 +199,38 @@ class SplitText extends React.Component {
   //////     Skulpt functions to run python    //////
   //////                                       //////
 
-  outf(text) {
+  outf = text => {
     var arr = [];
     arr.push(text);
     if (/\S/.test(text)) {
-      //console.log(text);
       this.setState(
         prevState => ({
           lines: [...prevState.lines, text]
-        }), () => this.packageMessage(this.state.lines, "codeOutput")
+        }),
+        () => this.packageMessage(this.state.lines, "codeOutput")
       );
     }
+  };
 
-    // console.log("codeRan");
-  }
-
-  builtinRead(x) {
-    if (
-      Sk.builtinFiles === undefined ||
-      Sk.builtinFiles["files"][x] === undefined
-    )
-      throw "File not found: '" + x + "'";
-    return Sk.builtinFiles["files"][x];
-  }
-
+  /////   runCode handles using the current text in state
+  /////            and running it as python code
   runCode() {
+    const builtinRead = x => {
+      if (
+        Sk.builtinFiles === undefined ||
+        Sk.builtinFiles["files"][x] === undefined
+      )
+        throw "File not found: '" + x + "'";
+      return Sk.builtinFiles["files"][x];
+    };
+
     var input = this.state.text;
     this.setState(prevState => ({
       lines: [...prevState.lines, "pair-programming-session:~ $ run"]
     }));
     Sk.configure({
       output: this.outf,
-      read: this.builtinRead,
+      read: builtinRead,
       inputfun: function(prompt) {
         return window.prompt(prompt, "");
       },
@@ -344,27 +240,25 @@ class SplitText extends React.Component {
     try {
       Sk.importMainWithBody("<stdin>", false, input, true);
     } catch (e) {
-      this.setState(prevState => ({
-        lines: [...prevState.lines, e.toString()]
-      }), () => this.packageMessage(this.state.lines, "codeOutput")
+      this.setState(
+        prevState => ({
+          lines: [...prevState.lines, e.toString()]
+        }),
+        () => this.packageMessage(this.state.lines, "codeOutput")
       );
     }
 
     let sessionID = this.state.sessionID;
     if (this.props.path != "/") {
       //if this session exists already, update the entry in dynamoDB
-      const url =
-        ENDPOINT + "updateRunCount/" +
-        sessionID;
+      const url = ENDPOINT + "updateRunCount/" + sessionID;
 
       let data = { timeStamp: String(new Date()) };
-      // console.log(data);
 
       axios.put(url, data).then(
         response => {
-          // console.log(response);
           const message = response.data;
-          // console.log(message);
+          console.log(message);
         },
         error => {
           console.log(error);
@@ -379,43 +273,42 @@ class SplitText extends React.Component {
 
   componentDidMount() {
     window.addEventListener("beforeunload", this.unsubscribeChannel);
-    // console.log(this.props.match.params.sessionID);
 
+    //in case someone is trying to view on their phone.
     if (window.matchMedia("(max-width: 767px)").matches) {
       this.setState({ onMobile: true });
     }
     if (this.props.match.path != "/") {
-      // console.log(this.props.match.params.sessionID);
+      //must be a valid session
       let session = this.props.match.params.sessionID;
       console.log("session", session);
-      const url =
-        ENDPOINT + "getData/" +
-        session;
+      const url = ENDPOINT + "getData/" + session;
       var self = this;
 
       axios.get(url).then(function(response) {
-        self.handleLeftChange(response.data);
+        self.handleTextChange(response.data);
       });
 
       this.setState({ sessionID: session });
       this.handleSessionIDChange(session);
     }
+
+    //get the name of the user
+    Auth.currentAuthenticatedUser()
+      .then(user => {
+        this.setState({ user_name: user.attributes.name, userArray: [{id: this.state.userID, name: user.attributes.name}] }, () => 
+        //announce to everyone that you've joined! 
+        this.packageMessage("", "join"))
+        
+      })
+      .catch(err => console.log(err));
   }
 
-  componentDidUpdate(prevProps, prevState) {}
-
-  handleLeftChange(text) {
+  /////       for both input and output panes
+  /////         updates the state
+  handleTextChange = text => {
     this.setState({ text });
-    // console.log(this.state.userNumber);
-  }
-
-  handleRightChange(text) {
-    this.setState({ text });
-  }
-
-  handleCursorChange(user, cursor) {}
-
-  handleSelectionChange() {}
+  };
 
   handleSessionIDChange(id) {
     //on sessionID change (session was loaded), unsubscribe
@@ -434,83 +327,28 @@ class SplitText extends React.Component {
         withPresence: true
       });
       this.assignRole();
-
-      let currentComponent = this;
     });
   }
 
-  toggleRole() {
-    if (this.state.userNumber === 1) {
-      this.setState({ userNumber: 2 });
-    }
-    this.setState({ isPilot: !this.state.isPilot });
 
-    let sessionID = this.state.sessionID;
-    if (this.props.path != "/") {
-      //if this session exists already, update the entry in dynamoDB
-      const url =
-        ENDPOINT + "updateToggleCount/" +
-        sessionID;
+  //from pilot to copilot
+  pilotHandoff() {
+    //swap with the second one 
+    let userArr = this.state.userArray;
+    userArr[0] = userArr[1];
+    userArr[1] = {id: this.state.userID, name: this.state.user_name}
 
-      axios.put(url).then(
-        response => {
-          // console.log(response);
-          const message = response.data;
-          // console.log(message);
-        },
-        error => {
-          console.log(error);
-        }
-      );
-    }
+    this.setState({userArray: userArr}, () => this.packageMessage(userArr, "userArray"))
   }
 
-  assignRole() {
-    //assign role based on userNumber
-    //only person with number 1 will start as pilot
-    // console.log("userNumber", this.state.userNumber);
-    // console.log(this.state.userID, this.state.userNumber);
-
-    if (this.state.userNumber === 1) {
+  assignRole = () => {
+    //assign role based on userArray
+    if (this.state.userArray.map(user => user.id).indexOf(this.state.userID) === 0) {
       this.setState({ isPilot: true });
     } else {
       this.setState({ isPilot: false });
     }
-  }
-
-  assignUserNumber() {
-    //assign the window a number based on when they showed up in channel
-    //i.e the 7th user to subscribe will get number 7
-    let currentComponent = this;
-
-    this.PubNub.hereNow(
-      //set this window's userNumber to the current number of users on the channel
-      {
-        channels: [this.state.sessionID],
-        includeUUIDs: true,
-        includeState: true
-      },
-      function(status, response) {
-        console.log(response, currentComponent.state.userNumber);
-        if (!response) {
-          return;
-        }
-        if (response.totalOccupancy === 0) {
-          //for some reason when the first person joins Occupancy shows up as 0
-          currentComponent.setState(
-            { userNumber: response.totalOccupancy + 1 },
-            () => currentComponent.assignRole()
-          );
-        } else {
-          //otherwise it shows up as the true occupancy
-          currentComponent.setState(
-            { userNumber: response.totalOccupancy },
-            () => currentComponent.assignRole()
-          );
-        }
-      }
-    );
-  }
+  };
 
   addToast(newToast) {
     this.setState(prevState => ({
@@ -526,22 +364,25 @@ class SplitText extends React.Component {
 
   componentWillUnmount() {
     //mostly removes users from PubNub channels on browserclose/refresh (not 100% successful)
+    // this.setTimeout(3000);
+    this.packageMessage("", "leave");
     this.unsubscribeChannel();
     window.removeEventListener("beforeunload", this.unsubscribeChannel);
   }
 
   render() {
-    const text = this.state.text;
-    const sessionID = this.state.sessionID;
-    const userID = this.state.userID;
-    const cursors = this.state.cursors;
-    const selections = this.state.selections;
-    const isPilot = this.state.isPilot;
-    const userNumber = this.state.userNumber;
-    const codeOutput = this.state.lines;
-    const history = this.props.history;
-    const confusionStatus = this.state.confusionStatus;
-    const resolve = this.state.resolve;
+    const {
+      text,
+      sessionID,
+      userID,
+      cursors,
+      selections,
+      isPilot,
+      lines: codeOutput,
+      history,
+      confusionStatus,
+      resolve
+    } = this.state;
 
     let container = document.getElementById("toasts-container");
     if (container) {
@@ -563,12 +404,12 @@ class SplitText extends React.Component {
               userID={userID}
               sessionID={sessionID}
               text={text}
-              userNumber={userNumber}
+              userArray={this.state.userArray}
               history={history}
-              onSendMessage={this.sendMessage}
-              handleTextChange={this.handleLeftChange}
+              packageMessage={this.packageMessage}
               handleIDChange={this.handleSessionIDChange}
-              handleToggle={this.toggleRole}
+              pilotHandoff={this.pilotHandoff}
+              // handleToggle={this.toggleRole}
             />
           </Row>
           <Row noGutters={true}>
@@ -586,11 +427,8 @@ class SplitText extends React.Component {
                 text={text}
                 ref="input"
                 isPilot={isPilot}
-                onTextChange={this.handleLeftChange}
-                onCursorChange={this.handleCursorChange}
-                onSelectionChange={this.handleSelectionChange}
+                onTextChange={this.handleTextChange}
                 sessionID={sessionID}
-                onSendMessage={this.sendMessage}
                 userID={userID}
                 confusionStatus={confusionStatus}
                 resolve={resolve}
@@ -598,17 +436,17 @@ class SplitText extends React.Component {
                 selections={selections}
                 handleRun={this.runCode}
                 addToast={this.addToast}
-                
+                user_name={this.state.user_name}
+                packageMessage={this.packageMessage}
               />
               <TextOutput
                 side="right"
                 ref={this.outputRef}
                 text={codeOutput}
-                onTextChange={this.handleRightChange}
+                onTextChange={this.handleTextChange}
                 userID={userID}
               />
             </SplitPane>
-            {/* <Button className="chat-btn">Chat</Button> */}
             {this.state.seeToasts && (
               <div className="meta-toast-container">
                 <div className="toasts-container" id="toasts-container">
@@ -626,7 +464,6 @@ class SplitText extends React.Component {
                             />
                           )
                       )
-                  // .reverse()
                   }
                 </div>
                 <div className="fade-toasts" />

@@ -38,7 +38,6 @@ class SplitText extends React.Component {
       text: "print(3+5)",
       sessionID: this.props.match.params.sessionID, //new session will default to 'unsaved' as the session ID
       userID,
-
       //these two items operate like dictionaries key: userID, value: cursor/highlight coordinates
       cursors: {},
       selections: {},
@@ -79,7 +78,7 @@ class SplitText extends React.Component {
           userArr.push({id: message.Who, name: message.UserName})
           //send out the actual updated new queue
           this.setState({userArray: userArr});
-          this.packageMessage(userArr, "userArray");
+          this.packageMessage(userArr, "userArray"); //to tell the person who just joined what the userARray is 
         } else if (message.Type === "userArray") {
           console.log(message.What, "user Array");
           //after the first person joins, they will get this package 
@@ -379,10 +378,10 @@ class SplitText extends React.Component {
       selections,
       isPilot,
       lines: codeOutput,
-      history,
       confusionStatus,
       resolve
     } = this.state;
+    const history = this.props.history;
 
     let container = document.getElementById("toasts-container");
     if (container) {

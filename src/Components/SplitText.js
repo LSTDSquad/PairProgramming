@@ -181,6 +181,29 @@ class SplitText extends React.Component {
       When: new Date().valueOf()
     };
 
+    if(type == "codeOutput" ||
+       type == "confused" ||
+       type == "resolve" ||
+       type == "toggleRequest"){
+
+      const url = ENDPOINT + "updateTimeStamps/" + this.state.sessionID;
+      let who = this.state.user_name
+      let data = { event: String(new Date()),who, type };
+      console.log(1, data);
+
+
+      axios.put(url, data).then(
+        response => {
+          const message = response.data;
+          console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+
+    }
+
     //send cursor/selection message on sessionID channel
     this.PubNub.publish(
       { channel: this.state.sessionID, message: messageObj },
@@ -338,6 +361,24 @@ class SplitText extends React.Component {
     userArr[1] = {id: this.state.userID, name: this.state.user_name}
 
     this.setState({userArray: userArr}, () => this.packageMessage(userArr, "userArray"))
+
+    const url = ENDPOINT + "updateTimeStamps/" + this.state.sessionID;
+
+      let type = "pilotHandoff"
+      let who = this.state.user_name
+      let data = { event: String(new Date()),who, type };
+
+      axios.put(url, data).then(
+        response => {
+          const message = response.data;
+          console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+
+
   }
 
   assignRole = () => {

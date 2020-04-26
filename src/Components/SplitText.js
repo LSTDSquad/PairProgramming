@@ -163,6 +163,24 @@ class SplitText extends React.Component {
             userArr[0] = {id, name};
             userArr[requester] = {id: this.state.userID, name: this.state.user_name};
             this.setState({ isPilot: false, userArray: userArr}, () => this.packageMessage(this.state.userArray, "userArray"));
+
+            let sessionID = this.state.sessionID;
+            if (this.props.path != "/") {
+              //if this session exists already, update the entry in dynamoDB
+              const url1 = ENDPOINT + "updateToggleCount/" + sessionID;
+
+              let data = { timeStamp: String(new Date()) };
+
+              axios.put(url1, data).then(
+                response => {
+                  const message = response.data;
+                  console.log(message);
+                },
+                error => {
+                  console.log(error);
+                }
+              );
+            }
           }
         },
         { label: "No", onClick: () => console.log("remain") }
@@ -377,6 +395,24 @@ class SplitText extends React.Component {
           console.log(error);
         }
       );
+
+    let sessionID = this.state.sessionID;
+    if (this.props.path != "/") {
+      //if this session exists already, update the entry in dynamoDB
+      const url1 = ENDPOINT + "updateToggleCount/" + sessionID;
+
+      let data = { timeStamp: String(new Date()) };
+
+      axios.put(url1, data).then(
+        response => {
+          const message = response.data;
+          console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+    }
 
 
   }

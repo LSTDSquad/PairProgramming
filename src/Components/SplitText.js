@@ -318,9 +318,9 @@ class SplitText extends React.Component {
     if (window.matchMedia("(max-width: 767px)").matches) {
       this.setState({ onMobile: true });
     }
+    let session = this.props.match.params.sessionID;
     if (this.props.match.path != "/") {
       //must be a valid session
-      let session = this.props.match.params.sessionID;
       console.log("session", session);
       const url = ENDPOINT + "getData/" + session;
       var self = this;
@@ -339,9 +339,31 @@ class SplitText extends React.Component {
         this.setState({ user_name: user.attributes.name, userArray: [{id: this.state.userID, name: user.attributes.name}] }, () => 
         //announce to everyone that you've joined! 
         this.packageMessage("", "join"))
-        
+
+
+        const userURL = ENDPOINT + "updateSessions/" + user.attributes.name;
+
+        let sessionID = this.state.sessionID
+        let data = { session: sessionID};
+
+        console.log(1, session,user.attributes.name);
+        console.log(userURL,data);
+        // let x = JSON.parse(data);
+        // console.log(x);
+
+        axios.put(userURL, data).then(
+          response => {
+            const message = response.data;
+            console.log(message);
+          },
+          error => {
+            console.log(error);
+          }
+        );
+          
       })
       .catch(err => console.log(err));
+
   }
 
   /////       for both input and output panes

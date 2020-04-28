@@ -147,18 +147,9 @@ class SplitText extends React.Component {
     });
   }
 
-  toggleAlert = (id, name) => {
-    //function to bypass Chrome blocking alerts on background windows
+  togglePilot = (id, name) => {
 
-    confirmAlert({
-      title: "Toggle Role Request",
-      message: name + " requests pilot role",
-      buttons: [
-        {
-          label: "Yes",
-          onClick: () => {
-            //swap id and current
-            let userArr = this.state.userArray;
+    let userArr = this.state.userArray;
             const requester = userArr.map(user => user.id).indexOf(id);
             userArr[0] = {id, name};
             userArr[requester] = {id: this.state.userID, name: this.state.user_name};
@@ -181,11 +172,45 @@ class SplitText extends React.Component {
                 }
               );
             }
+  }
+
+  toggleAlert = (id, name) => {
+    //function to bypass Chrome blocking alerts on background windows
+
+    let currentComponent  = this
+
+    var toggleTimeout = setTimeout(function () {
+
+        currentComponent.togglePilot(id,name)
+
+          confirmAlert({
+            title: "Pilot Time Out",
+            message: "You timed out and are now co-pilot",
+            buttons: [{label: "Ok"}]
+          })
+      },30000) //30 second timeout for no pilot response
+
+
+    confirmAlert({
+      title: "Toggle Role Request",
+      message: name + " requests pilot role",
+      buttons: [
+        {
+          label: "Yes",
+          onClick: () => {
+            //swap id and current
+
+            clearTimeout(toggleTimeout);
+            this.togglePilot(id,name);
+
           }
         },
-        { label: "No", onClick: () => console.log("remain") }
+        { label: "No", onClick: () => {
+                      clearTimeout(toggleTimeout);
+                      console.log("remain") }}
       ]
     });
+
   };
 
   packageMessage(what, type) {
@@ -345,11 +370,6 @@ class SplitText extends React.Component {
 
         let sessionID = this.state.sessionID
         let data = { session: sessionID};
-
-        console.log(1, session,user.attributes.name);
-        console.log(userURL,data);
-        // let x = JSON.parse(data);
-        // console.log(x);
 
         axios.put(userURL, data).then(
           response => {

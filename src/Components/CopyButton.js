@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
-import { Button, Modal } from "react-bootstrap";
-import {ENDPOINT} from "./endpoints"
+import { Button, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { ENDPOINT } from "./endpoints";
 
 class CopyButton extends React.Component {
   constructor(props) {
@@ -11,12 +11,11 @@ class CopyButton extends React.Component {
     };
   }
 
-  handleClick = (e) => {
+  handleClick = e => {
     //Generates copy of current page and saves it to dynamoDB
 
     let data = { text: this.props.text };
-    const url =
-      ENDPOINT + "setData";
+    const url = ENDPOINT + "setData";
     this.setState({ copyMsg: true });
     axios.post(url, data).then(
       response => {
@@ -28,14 +27,22 @@ class CopyButton extends React.Component {
         console.log(error);
       }
     );
-  }
+  };
 
   render() {
     return (
       <div>
-        <Button type="button" variant="light" onClick={this.handleClick}>
-          Make Copy
-        </Button>
+        <OverlayTrigger
+          trigger={["hover", "focus"]}
+          overlay={
+            <Tooltip>This will make a copy of this project. (The URL will change)</Tooltip>
+          }
+          placement="bottom"
+        >
+          <Button className="copy-btn" type="button" variant="light" onClick={this.handleClick}>
+            Make Copy
+          </Button>
+        </OverlayTrigger>
         <Modal
           size="md"
           show={this.state.copyMsg}

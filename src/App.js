@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import AceEditor from "react-ace";
+import AceEditor from "react-ace"; //needed
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-github";
 import SplitText from "./Components/SplitText";
@@ -61,7 +61,6 @@ const signUpConfig = {
     }
   ]
 };
-const usernameAttributes = "Email";
 
 export default withAuthenticator(App, {
   signUpConfig,

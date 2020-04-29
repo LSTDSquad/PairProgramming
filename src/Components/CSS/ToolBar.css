@@ -8,6 +8,22 @@
     height: 70px;
 }
 
-.swap-button {
+.swap-button, .copy-btn {
     margin: 10px;
+}
+
+.save-button, .tips-button {
+    background-color: rgba(0, 0, 0, 0) !important;
+    border-color: rgba(0, 0, 0, 0) !important;
+}
+
+.left-side-toolbar, .right-side-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* white-space: nowrap; */
+}
+
+.role-display {
+    font-size: 1.4em;
 }

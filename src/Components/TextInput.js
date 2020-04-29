@@ -1,4 +1,4 @@
-import React from "react";
+import React  from "react";
 import AceEditor from "react-ace";
 import {
   AceMultiCursorManager,
@@ -16,7 +16,8 @@ import {
   Popover,
   OverlayTrigger,
   Alert,
-  Form
+  Form,
+  Tooltip,
 } from "react-bootstrap";
 import "./CSS/TextInput.css";
 import SplitPane from "react-split-pane";
@@ -25,9 +26,9 @@ import {
   SendRounded,
   HelpOutlineRounded,
   DoneRounded,
-  CommentRounded
 } from "@material-ui/icons";
 import { ENDPOINT } from "./endpoints";
+import HoverClickPopover from "./HoverClickPopover";
 
 /*
 Props:
@@ -51,6 +52,7 @@ class TextInput extends React.Component {
       commentMsg: "",
       //showign the confusion popup for entering the confusion
       showConfused: false,
+      confusedHover: false,
       showComment: false,
       commentError: false,
       confusedError: false,
@@ -61,6 +63,8 @@ class TextInput extends React.Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
+    this.basicSetState = this.basicSetState.bind(this);
+    this.getConfusedPopover = this.getConfusedPopover.bind(this);
 
     this.editor = React.createRef(); //will reference Ace Editor
     this.session = Object;
@@ -197,12 +201,12 @@ class TextInput extends React.Component {
         this.state.key === 0)
     ) {
       //it genuinely thinks it's changing the cursor. event type stays as changeCursor.
-      console.log(e, event);
+      // console.log(e, event);
       event.preventDefault();
       var cursorPosition = e.getCursor();
       //current issue: somehow it thinks there are mouse clicks when there really arent'
       // this.setState({cursor: cursorPosition})
-      console.log("changeCursor", this.state.key, cursorPosition);
+      // console.log("changeCursor", this.state.key, cursorPosition);
       this.props.packageMessage(cursorPosition, "cursor");
     }
 
@@ -236,10 +240,10 @@ class TextInput extends React.Component {
     //and instead use the cursor positions from the two event actions
     else if (event.action === "insert" || event.action === "remove") {
       if (event.action === "insert") {
-        var cursorPosition = event.end;
+        cursorPosition = event.end;
         // this.props.packageMessage(cursorPosition, "cursor");
       } else if (event.action === "remove") {
-        var cursorPosition = event.end;
+        cursorPosition = event.end;
         cursorPosition.column--;
         // this.props.packageMessage(cursorPosition, "cursor");
       }
@@ -254,7 +258,7 @@ class TextInput extends React.Component {
     //uses session ID from props to either update backend
     let data = { text: this.props.text };
     let sessionID = this.props.sessionID;
-    if (this.props.path != "/") {
+    if (this.props.path !== "/") {
       //if this session exists already, update the entry in dynamoDB
       const url = ENDPOINT + "updateData/" + sessionID;
 
@@ -281,13 +285,13 @@ class TextInput extends React.Component {
     //this.state.selected is in this form: {start: {row:, column:}, end{row:, column:}}
     this.processConfused(this.state);
     const { selected, confusedMsg } = this.state;
-    let { start, end } = selected;
+    let { end } = selected;
     selected.start.column = 0;
     selected.end = { row: end.row + 1, column: 0 };
     this.props.packageMessage({ selected, confusedMsg }, "confused");
 
     let sessionID = this.props.sessionID;
-    if (this.props.path != "/") {
+    if (this.props.path !== "/") {
       //if this session exists already, update the entry in dynamoDB
       const url = ENDPOINT + "updateConfusionCount/" + sessionID;
 
@@ -355,9 +359,9 @@ class TextInput extends React.Component {
     this.processConfused(this.props.confusionStatus);
   };
 
-  getConfusedPopover = () =>
-    this.state.showConfused ? (
-      <Popover className="confused-popover">
+  getConfusedPopover = ({ ...props }) => {
+    return (
+      <Popover {...props} className="confused-popover">
         {this.state && this.state.selected ? (
           <Form onSubmit={this.handleConfused}>
             <Form.Label>Briefly describe your confusion.</Form.Label>
@@ -382,9 +386,8 @@ class TextInput extends React.Component {
           </Alert>
         )}
       </Popover>
-    ) : (
-      <span />
     );
+  };
 
   handleComment = event => {
     event.preventDefault();
@@ -406,15 +409,13 @@ class TextInput extends React.Component {
     this.setState({ showComment: false, commentMsg: "" });
 
     let sessionID = this.props.sessionID;
-    if (this.props.path != "/") {
+    if (this.props.path !== "/") {
       //if this session exists already, update the entry in dynamoDB
       const url = ENDPOINT + "updateCommentCount/" + sessionID;
 
       axios.put(url).then(
         response => {
           // console.log(response);
-          const message = response.data;
-          // console.log(message);
         },
         error => {
           console.log(error);
@@ -453,6 +454,8 @@ class TextInput extends React.Component {
     ) : (
       <span />
     );
+
+  basicSetState = stateChange => this.setState(stateChange);
 
   render() {
     console.log("key", this.state.key);
@@ -501,21 +504,23 @@ class TextInput extends React.Component {
             markers={this.state.markers}
           />
         </SplitPane>
-        <OverlayTrigger
-          trigger={"click"}
-          placement="right"
-          overlay={this.getConfusedPopover()}
-          rootClose={true}
-          onHide={() => this.setState({ confusedMsg: "" })}
-        >
-          <Button
-            variant="danger"
-            className="confused-btn"
-            onClick={() => this.setState({ showConfused: true })}
-          >
-            <HelpOutlineRounded />
-          </Button>
-        </OverlayTrigger>
+        <HoverClickPopover
+          onHidePopover={() =>
+            this.basicSetState({ confusedMsg: "", showConfused: false })
+          }
+          popover={this.getConfusedPopover}
+          variant="danger"
+          buttonClass="confused-btn"
+          showPopover={this.state.showConfused} //to close the confused popover once submitted.
+          hoverContent={
+            <div>Click to ask your partner a question about the code</div>
+          }
+          showPopover={this.state.showConfused}
+          onClick={() => this.setState({ showConfused: true })}
+          buttonContent={<HelpOutlineRounded />}
+          usePopoverStateOutside={true}
+        />
+        
         {/* <OverlayTrigger
           trigger={"click"}
           placement="top"
@@ -531,13 +536,19 @@ class TextInput extends React.Component {
             <CommentRounded />
           </Button>
         </OverlayTrigger> */}
-        <Button
-          variant="success"
-          className="run"
-          onClick={this.props.handleRun}
+        <OverlayTrigger
+          trigger={["hover", "focus"]}
+          overlay={<Tooltip>Run code</Tooltip>}
+          placement="right"
         >
-          <PlayArrowRounded />
-        </Button>
+          <Button
+            variant="success"
+            className="run"
+            onClick={this.props.handleRun}
+          >
+            <PlayArrowRounded />
+          </Button>
+        </OverlayTrigger>
 
         {this.state.annotations && this.state.annotations.length > 0 && (
           <Button

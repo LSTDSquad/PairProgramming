@@ -26,17 +26,17 @@ class MyToast extends React.Component {
       <Toast className="my-toast" show={this.state.show} onClose={this.onClose}>
         <Toast.Header
           className={
-            type == "comment" ? "toast-header-comment" : "toast-header-confused"
+            type === "comment" ? "toast-header-comment" : "toast-header-confused"
           }
         >
-          {type == "comment" ? <CommentRounded /> : <HelpOutlineRounded />}
+          {type === "comment" ? <CommentRounded /> : <HelpOutlineRounded />}
           <div className="toast-header-code">{lines}</div>
           {/* <small>11 mins ago</small> */}
         </Toast.Header>
         <Toast.Body>
           <code>
-            {code.map(line => (
-              <div>{line}</div>
+            {code.map((line, i) => (
+              <div key={i} >{line}</div>
             ))}
           </code>
 

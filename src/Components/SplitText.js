@@ -29,6 +29,7 @@ class SplitText extends React.Component {
     this.handleTextChange = this.handleTextChange.bind(this);
     this.handleSessionIDChange = this.handleSessionIDChange.bind(this);
     this.runCode = this.runCode.bind(this);
+    this.handleDownload = this.handleDownload.bind(this);
     this.addToast = this.addToast.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
     this.pilotHandoff = this.pilotHandoff.bind(this);
@@ -332,6 +333,17 @@ class SplitText extends React.Component {
     }
   }
 
+  handleDownload = () => {
+    
+      const element = document.createElement("a");
+      const file = new Blob([this.state.text], {type: 'text/x-python'});
+      element.href = URL.createObjectURL(file);
+      element.download = "pearprogram.py";
+      document.body.appendChild(element); // Required for this to work in FireFox
+      element.click();
+  
+  }
+
   //////                                                    //////
   //////   Functions that handle state changes/updates      //////
   //////                                                    //////
@@ -527,6 +539,7 @@ class SplitText extends React.Component {
               packageMessage={this.packageMessage}
               handleIDChange={this.handleSessionIDChange}
               pilotHandoff={this.pilotHandoff}
+              handleDownload={this.handleDownload}
               // handleToggle={this.toggleRole}
             />
           </Row>

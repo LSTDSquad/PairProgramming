@@ -14,10 +14,12 @@ import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { Auth } from "aws-amplify";
 
-import { Container, Row } from "react-bootstrap";
+import { Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
 
 import { ENDPOINT } from "./endpoints";
+
+const MAX_TOGGLE_WAIT = 10000; //10 seconds is the max amount of time before toggle gets handed over to copilot
 
 class SplitText extends React.Component {
   constructor(props) {
@@ -34,7 +36,7 @@ class SplitText extends React.Component {
     this.packageMessage = this.packageMessage.bind(this);
     this.pilotHandoff = this.pilotHandoff.bind(this);
     const userID = Math.round(Math.random() * 1000000).toString();
-    
+
     this.state = {
       text: "print(3+5)",
       sessionID: this.props.match.params.sessionID, //new session will default to 'unsaved' as the session ID
@@ -43,17 +45,20 @@ class SplitText extends React.Component {
       cursors: {},
       selections: {},
       isPilot: true,
-      userArray: [{id: userID}], //in format: [{id, name}...]
+      userArray: [{ id: userID }], //in format: [{id, name}...]
       lines: [""],
       toasts: [],
       confusionStatus: {},
       resolve: {},
       seeToasts: true,
       onMobile: false,
-      user_name: ""
+      user_name: "",
+      showCopilotToggleMsg: false,
+      msRemaining: MAX_TOGGLE_WAIT
     };
 
     this.baseState = this.state;
+    this.toggleTimer = null;
 
     //////                                       //////
     //////      Initial Pubnub setup             //////
@@ -76,27 +81,39 @@ class SplitText extends React.Component {
           console.log(message.Who, "joining");
           //notify everyone besides the person who joined
           let userArr = this.state.userArray;
-          userArr.push({id: message.Who, name: message.UserName})
+          userArr.push({ id: message.Who, name: message.UserName });
           //send out the actual updated new queue
-          this.setState({userArray: userArr});
-          this.packageMessage(userArr, "userArray"); //to tell the person who just joined what the userARray is 
+          this.setState({ userArray: userArr });
+          this.packageMessage(userArr, "userArray"); //to tell the person who just joined what the userARray is
         } else if (message.Type === "userArray") {
           console.log(message.What, "user Array");
-          //after the first person joins, they will get this package 
-          this.setState({userArray: message.What}, () => this.assignRole());
-        } else if (message.Type === "leave" && message.Who !== this.state.userID) {
+          //after the first person joins, they will get this package
+          //this could also be used whenever someone else updates the user array.
+          this.setState({ userArray: message.What }, () => this.assignRole());
+        } else if (
+          message.Type === "leave" &&
+          message.Who !== this.state.userID
+        ) {
           console.log(message.Who, "leaving");
           let userArr = this.state.userArray;
           const i = userArr.map(user => user.id).indexOf(message.Who);
           if (i !== -1) {
             userArr.splice(i, 1);
           }
-          this.setState({userArray: userArr}, () => this.assignRole());
+          this.setState({ userArray: userArr }, () => this.assignRole());
           delete this.state.cursors[message.Who];
-        }
-        else if ((message.Type === "cursor") && (message.Who !== this.state.userID)) {
+        } else if (
+          message.Type === "cursor" &&
+          message.Who !== this.state.userID
+        ) {
           //if message containing cursor change info comes in, update cursor object in setState
-          console.log("cursor message", "curr user", this.state.userID, "origin:", message.Who)
+          console.log(
+            "cursor message",
+            "curr user",
+            this.state.userID,
+            "origin:",
+            message.Who
+          );
           let what = { msg: message.What, name: message.UserName };
           this.setState({
             ...(this.state.cursors[message.Who] = what)
@@ -124,19 +141,48 @@ class SplitText extends React.Component {
         } else if (
           (message.Type === "confused") &
           (message.Who != this.state.userID)
-        ) { 
+        ) {
           this.setState({ confusionStatus: message.What });
         } else if (
           (message.Type === "resolve") &
           (message.Who != this.state.userID)
         ) {
           this.setState({ resolve: message.What });
-        } else if (
-          (message.Type === "toggleRequest") &
-          (message.Who != this.state.userID) &
-          (this.state.isPilot)
-        ) {
-          this.toggleAlert(message.Who, message.UserName);
+        } else if (message.Type === "toggleRequest") {
+          if ((message.Who != this.state.userID) & this.state.isPilot) {
+            this.toggleAlert(message.Who, message.UserName);
+          } else if (message.Who == this.state.userID) {
+            //it is the current user
+            this.setState({ showCopilotToggleMsg: true });
+
+            this.toggleTimer = setInterval(() => {
+              if (this.state.msRemaining > 0) {
+                this.setState({ msRemaining: this.state.msRemaining - 1000 });
+              } else {
+                this.setState({
+                  showCopilotToggleMsg: false
+                });
+                let timer;
+                timer = setTimeout(() => {
+                  this.setState({ msRemaining: MAX_TOGGLE_WAIT });
+                  clearTimeout(timer);
+                }, 300);
+              }
+            }, 1000);
+          }
+        } else if (message.Type === "toggleResponse") {
+          if ((message.What === "decline") & this.state.showCopilotToggleMsg) {
+            clearInterval(this.toggleTimer);
+            this.setState({
+              showCopilotToggleMsg: false
+            });
+            let timer;
+            timer = setTimeout(() => {
+              this.setState({msRemaining: MAX_TOGGLE_WAIT});
+              clearTimeout(timer);
+            }, 300);
+            
+          }
         }
       }
     });
@@ -149,48 +195,47 @@ class SplitText extends React.Component {
   }
 
   togglePilot = (id, name) => {
-
     let userArr = this.state.userArray;
-            const requester = userArr.map(user => user.id).indexOf(id);
-            userArr[0] = {id, name};
-            userArr[requester] = {id: this.state.userID, name: this.state.user_name};
-            this.setState({ isPilot: false, userArray: userArr}, () => this.packageMessage(this.state.userArray, "userArray"));
+    const requester = userArr.map(user => user.id).indexOf(id);
+    userArr[0] = { id, name };
+    userArr[requester] = { id: this.state.userID, name: this.state.user_name };
+    this.setState({ isPilot: false, userArray: userArr }, () =>
+      this.packageMessage(this.state.userArray, "userArray")
+    );
 
-            let sessionID = this.state.sessionID;
-            if (this.props.path != "/") {
-              //if this session exists already, update the entry in dynamoDB
-              const url1 = ENDPOINT + "updateToggleCount/" + sessionID;
+    let sessionID = this.state.sessionID;
+    if (this.props.path != "/") {
+      //if this session exists already, update the entry in dynamoDB
+      const url1 = ENDPOINT + "updateToggleCount/" + sessionID;
 
-              let data = { timeStamp: String(new Date()) };
+      let data = { timeStamp: String(new Date()) };
 
-              axios.put(url1, data).then(
-                response => {
-                  const message = response.data;
-                  console.log(message);
-                },
-                error => {
-                  console.log(error);
-                }
-              );
-            }
-  }
+      axios.put(url1, data).then(
+        response => {
+          const message = response.data;
+          console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+    }
+  };
 
   toggleAlert = (id, name) => {
     //function to bypass Chrome blocking alerts on background windows
 
-    let currentComponent  = this
+    let currentComponent = this;
 
-    var toggleTimeout = setTimeout(function () {
+    var toggleTimeout = setTimeout(function() {
+      currentComponent.togglePilot(id, name);
 
-        currentComponent.togglePilot(id,name)
-
-          confirmAlert({
-            title: "Pilot Time Out",
-            message: "You timed out and are now co-pilot",
-            buttons: [{label: "Ok"}]
-          })
-      },30000) //30 second timeout for no pilot response
-
+      confirmAlert({
+        title: "Pilot Time Out",
+        message: "You timed out and are now co-pilot",
+        buttons: [{ label: "Ok" }]
+      });
+    }, MAX_TOGGLE_WAIT); //10 second timeout for no pilot response
 
     confirmAlert({
       title: "Toggle Role Request",
@@ -202,16 +247,19 @@ class SplitText extends React.Component {
             //swap id and current
 
             clearTimeout(toggleTimeout);
-            this.togglePilot(id,name);
-
+            this.togglePilot(id, name);
           }
         },
-        { label: "No", onClick: () => {
-                      clearTimeout(toggleTimeout);
-                      console.log("remain") }}
+        {
+          label: "No",
+          onClick: () => {
+            clearTimeout(toggleTimeout);
+            console.log("remain");
+            this.packageMessage("decline", "toggleResponse");
+          }
+        }
       ]
     });
-
   };
 
   packageMessage(what, type) {
@@ -225,16 +273,16 @@ class SplitText extends React.Component {
       When: new Date().valueOf()
     };
 
-    if(type == "codeOutput" ||
-       type == "confused" ||
-       type == "resolve" ||
-       type == "toggleRequest"){
-
+    if (
+      type == "codeOutput" ||
+      type == "confused" ||
+      type == "resolve" ||
+      type == "toggleRequest"
+    ) {
       const url = ENDPOINT + "updateTimeStamps/" + this.state.sessionID;
-      let who = this.state.user_name
-      let data = { event: String(new Date()),who, type };
+      let who = this.state.user_name;
+      let data = { event: String(new Date()), who, type };
       console.log(1, data);
-
 
       axios.put(url, data).then(
         response => {
@@ -245,21 +293,19 @@ class SplitText extends React.Component {
           console.log(error);
         }
       );
-
     }
 
     //send cursor/selection message on sessionID channel
     this.PubNub.publish(
       { channel: this.state.sessionID, message: messageObj },
-      function(status, response) {
-      }
+      function(status, response) {}
     );
   }
 
   unsubscribeChannel = () => {
     this.packageMessage("", "leave");
     this.PubNub.unsubscribeAll();
-  }
+  };
 
   //////                                       //////
   //////     Skulpt functions to run python    //////
@@ -334,15 +380,13 @@ class SplitText extends React.Component {
   }
 
   handleDownload = () => {
-    
-      const element = document.createElement("a");
-      const file = new Blob([this.state.text], {type: 'text/x-python'});
-      element.href = URL.createObjectURL(file);
-      element.download = "pearprogram.py";
-      document.body.appendChild(element); // Required for this to work in FireFox
-      element.click();
-  
-  }
+    const element = document.createElement("a");
+    const file = new Blob([this.state.text], { type: "text/x-python" });
+    element.href = URL.createObjectURL(file);
+    element.download = "pearprogram.py";
+    document.body.appendChild(element); // Required for this to work in FireFox
+    element.click();
+  };
 
   //////                                                    //////
   //////   Functions that handle state changes/updates      //////
@@ -373,15 +417,20 @@ class SplitText extends React.Component {
     //get the name of the user
     Auth.currentAuthenticatedUser()
       .then(user => {
-        this.setState({ user_name: user.attributes.name, userArray: [{id: this.state.userID, name: user.attributes.name}] }, () => 
-        //announce to everyone that you've joined! 
-        this.packageMessage("", "join"))
-
+        this.setState(
+          {
+            user_name: user.attributes.name,
+            userArray: [{ id: this.state.userID, name: user.attributes.name }]
+          },
+          () =>
+            //announce to everyone that you've joined!
+            this.packageMessage("", "join")
+        );
 
         const userURL = ENDPOINT + "updateSessions/" + user.attributes.name;
 
-        let sessionID = this.state.sessionID
-        let data = { session: sessionID};
+        let sessionID = this.state.sessionID;
+        let data = { session: sessionID };
 
         axios.put(userURL, data).then(
           response => {
@@ -392,10 +441,8 @@ class SplitText extends React.Component {
             console.log(error);
           }
         );
-          
       })
       .catch(err => console.log(err));
-
   }
 
   /////       for both input and output panes
@@ -424,31 +471,32 @@ class SplitText extends React.Component {
     });
   }
 
-
   //from pilot to copilot
   pilotHandoff() {
-    //swap with the second one 
+    //swap with the second one
     let userArr = this.state.userArray;
     userArr[0] = userArr[1];
-    userArr[1] = {id: this.state.userID, name: this.state.user_name}
+    userArr[1] = { id: this.state.userID, name: this.state.user_name };
 
-    this.setState({userArray: userArr}, () => this.packageMessage(userArr, "userArray"))
+    this.setState({ userArray: userArr }, () =>
+      this.packageMessage(userArr, "userArray")
+    );
 
     const url = ENDPOINT + "updateTimeStamps/" + this.state.sessionID;
 
-      let type = "pilotHandoff"
-      let who = this.state.user_name
-      let data = { event: String(new Date()),who, type };
+    let type = "pilotHandoff";
+    let who = this.state.user_name;
+    let data = { event: String(new Date()), who, type };
 
-      axios.put(url, data).then(
-        response => {
-          const message = response.data;
-          console.log(message);
-        },
-        error => {
-          console.log(error);
-        }
-      );
+    axios.put(url, data).then(
+      response => {
+        const message = response.data;
+        console.log(message);
+      },
+      error => {
+        console.log(error);
+      }
+    );
 
     let sessionID = this.state.sessionID;
     if (this.props.path != "/") {
@@ -467,14 +515,21 @@ class SplitText extends React.Component {
         }
       );
     }
-
-
   }
 
   assignRole = () => {
     //assign role based on userArray
-    if (this.state.userArray.map(user => user.id).indexOf(this.state.userID) === 0) {
+    if (
+      this.state.userArray.map(user => user.id).indexOf(this.state.userID) === 0
+    ) {
       this.setState({ isPilot: true });
+      if (this.state.showCopilotToggleMsg) {
+        clearInterval(this.toggleTimer);
+        this.setState({
+          showCopilotToggleMsg: false,
+          msRemaining: MAX_TOGGLE_WAIT
+        });
+      }
     } else {
       this.setState({ isPilot: false });
     }
@@ -528,7 +583,19 @@ class SplitText extends React.Component {
     ) : (
       <div>
         <Container fluid style={{ padding: 0, margin: 0 }}>
-          <Row noGutters={true}>
+          <Row noGutters={true} style={{ justifyContent: "center" }}>
+            <Toast
+              className="copilot-toggle-msg"
+              show={this.state.showCopilotToggleMsg}
+            >
+              <Toast.Header closeButton={false}>
+                Swap request sent!
+              </Toast.Header>
+              <Toast.Body>
+                If pilot does not respond to request within{" "}
+                {this.state.msRemaining / 1000} seconds, you will become pilot.
+              </Toast.Body>
+            </Toast>
             <ToolBar
               isPilot={isPilot}
               userID={userID}
@@ -594,8 +661,7 @@ class SplitText extends React.Component {
                               toast={toast}
                             />
                           )
-                      )
-                  }
+                      )}
                 </div>
                 <div className="fade-toasts" />
               </div>

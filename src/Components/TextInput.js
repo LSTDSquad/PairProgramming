@@ -368,17 +368,20 @@ class TextInput extends React.Component {
             {this.state.confusedError && (
               <Alert variant="danger">Please enter a note.</Alert>
             )}
-            <Form.Control
+            <div className="confused-input">
+               <Form.Control
               onChange={event => {
                 this.setState({ confusedMsg: event.target.value });
               }}
-              size="sm"
+              size="md"
               type="text"
               // placeholder="briefly describe your confusion."
             ></Form.Control>
             <Button variant="primary" type="submit">
               <SendRounded />
             </Button>
+            </div>
+           
           </Form>
         ) : (
           <Alert variant="danger">

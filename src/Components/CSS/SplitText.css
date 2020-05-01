@@ -77,3 +77,10 @@ button.chat-btn {
 .comments-switch, .Mui-checked + span.MuiSwitch-track.comments-switch-track {
     background-color: #007bff !important;
 }
+
+.copilot-toggle-msg {
+    position: absolute;
+    top: 80px;
+    z-index: 2;
+    max-width: max-content !important;
+}

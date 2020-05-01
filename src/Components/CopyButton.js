@@ -48,8 +48,8 @@ class CopyButton extends React.Component {
           show={this.state.copyMsg}
           onHide={() => this.setState({ copyMsg: false })}
         >
-          <Modal.Header closeButton>
-            <Modal.Title>Created a copy of this session!</Modal.Title>
+          <Modal.Header >
+            <Modal.Title>Created a copy of this session! You are now in the new session.</Modal.Title>
           </Modal.Header>
         </Modal>
       </div>

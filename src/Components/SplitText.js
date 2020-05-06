@@ -38,7 +38,7 @@ class SplitText extends React.Component {
     const userID = Math.round(Math.random() * 1000000).toString();
 
     this.state = {
-      text: "print(3+5)",
+      text: "# happy coding!",
       sessionID: this.props.match.params.sessionID, //new session will default to 'unsaved' as the session ID
       userID,
       //these two items operate like dictionaries key: userID, value: cursor/highlight coordinates
@@ -72,7 +72,6 @@ class SplitText extends React.Component {
       presenceTimeout: 20
     });
 
-    let currentComponent = this;
     //add PubNub listener to handle messages
     this.PubNub.addListener({
       message: ({ channel, message }) => {
@@ -120,12 +119,12 @@ class SplitText extends React.Component {
           });
         } else if (
           (message.Type === "text") &
-          (message.Who != this.state.userID)
+          (message.Who !== this.state.userID)
         ) {
           this.setState({ text: message.What });
         } else if (
           (message.Type === "selection") &
-          (message.Who != this.state.userID)
+          (message.Who !== this.state.userID)
         ) {
           //if message containing highlight change info comes in, update selection object in state
           let what = { msg: message.What, name: message.UserName };
@@ -134,22 +133,22 @@ class SplitText extends React.Component {
           });
         } else if (
           (message.Type === "codeOutput") &
-          (message.Who != this.state.userID)
+          (message.Who !== this.state.userID)
         ) {
           // console.log(message.What);
           this.setState({ lines: message.What });
         } else if (
           (message.Type === "confused") &
-          (message.Who != this.state.userID)
+          (message.Who !== this.state.userID)
         ) {
           this.setState({ confusionStatus: message.What });
         } else if (
           (message.Type === "resolve") &
-          (message.Who != this.state.userID)
+          (message.Who !== this.state.userID)
         ) {
           this.setState({ resolve: message.What });
         } else if (message.Type === "toggleRequest") {
-          if ((message.Who != this.state.userID) & this.state.isPilot) {
+          if ((message.Who !== this.state.userID) & this.state.isPilot) {
             this.toggleAlert(message.Who, message.UserName);
           } else if (message.Who == this.state.userID) {
             //it is the current user
@@ -204,7 +203,7 @@ class SplitText extends React.Component {
     );
 
     let sessionID = this.state.sessionID;
-    if (this.props.path != "/") {
+    if (this.props.path !== "/") {
       //if this session exists already, update the entry in dynamoDB
       const url1 = ENDPOINT + "updateToggleCount/" + sessionID;
 
@@ -602,7 +601,7 @@ class SplitText extends React.Component {
               sessionID={sessionID}
               text={text}
               userArray={this.state.userArray}
-              history={history}
+              // history={history}
               packageMessage={this.packageMessage}
               handleIDChange={this.handleSessionIDChange}
               pilotHandoff={this.pilotHandoff}

@@ -211,7 +211,7 @@ class ToolBar extends React.Component {
           <CopyButton
             //component to save session to backend
             text={this.props.text}
-            history={this.props.history}
+            // history={this.props.history}
             sessionID={this.props.sessionID}
             onSessionIDChange={this.props.handleIDChange}
           />

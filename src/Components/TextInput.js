@@ -1,4 +1,4 @@
-import React  from "react";
+import React from "react";
 import AceEditor from "react-ace";
 import {
   AceMultiCursorManager,
@@ -17,7 +17,7 @@ import {
   OverlayTrigger,
   Alert,
   Form,
-  Tooltip,
+  Tooltip
 } from "react-bootstrap";
 import "./CSS/TextInput.css";
 import SplitPane from "react-split-pane";
@@ -25,7 +25,7 @@ import {
   PlayArrowRounded,
   SendRounded,
   HelpOutlineRounded,
-  DoneRounded,
+  DoneRounded
 } from "@material-ui/icons";
 import { ENDPOINT } from "./endpoints";
 import HoverClickPopover from "./HoverClickPopover";
@@ -58,7 +58,7 @@ class TextInput extends React.Component {
       confusedError: false,
       confusionStatus: {}, //object with fields 'selected' and 'confusedMsg', confusionPresent (liek in state)
       resolve: {}, //object with fields 'markers' and 'showConfused' (like in state)
-      key: 0 // reference to key that was most recently pressed
+      clickedRecently: false, //so that we filter out all the cursorChange noise 
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -76,6 +76,16 @@ class TextInput extends React.Component {
 
   componentDidMount() {
     this.editor = this.refs.editor.editor; //set reference to ace editor
+    // console.log(this.editor);
+    let ace_div = document.getElementById("UNIQUE_ID_OF_DIV");
+    ace_div.onmousedown = e => {
+      this.setState({ clickedRecently: true });
+      
+    };
+    ace_div.onmouseup = () => {
+      //after 500ms, clickedRecently is false. 
+      setTimeout(() => this.setState({ clickedRecently: false }), 500);
+    }
 
     this.session = this.editor.getSession();
     this.session.$useWorker = false;
@@ -83,6 +93,7 @@ class TextInput extends React.Component {
     let currentComponent = this;
 
     //add keyboard listener to ace editor to record which key was pressed
+    //for filtering out the cursorChange noise 
     this.editor.keyBinding.addKeyboardHandler(function(
       data,
       hashId,
@@ -90,7 +101,13 @@ class TextInput extends React.Component {
       keyCode,
       e
     ) {
-      currentComponent.setState({ key: keyCode });
+      if (keyCode === 37 ||
+        keyCode === 38 ||
+        keyCode === 39 ||
+        keyCode === 40) {
+        currentComponent.setState({ clickedRecently: true});
+        setTimeout(() => currentComponent.setState({ clickedRecently: false }), 500);
+        }
     });
 
     this.curMgr = new AceMultiCursorManager(this.session); //setup cursor manager in reference to editor
@@ -189,69 +206,53 @@ class TextInput extends React.Component {
       return sel.doc.$lines.slice(start.row, end.row + 1);
     }
 
-    //If the cursor changes due to arrow key movement
-    // 37-40 are the key codes corresponding to arrow keys
-    // 0 corresponds to mouse click //actually i dont' think it does
-    if (
-      event.type === "changeCursor" &&
-      (this.state.key === 37 ||
-        this.state.key === 38 ||
-        this.state.key === 39 ||
-        this.state.key === 40 ||
-        this.state.key === 0)
-    ) {
-      //it genuinely thinks it's changing the cursor. event type stays as changeCursor.
-      // console.log(e, event);
-      event.preventDefault();
-      var cursorPosition = e.getCursor();
-      //current issue: somehow it thinks there are mouse clicks when there really arent'
-      // this.setState({cursor: cursorPosition})
-      // console.log("changeCursor", this.state.key, cursorPosition);
-      this.props.packageMessage(cursorPosition, "cursor");
-    }
+    //to give the document time to register the mouse click!
+    setTimeout(() => {
+      console.log(event.type, this.state.clickedRecently);
+      //If the cursor changes due to arrow key movement
+      // 37-40 are the key codes corresponding to arrow keys
+      // 0 corresponds to mouse click //actually i dont' think it does
+      if (
+        event.type === "changeCursor" &&
+        this.state.clickedRecently
 
-    //only send selection messages after mouseclick or typing, not with every change in text
-    else if (
-      event.type === "changeSelection" &&
-      (this.state.key === 0 ||
-        this.state.key === undefined ||
-        this.state.key === 37 ||
-        this.state.key === 38 ||
-        this.state.key === 39 ||
-        this.state.key === 40)
-    ) {
-      const selectionRange = e.getRange();
-      // let { start, end } = selectionRange;
-      // // if (end.row > start.row || end.column > start.column) {
-      selectionRange.code = selectionToCode(e);
-      //   selectionRange.start.column = 0;
-      //   selectionRange.end = {row: end.row+1, column:0};
-      // this.setState({selected: selectionRange});
-      setTimeout(() => this.setState({ selected: selectionRange }), 400);
-      // } else {
-      //   this.setState({ selected: null });
-      //   // setTimeout(() => this.setState({ selected: null }), 500);
-      // }
-
-      this.props.packageMessage(selectionRange, "selection");
-    }
-
-    //ignore the cursor change events that emerge with typing...
-    //and instead use the cursor positions from the two event actions
-    else if (event.action === "insert" || event.action === "remove") {
-      if (event.action === "insert") {
-        cursorPosition = event.end;
-        // this.props.packageMessage(cursorPosition, "cursor");
-      } else if (event.action === "remove") {
-        cursorPosition = event.end;
-        cursorPosition.column--;
-        // this.props.packageMessage(cursorPosition, "cursor");
+      ) {
+        //it genuinely thinks it's changing the cursor. event type stays as changeCursor.
+        event.preventDefault();
+        var cursorPosition = e.getCursor();
+        console.log(cursorPosition);
+        //current issue: somehow it thinks there are mouse clicks when there really arent'
+        this.props.packageMessage(cursorPosition, "cursor");
       }
 
-      this.props.onTextChange(e); //update text for this through state
-      this.props.packageMessage(e, "text"); //synch text through pubnub
-      this.handleTextChange(e); //save updated text to dynamoDB
-    }
+      //only send selection messages after mouseclick or typing, not with every change in text
+      else if (
+        event.type === "changeSelection" &&
+        this.state.clickedRecently
+      ) {
+        const selectionRange = e.getRange();
+        selectionRange.code = selectionToCode(e);
+        setTimeout(() => this.setState({ selected: selectionRange }), 300);
+        this.props.packageMessage(selectionRange, "selection");
+      }
+
+      //ignore the cursor change events that emerge with typing...
+      //and instead use the cursor positions from the two event actions
+      else if (event.action === "insert" || event.action === "remove") {
+        if (event.action === "insert") {
+          cursorPosition = event.end;
+        } else if (event.action === "remove") {
+          cursorPosition = event.end;
+          cursorPosition.column--;
+        }
+
+        this.props.onTextChange(e); //update text for this through state
+        this.props.packageMessage(e, "text"); //synch text through pubnub
+        this.handleTextChange(e); //save updated text to dynamoDB
+      }
+      //the cursor thing is only a problem for the copilots. the pilot when typing is totally ok. 
+      //300ms is about enough time to make sure the clickedRecently state is already set.
+    }, this.props.isPilot ? 0 : 300);
   }
 
   handleTextChange(e) {
@@ -369,19 +370,18 @@ class TextInput extends React.Component {
               <Alert variant="danger">Please enter a note.</Alert>
             )}
             <div className="confused-input">
-               <Form.Control
-              onChange={event => {
-                this.setState({ confusedMsg: event.target.value });
-              }}
-              size="md"
-              type="text"
-              // placeholder="briefly describe your confusion."
-            ></Form.Control>
-            <Button variant="primary" type="submit">
-              <SendRounded />
-            </Button>
+              <Form.Control
+                onChange={event => {
+                  this.setState({ confusedMsg: event.target.value });
+                }}
+                size="md"
+                type="text"
+                // placeholder="briefly describe your confusion."
+              ></Form.Control>
+              <Button variant="primary" type="submit">
+                <SendRounded />
+              </Button>
             </div>
-           
           </Form>
         ) : (
           <Alert variant="danger">
@@ -461,7 +461,6 @@ class TextInput extends React.Component {
   basicSetState = stateChange => this.setState(stateChange);
 
   render() {
-    console.log("key", this.state.key);
     const text = this.props.text;
     const isPilot = this.props.isPilot;
     return (
@@ -470,11 +469,11 @@ class TextInput extends React.Component {
           //One side input, other side output, once we get app to run code?
           split="horizontal"
           minSize={0} //change to 50 to show the text desc
-          maxSize={0} //{window.innerHeight * 0.8}   //change to show text desc.
-          defaultSize={0} //change to 200 to show text desc
+          maxSize={window.innerHeight * 0.8} //change to show text desc.
+          defaultSize={200} //change to 200 to show text desc
           style={{ width: "100%" }}
           resizerStyle={{ border: 0 }} //{{ border: 10 }}
-          pane1Style={{ color: "#ffffff", backgroundColor: "#170a30" }}
+          pane1Style={{ color: "#ffffff", backgroundColor: "#43454d" }}
           pane2Style={
             this.state.annotations && this.state.annotations.length > 0
               ? { border: "5px solid red" }
@@ -483,9 +482,7 @@ class TextInput extends React.Component {
         >
           <div className="problem-desc">
             {`
-        Some dank problems for you to solve
-        
-        woohoo yeah
+        put problem description here
         `}{" "}
           </div>
           <AceEditor
@@ -523,7 +520,7 @@ class TextInput extends React.Component {
           buttonContent={<HelpOutlineRounded />}
           usePopoverStateOutside={true}
         />
-        
+
         {/* <OverlayTrigger
           trigger={"click"}
           placement="top"

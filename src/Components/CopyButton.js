@@ -20,8 +20,9 @@ class CopyButton extends React.Component {
     axios.post(url, data).then(
       response => {
         let newSession = "/" + response.data.id;
+        window.open("/#" + newSession);
         this.props.onSessionIDChange(response.data.id);
-        this.props.history.push(newSession); //navigate to page referencing copy
+        // this.props.history.push(newSession); //navigate to page referencing copy
       },
       error => {
         console.log(error);
@@ -35,15 +36,15 @@ class CopyButton extends React.Component {
         <OverlayTrigger
           trigger={["hover", "focus"]}
           overlay={
-            <Tooltip>This will make a copy of this project. (The URL will change)</Tooltip>
+            <Tooltip>This will make a copy of this project. (It will open in a new tab)</Tooltip>
           }
           placement="bottom"
         >
           <Button className="copy-btn" type="button" variant="light" onClick={this.handleClick}>
-            Make Copy
+            Fork
           </Button>
         </OverlayTrigger>
-        <Modal
+        {/* <Modal
           size="md"
           show={this.state.copyMsg}
           onHide={() => this.setState({ copyMsg: false })}
@@ -51,7 +52,7 @@ class CopyButton extends React.Component {
           <Modal.Header >
             <Modal.Title>Created a copy of this session! You are now in the new session.</Modal.Title>
           </Modal.Header>
-        </Modal>
+        </Modal> */}
       </div>
     );
   }

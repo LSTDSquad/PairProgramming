@@ -40,7 +40,7 @@ class SplitText extends React.Component {
     this.state = {
       text: "# happy coding!",
       sessionID: this.props.match.params.sessionID, //new session will default to 'unsaved' as the session ID
-      userID,
+      userID, //NOTE THAT THIS IS ONLY FOR PUBNUB PURPOSES. THIS IS NOT THAT SPECIFIC USER'S UNIQUE IDENTIFIER 
       //these two items operate like dictionaries key: userID, value: cursor/highlight coordinates
       cursors: {},
       selections: {},
@@ -601,7 +601,7 @@ class SplitText extends React.Component {
               sessionID={sessionID}
               text={text}
               userArray={this.state.userArray}
-              // history={history}
+              history={history}
               packageMessage={this.packageMessage}
               handleIDChange={this.handleSessionIDChange}
               pilotHandoff={this.pilotHandoff}

@@ -470,7 +470,7 @@ class TextInput extends React.Component {
           split="horizontal"
           minSize={0} //change to 50 to show the text desc
           maxSize={window.innerHeight * 0.8} //change to show text desc.
-          defaultSize={200} //change to 200 to show text desc
+          defaultSize={0}//{200} //change to 200 to show text desc
           style={{ width: "100%" }}
           resizerStyle={{ border: 0 }} //{{ border: 10 }}
           pane1Style={{ color: "#ffffff", backgroundColor: "#43454d" }}

@@ -31,7 +31,7 @@ class Home extends React.Component {
           user_name: user.attributes.name,
           user_id: user.username,
           user: user
-        });
+        }, () => this.getUserSessions());
       })
       .catch(err => console.log(err));
   }
@@ -49,6 +49,19 @@ class Home extends React.Component {
       }
     );
   }
+
+  getUserSessions = () => {
+
+    console.log(this.state.user_name)
+    const url = ENDPOINT + "getSessions/" + this.state.user_name;
+
+    axios.get(url).then(function(response) {
+        console.log(response.data);
+      });
+
+
+  }
+
 
   componentWillUnmount() {}
 

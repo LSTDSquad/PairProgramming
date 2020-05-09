@@ -46,6 +46,34 @@ class ToolBar extends React.Component {
     };
   }
 
+  componentDidMount() {
+
+
+    const url = ENDPOINT + "getName/" + this.props.sessionID;
+    var self=this
+
+    //to load file name if it exists
+    axios.get(url).then(function(response) {
+        console.log(response.data.name);
+
+        if(response.data.name === undefined){
+          console.log(1)
+          self.setState({fileName: 'unitled document'})
+        }
+        else{
+          console.log(2)
+          self.setState({fileName: response.data.name}, () =>{
+            console.log(3)
+            }
+          )
+        }
+      })
+        .catch(function (error) {
+        // handle error
+    })
+
+  }
+
   ///// for the hamburger menu
   toggleDrawer = open => {
     this.setState({ drawerOpen: open });
@@ -67,6 +95,7 @@ class ToolBar extends React.Component {
     }
   };
 
+  //change file name
   handleNameChange = (e) =>{
     console.log(e.target.value)
     
@@ -92,22 +121,17 @@ class ToolBar extends React.Component {
           console.log(error);
         }
       );
-
-      // setTimeout(() => {
-      //   if(this.state.fileName === ""){ 
-      //     this.setState({fileName: "untitled document"})
-      //   }
-      //  },700) 
-
     })
   }
 
+  //when use clicks away from filename input 
   moveAway = () => {
     if(this.state.fileName === ""){ 
           this.setState({fileName: "untitled document"})
       }
   }
 
+  //goodle docs style where the whole name highlights if the title is "untitled document"
   handleRenameClick = (e) =>{
     console.log(e.target.value)
     if(this.state.fileName === "untitled document"){

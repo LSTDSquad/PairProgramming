@@ -58,8 +58,6 @@ class Home extends React.Component {
     axios.get(url).then(function(response) {
         console.log(response.data);
       });
-
-
   }
 
 

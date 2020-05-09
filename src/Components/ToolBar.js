@@ -41,7 +41,8 @@ class ToolBar extends React.Component {
 
     this.state = {
       //used for the hamburger menu
-      drawerOpen: false
+      drawerOpen: false,
+      fileName: 'untitled document'
     };
   }
 
@@ -65,6 +66,44 @@ class ToolBar extends React.Component {
       this.props.packageMessage(this.state, "toggleRequest");
     }
   };
+
+  handleNameChange = (e) =>{
+    console.log(e.target.value)
+    
+    this.setState({fileName: e.target.value}, () => {
+      
+      //This needs to be reworked a little
+      //GoogleDocs makes it seem much smoother!
+      if(this.state.fileName === ""){ 
+          this.setState({fileName: "untitled document"})
+      }
+
+      let data = { name: this.state.fileName };
+      let sessionID = this.props.sessionID;
+
+      const url = ENDPOINT + "updateName/" + sessionID;
+
+      console.log(url,data)
+
+      axios.put(url, data).then(
+        response => {
+          const message = response.data;
+          console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+
+    })
+  }
+
+  handleRenameClick = (e) =>{
+    console.log(e.target.value)
+    if(this.state.fileName === "untitled document"){
+      e.target.select()
+    }
+  }
 
   makeNewSession = (e) => {
     e.preventDefault();
@@ -146,6 +185,11 @@ class ToolBar extends React.Component {
               <GetApp fontSize="large" />
             </Button>
           </OverlayTrigger>
+
+          <input type="text" value={this.state.fileName} 
+                 onChange = {this.handleNameChange} 
+                 onClick = {this.handleRenameClick}/>
+
         </div>
         <div>
           {this.props.isPilot ? (

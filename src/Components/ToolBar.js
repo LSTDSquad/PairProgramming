@@ -41,8 +41,37 @@ class ToolBar extends React.Component {
 
     this.state = {
       //used for the hamburger menu
-      drawerOpen: false
+      drawerOpen: false,
+      fileName: 'untitled document'
     };
+  }
+
+  componentDidMount() {
+
+
+    const url = ENDPOINT + "getName/" + this.props.sessionID;
+    var self=this
+
+    //to load file name if it exists
+    axios.get(url).then(function(response) {
+        console.log(response.data.name);
+
+        if(response.data.name === undefined){
+          console.log(1)
+          self.setState({fileName: 'unitled document'})
+        }
+        else{
+          console.log(2)
+          self.setState({fileName: response.data.name}, () =>{
+            console.log(3)
+            }
+          )
+        }
+      })
+        .catch(function (error) {
+        // handle error
+    })
+
   }
 
   ///// for the hamburger menu
@@ -65,6 +94,50 @@ class ToolBar extends React.Component {
       this.props.packageMessage(this.state, "toggleRequest");
     }
   };
+
+  //change file name
+  handleNameChange = (e) =>{
+    console.log(e.target.value)
+    
+    this.setState({fileName: e.target.value}, () => {
+      
+      //This needs to be reworked a little
+      //GoogleDocs makes it seem much smoother!
+      
+
+      let data = { name: this.state.fileName };
+      let sessionID = this.props.sessionID;
+
+      const url = ENDPOINT + "updateName/" + sessionID;
+
+      console.log(url,data)
+
+      axios.put(url, data).then(
+        response => {
+          const message = response.data;
+          console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+    })
+  }
+
+  //when use clicks away from filename input 
+  moveAway = () => {
+    if(this.state.fileName === ""){ 
+          this.setState({fileName: "untitled document"})
+      }
+  }
+
+  //goodle docs style where the whole name highlights if the title is "untitled document"
+  handleRenameClick = (e) =>{
+    console.log(e.target.value)
+    if(this.state.fileName === "untitled document"){
+      e.target.select()
+    }
+  }
 
   makeNewSession = (e) => {
     e.preventDefault();
@@ -146,6 +219,12 @@ class ToolBar extends React.Component {
               <GetApp fontSize="large" />
             </Button>
           </OverlayTrigger>
+
+          <input type="text" value={this.state.fileName} 
+                 onChange = {this.handleNameChange} 
+                 onClick = {this.handleRenameClick}
+                 onBlur = {this.moveAway}/>
+
         </div>
         <div>
           {this.props.isPilot ? (

@@ -74,9 +74,7 @@ class ToolBar extends React.Component {
       
       //This needs to be reworked a little
       //GoogleDocs makes it seem much smoother!
-      if(this.state.fileName === ""){ 
-          this.setState({fileName: "untitled document"})
-      }
+      
 
       let data = { name: this.state.fileName };
       let sessionID = this.props.sessionID;
@@ -95,7 +93,19 @@ class ToolBar extends React.Component {
         }
       );
 
+      // setTimeout(() => {
+      //   if(this.state.fileName === ""){ 
+      //     this.setState({fileName: "untitled document"})
+      //   }
+      //  },700) 
+
     })
+  }
+
+  moveAway = () => {
+    if(this.state.fileName === ""){ 
+          this.setState({fileName: "untitled document"})
+      }
   }
 
   handleRenameClick = (e) =>{
@@ -188,7 +198,8 @@ class ToolBar extends React.Component {
 
           <input type="text" value={this.state.fileName} 
                  onChange = {this.handleNameChange} 
-                 onClick = {this.handleRenameClick}/>
+                 onClick = {this.handleRenameClick}
+                 onBlur = {this.moveAway}/>
 
         </div>
         <div>

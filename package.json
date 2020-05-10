@@ -11,6 +11,7 @@
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
     "ace-builds": "^1.4.8",
+    "async": "^3.2.0",
     "aws-amplify": "^3.0.7",
     "aws-amplify-react": "^4.1.6",
     "axios": "^0.19.2",

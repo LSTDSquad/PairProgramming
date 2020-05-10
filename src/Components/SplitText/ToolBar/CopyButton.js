@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
 import { Button, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { ENDPOINT } from "./endpoints";
+import { ENDPOINT } from "../../endpoints";
 
 class CopyButton extends React.Component {
   constructor(props) {

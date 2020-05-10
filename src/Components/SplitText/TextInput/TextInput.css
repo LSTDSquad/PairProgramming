@@ -36,12 +36,12 @@
     padding: 10px;
 }
 
-.confused-input {
+.confused-input, .comment-input {
     display: flex;
 }
 
 .resolve-btn {
-    bottom: 140px;
+    bottom: 200px;
 }
 
 .comment-btn {

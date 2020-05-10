@@ -3,8 +3,8 @@ import "./App.css";
 import AceEditor from "react-ace"; //needed
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-github";
-import SplitText from "./Components/SplitText";
-import Home from "./Components/Home";
+import SplitText from "./Components/SplitText/";
+import Home from "./Components/Home/";
 import { HashRouter as Router, Route, Switch } from "react-router-dom";
 import Amplify from "aws-amplify";
 import awsconfig from "./aws-exports";

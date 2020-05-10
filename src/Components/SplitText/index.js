@@ -1,23 +1,23 @@
 import React from "react";
 import SplitPane from "react-split-pane";
-import TextOutput from "./TextOutput";
-import TextInput from "./TextInput";
-import ToolBar from "./ToolBar";
+import TextOutput from "./TextOutput/";
+import TextInput from "./TextInput/";
+import ToolBar from "./ToolBar/";
 import PubNub from "pubnub";
 import axios from "axios";
 import Sk from "skulpt";
 import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
-import "./CSS/SplitText.css";
+import "./SplitText.css";
 import MyToast from "./MyToast";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { Auth } from "aws-amplify";
 
-import { Container, Row, Toast } from "react-bootstrap";
+import { Container, Row, Toast, Spinner } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
 
-import { ENDPOINT } from "./endpoints";
+import { ENDPOINT } from "../endpoints";
 
 const MAX_TOGGLE_WAIT = 10000; //10 seconds is the max amount of time before toggle gets handed over to copilot
 
@@ -35,9 +35,12 @@ class SplitText extends React.Component {
     this.addToast = this.addToast.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
     this.pilotHandoff = this.pilotHandoff.bind(this);
+    this.basicSetState = this.basicSetState.bind(this);
     const userID = Math.round(Math.random() * 1000000).toString();
 
     this.state = {
+      textLoaded: false,
+      titleLoaded: false,
       text: "# happy coding!",
       sessionID: this.props.match.params.sessionID, //new session will default to 'unsaved' as the session ID
       userID, //NOTE THAT THIS IS ONLY FOR PUBNUB PURPOSES. THIS IS NOT THAT SPECIFIC USER'S UNIQUE IDENTIFIER 
@@ -54,7 +57,8 @@ class SplitText extends React.Component {
       onMobile: false,
       user_name: "",
       showCopilotToggleMsg: false,
-      msRemaining: MAX_TOGGLE_WAIT
+      msRemaining: MAX_TOGGLE_WAIT,
+      fileName: "",
     };
 
     this.baseState = this.state;
@@ -191,6 +195,87 @@ class SplitText extends React.Component {
       channels: [this.state.sessionID],
       withPresence: true
     });
+  }
+
+  componentDidMount() {
+    window.addEventListener("beforeunload", this.unsubscribeChannel);
+
+    //in case someone is trying to view on their phone.
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      this.setState({ onMobile: true });
+    }
+    let session = this.props.match.params.sessionID;
+    if (this.props.match.path != "/") {
+      //must be a valid session
+      console.log("session", session);
+      const url = ENDPOINT + "getData/" + session;
+      var self = this;
+
+      axios.get(url).then(function(response) {
+        self.handleTextChange(response.data);
+        self.setState({textLoaded: true});
+      });
+
+      this.setState({ sessionID: session });
+      this.handleSessionIDChange(session);
+
+
+      const nameurl = ENDPOINT + "getName/" + session;
+    var self=this
+
+    //to load file name if it exists
+    axios.get(nameurl).then(function(response) {
+        console.log(response.data.name);
+
+        if(response.data.name === undefined){
+          console.log(1)
+          self.setState({fileName: 'untitled document'})
+        }
+        else{
+          console.log(2)
+          self.setState({fileName: response.data.name}, () =>{
+            console.log(3)
+            }
+          )
+        }
+        self.setState({titleLoaded: true})
+
+      })
+        .catch(function (error) {
+        self.setState({titleLoaded: true})
+        // handle error
+    })
+    }
+
+    //get the name of the user
+    Auth.currentAuthenticatedUser()
+      .then(user => {
+        this.setState(
+          {
+            user_name: user.attributes.name,
+            userArray: [{ id: this.state.userID, name: user.attributes.name }]
+          },
+          () =>
+            //announce to everyone that you've joined!
+            this.packageMessage("", "join")
+        );
+
+        const userURL = ENDPOINT + "updateSessions/" + user.attributes.name;
+
+        let sessionID = this.state.sessionID;
+        let data = { session: sessionID };
+
+        axios.put(userURL, data).then(
+          response => {
+            const message = response.data;
+            console.log(message);
+          },
+          error => {
+            console.log(error);
+          }
+        );
+      })
+      .catch(err => console.log(err));
   }
 
   togglePilot = (id, name) => {
@@ -391,58 +476,7 @@ class SplitText extends React.Component {
   //////   Functions that handle state changes/updates      //////
   //////                                                    //////
 
-  componentDidMount() {
-    window.addEventListener("beforeunload", this.unsubscribeChannel);
-
-    //in case someone is trying to view on their phone.
-    if (window.matchMedia("(max-width: 767px)").matches) {
-      this.setState({ onMobile: true });
-    }
-    let session = this.props.match.params.sessionID;
-    if (this.props.match.path != "/") {
-      //must be a valid session
-      console.log("session", session);
-      const url = ENDPOINT + "getData/" + session;
-      var self = this;
-
-      axios.get(url).then(function(response) {
-        self.handleTextChange(response.data);
-      });
-
-      this.setState({ sessionID: session });
-      this.handleSessionIDChange(session);
-    }
-
-    //get the name of the user
-    Auth.currentAuthenticatedUser()
-      .then(user => {
-        this.setState(
-          {
-            user_name: user.attributes.name,
-            userArray: [{ id: this.state.userID, name: user.attributes.name }]
-          },
-          () =>
-            //announce to everyone that you've joined!
-            this.packageMessage("", "join")
-        );
-
-        const userURL = ENDPOINT + "updateSessions/" + user.attributes.name;
-
-        let sessionID = this.state.sessionID;
-        let data = { session: sessionID };
-
-        axios.put(userURL, data).then(
-          response => {
-            const message = response.data;
-            console.log(message);
-          },
-          error => {
-            console.log(error);
-          }
-        );
-      })
-      .catch(err => console.log(err));
-  }
+  
 
   /////       for both input and output panes
   /////         updates the state
@@ -554,6 +588,8 @@ class SplitText extends React.Component {
     window.removeEventListener("beforeunload", this.unsubscribeChannel);
   }
 
+  basicSetState = stateChange => this.setState(stateChange);
+
   render() {
     const {
       text,
@@ -579,8 +615,9 @@ class SplitText extends React.Component {
         Oy! Looks like you're trying to code on a mobile device. Please try
         accessing this programming tool with a tablet or computer.
       </div>
-    ) : (
-      <div>
+    ) : ( this.state.textLoaded && this.state.titleLoaded ? 
+       
+      (<div>
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
             <Toast
@@ -606,6 +643,7 @@ class SplitText extends React.Component {
               handleIDChange={this.handleSessionIDChange}
               pilotHandoff={this.pilotHandoff}
               handleDownload={this.handleDownload}
+              title={this.state.fileName}
               // handleToggle={this.toggleRole}
             />
           </Row>
@@ -683,7 +721,17 @@ class SplitText extends React.Component {
             />
           </Row>
         </Container>
-      </div>
+      </div>) 
+      : (<Container fluid className="vh-100 d-flex flex-column justify-content-center align-items-center">
+        <div>
+          <Spinner animation="grow" variant="warning"/>
+          <Spinner animation="grow" variant="danger"/>
+          <Spinner animation="grow" variant="primary"/>
+        </div>
+        <h1 className="h1">Loading</h1>
+        
+        
+        </Container>)
     );
   }
 }

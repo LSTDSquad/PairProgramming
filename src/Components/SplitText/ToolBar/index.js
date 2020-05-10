@@ -1,12 +1,14 @@
 import React from "react";
 import {
   Navbar,
+  Form,
   Button,
   Popover,
   OverlayTrigger,
   Tooltip
 } from "react-bootstrap";
 import {
+
   SwapHoriz,
   GetApp,
   EmojiObjectsRounded,
@@ -14,15 +16,15 @@ import {
 } from "@material-ui/icons";
 // import { Drawer } from "@material-ui/core";
 import axios from "axios";
-import { ENDPOINT } from "./endpoints";
+import { ENDPOINT } from "../../endpoints";
 
 
 import { AmplifySignOut } from "@aws-amplify/ui-react";
 
 import CopyButton from "./CopyButton";
 
-import "./CSS/ToolBar.css";
-import HoverClickPopover from "./HoverClickPopover";
+import "./ToolBar.css";
+import HoverClickPopover from "../../HoverClickPopover";
 
 /////     props:
 /////     isPilot
@@ -42,35 +44,14 @@ class ToolBar extends React.Component {
     this.state = {
       //used for the hamburger menu
       drawerOpen: false,
-      fileName: 'untitled document'
+      fileName: this.props.title,
     };
   }
 
   componentDidMount() {
 
 
-    const url = ENDPOINT + "getName/" + this.props.sessionID;
-    var self=this
-
-    //to load file name if it exists
-    axios.get(url).then(function(response) {
-        console.log(response.data.name);
-
-        if(response.data.name === undefined){
-          console.log(1)
-          self.setState({fileName: 'unitled document'})
-        }
-        else{
-          console.log(2)
-          self.setState({fileName: response.data.name}, () =>{
-            console.log(3)
-            }
-          )
-        }
-      })
-        .catch(function (error) {
-        // handle error
-    })
+    
 
   }
 
@@ -187,6 +168,12 @@ class ToolBar extends React.Component {
           </ListGroup>
         </Drawer> */}
         <div className="left-side-toolbar">
+        <Form>
+                <Form.Control type="text"  value={this.state.fileName} 
+                 onChange = {this.handleNameChange} 
+                 onClick = {this.handleRenameClick}
+                 onBlur = {this.moveAway}/>
+              </Form>
           <HoverClickPopover
             popover={({ ...props }) => (
               <Popover {...props}>
@@ -219,11 +206,8 @@ class ToolBar extends React.Component {
               <GetApp fontSize="large" />
             </Button>
           </OverlayTrigger>
-
-          <input type="text" value={this.state.fileName} 
-                 onChange = {this.handleNameChange} 
-                 onClick = {this.handleRenameClick}
-                 onBlur = {this.moveAway}/>
+   
+          
 
         </div>
         <div>

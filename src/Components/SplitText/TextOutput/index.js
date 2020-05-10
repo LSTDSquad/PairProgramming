@@ -1,5 +1,5 @@
 import React from "react";
-import "./CSS/TextOutput.css";
+import "./TextOutput.css";
 
 class TextOutput extends React.Component {
   constructor(props) {

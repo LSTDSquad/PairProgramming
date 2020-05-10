@@ -1,7 +1,7 @@
 import React from "react";
 import { Toast } from "react-bootstrap";
 import { CommentRounded, HelpOutlineRounded } from "@material-ui/icons";
-import "./CSS/MyToast.css";
+import "./MyToast.css";
 
 class MyToast extends React.Component {
   constructor(props) {

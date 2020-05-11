@@ -160,7 +160,9 @@ class Home extends React.Component {
           self.setState({ prevSessions: sessionObjs, doneLoading: true });
         }
       );
-    });
+    })
+    //in case they don't have an account in the userTable yet. 
+    .catch(err => self.setState({doneLoading: true}));
   };
 
   componentWillUnmount() {}

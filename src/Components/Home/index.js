@@ -28,7 +28,7 @@ class Home extends React.Component {
     //get the name of the user
     Auth.currentAuthenticatedUser()
       .then(user => {
-        console.log("user", user);
+        //console.log("user", user);
         this.setState(
           {
             user_name: user.attributes.name,
@@ -60,9 +60,7 @@ class Home extends React.Component {
     const url = ENDPOINT + "getSessions/" + this.state.user_name;
     var self = this;
     axios.get(url).then(function(response) {
-      console.log(response.data);
       async.map(response.data, function(sessionID, callback) {
-        console.log(sessionID);
         const nameURL = ENDPOINT + "getName/" + sessionID;
         let sessionObj = {sessionID};
 
@@ -70,13 +68,12 @@ class Home extends React.Component {
         axios
           .get(nameURL)
           .then(function(response) {
-            console.log(response.data.name);
 
-            if (response.data.name === undefined) {
+            if (response.data === "") {
               // console.error("no file name associated")
               sessionObj.title = "Untitled"
             } else {
-              sessionObj.title = response.data.name;
+              sessionObj.title = response.data;
             }
             callback(null, sessionObj);
           })
@@ -84,7 +81,24 @@ class Home extends React.Component {
             // handle error
             console.log(error);
           });
-        //const forksURL = ENDPOINT + 
+        
+        const forksURL = ENDPOINT + "getChildren/" + sessionID;
+
+        axios
+          .get(forksURL)
+          .then(function(response){
+
+            sessionObj.forks = response.data
+          })
+
+        const timestampURL = ENDPOINT + "getLastEdit/" + sessionID;
+
+        axios
+          .get(timestampURL)
+          .then(function(response){
+
+            sessionObj.lastEditTimeStamp = response.data
+          })
         
       }, function(err, sessionObjs) {
         console.log(sessionObjs);

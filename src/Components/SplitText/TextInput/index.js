@@ -265,9 +265,9 @@ class TextInput extends React.Component {
     let sessionID = this.props.sessionID;
     if (this.props.path !== "/") {
       //if this session exists already, update the entry in dynamoDB
-      const url = ENDPOINT + "updateData/" + sessionID;
+      const updateTextURL = ENDPOINT + "updateData/" + sessionID;
 
-      axios.put(url, data).then(
+      axios.put(updateTextURL, data).then(
         response => {
           const message = response.data;
           console.log(message);
@@ -276,6 +276,19 @@ class TextInput extends React.Component {
           console.log(error);
         }
       );
+
+      const updateLastEditURL = ENDPOINT + "updateLastEdit/" + sessionID;
+      let editTimestamp = {timestamp: String(new Date())};
+      axios.put(updateLastEditURL, editTimestamp).then(
+        response => {
+          const message = response.data;
+          console.log(message);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+
     }
   }
 

@@ -537,22 +537,6 @@ class TextInput extends React.Component {
           buttonContent={<CommentRounded />}
           usePopoverStateOutside={true}
         />
-
-        {/* <OverlayTrigger
-          trigger={"click"}
-          placement="top"
-          overlay={this.getCommentPopover()}
-          rootClose={true}
-          onHide={() => this.setState({ commentMsg: "" })}
-        >
-          <Button
-            variant="warning"
-            onClick={() => this.setState({ showComment: true })}
-            className="comment-btn"
-          >
-            <CommentRounded />
-          </Button>
-        </OverlayTrigger> */}
         <OverlayTrigger
           trigger={["hover", "focus"]}
           overlay={<Tooltip>Run code</Tooltip>}
@@ -568,6 +552,11 @@ class TextInput extends React.Component {
         </OverlayTrigger>
 
         {this.state.annotations && this.state.annotations.length > 0 && (
+          <OverlayTrigger
+          trigger={["hover", "focus"]}
+          overlay={<Tooltip>Resolve the question</Tooltip>}
+          placement="right"
+        >
           <Button
             variant="success"
             className="resolve-btn"
@@ -584,7 +573,7 @@ class TextInput extends React.Component {
             }}
           >
             <DoneRounded />
-          </Button>
+          </Button></OverlayTrigger>
         )}
       </Container>
     );

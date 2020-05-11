@@ -70,7 +70,7 @@ class Home extends React.Component {
         axios
           .get(nameURL)
           .then(function(response) {
-            console.log(response.data.name);
+            console.log(response.data);
 
             if (response.data.name === undefined) {
               // console.error("no file name associated")

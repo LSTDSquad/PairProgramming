@@ -49,7 +49,7 @@ class SplitText extends React.Component {
       selections: {},
       isPilot: true,
       userArray: [{ id: userID }], //in format: [{id, name}...]
-      lines: [""],
+      lines: ["Welcome to PearProgram! This is your console. Click the run button to see your output here."],
       toasts: [],
       confusionStatus: {},
       resolve: {},
@@ -59,6 +59,7 @@ class SplitText extends React.Component {
       showCopilotToggleMsg: false,
       msRemaining: MAX_TOGGLE_WAIT,
       fileName: "",
+      waitingForInput: false,
     };
 
     this.baseState = this.state;
@@ -424,18 +425,50 @@ class SplitText extends React.Component {
     this.setState(prevState => ({
       lines: [...prevState.lines, "pair-programming-session:~ $ run"]
     }));
+    var self = this;
     Sk.configure({
       output: this.outf,
       read: builtinRead,
       inputfun: function(prompt) {
-        return window.prompt(prompt, "");
+        self.setState(prevState => ({
+          lines: [...prevState.lines, prompt],
+          waitingForInput: true,
+        }));
+        document.getElementById("std-input").focus();
+        return new Promise(function (resolve, reject) {
+          document.getElementById("std-input").onkeyup = (e) => {
+            // console.log(e.keyCode);
+            if (e.keyCode == 13) {
+
+              //add input to lines
+              self.setState(prevState => ({
+                lines: [...prevState.lines, `> ${e.target.value}`],
+                waitingForInput: false,
+              }), () => resolve(e.target.value));
+              //clear the input 
+
+              
+            }
+          }
+        });
+        // var interval = setInterval(function() {
+        //   if (self.state.inputEntered) {
+        //     console.log(self.state.inputEntered);
+        //     clearInterval(interval)
+        //     return self.state.inputEntered;
+        //   }
+        // }, 500);
+        // // return window.prompt(prompt, "");
       },
       inputfunTakesPrompt: true
     });
 
     try {
-      Sk.importMainWithBody("<stdin>", false, input, true);
+      Sk.misceval.asyncToPromise(function() {
+        return Sk.importMainWithBody("<stdin>", false, input, true);
+      }).then(() => self.setState(prevState => ({lines: [...prevState.lines, '<<<<<<<<<< Program finished running >>>>>>>>>>']})));
     } catch (e) {
+      console.log(e);
       this.setState(
         prevState => ({
           lines: [...prevState.lines, e.toString()]
@@ -680,6 +713,7 @@ class SplitText extends React.Component {
                 text={codeOutput}
                 onTextChange={this.handleTextChange}
                 userID={userID}
+                waitingForInput={this.state.waitingForInput}
               />
             </SplitPane>
             {this.state.seeToasts && (

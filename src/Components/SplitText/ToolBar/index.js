@@ -114,6 +114,7 @@ class ToolBar extends React.Component {
 
   //goodle docs style where the whole name highlights if the title is "untitled document"
   handleRenameClick = (e) =>{
+    e.preventDefault();
     console.log(e.target.value)
     if(this.state.fileName === "untitled document"){
       e.target.select()

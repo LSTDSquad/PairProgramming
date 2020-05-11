@@ -4,6 +4,17 @@
     font-family: 'Roboto Mono', monospace;
 }
 
+.std-input {
+    height: 80vh;
+    width: 100%;
+    background-color: transparent;
+    border-color: transparent;
+    color: #28a745;
+}
+
+.std-input:focus {
+    outline: 0px solid transparent;
+}
 /* .joiawe {
     color: #240606
 } */

@@ -12,7 +12,7 @@
     margin: 10px;
 }
 
-.save-button, .tips-button {
+.save-button, .tips-button, .home-button {
     background-color: rgba(0, 0, 0, 0) !important;
     border-color: rgba(0, 0, 0, 0) !important;
 }

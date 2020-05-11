@@ -8,7 +8,7 @@ import {
   Tooltip
 } from "react-bootstrap";
 import {
-
+  HomeRounded,
   SwapHoriz,
   GetApp,
   EmojiObjectsRounded,
@@ -17,7 +17,7 @@ import {
 // import { Drawer } from "@material-ui/core";
 import axios from "axios";
 import { ENDPOINT } from "../../endpoints";
-
+import {Link} from "react-router-dom"
 
 import { AmplifySignOut } from "@aws-amplify/ui-react";
 
@@ -124,13 +124,19 @@ class ToolBar extends React.Component {
   makeNewSession = (e) => {
     e.preventDefault();
     const url = ENDPOINT + "setData";
-    const data = { text: "# happy coding!" };
+    let data = { text: "# happy coding!" };
     axios.post(url, data).then(
       response => {
         let newSession = "/" + response.data.id;
         this.props.handleIDChange(response.data.id);
         this.props.history.push(newSession); //navigate to page referencing copy
-        window.location.reload(true);
+        // const lastEditurl = ENDPOINT + "updateLastEdit/" + response.data
+        // data = {timestamp: String(new Date())};
+        // axios.post(lastEditurl, data).then( response => {
+        //   console.log(response);
+        //   window.location.reload(true);
+        // })
+        
       },
       error => {
         console.log(error);
@@ -169,7 +175,12 @@ class ToolBar extends React.Component {
           </ListGroup>
         </Drawer> */}
         <div className="left-side-toolbar">
-        <Form>
+          <Link to="/">
+            <Button className="home-button">
+              <HomeRounded fontSize="large" />
+            </Button>
+          </Link>
+        <Form onSubmit={(e) => e.preventDefault()}>
                 <Form.Control type="text"  value={this.state.fileName} 
                  onChange = {this.handleNameChange} 
                  onClick = {this.handleRenameClick}

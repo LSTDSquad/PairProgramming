@@ -3,6 +3,7 @@ import SplitPane from "react-split-pane";
 import TextOutput from "./TextOutput/";
 import TextInput from "./TextInput/";
 import ToolBar from "./ToolBar/";
+import Loading from "../Loading/"
 import PubNub from "pubnub";
 import axios from "axios";
 import Sk from "skulpt";
@@ -43,13 +44,15 @@ class SplitText extends React.Component {
       titleLoaded: false,
       text: "# happy coding!",
       sessionID: this.props.match.params.sessionID, //new session will default to 'unsaved' as the session ID
-      userID, //NOTE THAT THIS IS ONLY FOR PUBNUB PURPOSES. THIS IS NOT THAT SPECIFIC USER'S UNIQUE IDENTIFIER 
+      userID, //NOTE THAT THIS IS ONLY FOR PUBNUB PURPOSES. THIS IS NOT THAT SPECIFIC USER'S UNIQUE IDENTIFIER
       //these two items operate like dictionaries key: userID, value: cursor/highlight coordinates
       cursors: {},
       selections: {},
       isPilot: true,
       userArray: [{ id: userID }], //in format: [{id, name}...]
-      lines: ["Welcome to PearProgram! This is your console. Click the run button to see your output here."],
+      lines: [
+        "Welcome to PearProgram! This is your console. Click the run button to see your output here."
+      ],
       toasts: [],
       confusionStatus: {},
       resolve: {},
@@ -59,7 +62,7 @@ class SplitText extends React.Component {
       showCopilotToggleMsg: false,
       msRemaining: MAX_TOGGLE_WAIT,
       fileName: "",
-      waitingForInput: false,
+      waitingForInput: false
     };
 
     this.baseState = this.state;
@@ -182,10 +185,9 @@ class SplitText extends React.Component {
             });
             let timer;
             timer = setTimeout(() => {
-              this.setState({msRemaining: MAX_TOGGLE_WAIT});
+              this.setState({ msRemaining: MAX_TOGGLE_WAIT });
               clearTimeout(timer);
             }, 300);
-            
           }
         }
       }
@@ -214,43 +216,42 @@ class SplitText extends React.Component {
 
       axios.get(url).then(function(response) {
         self.handleTextChange(response.data);
-        self.setState({textLoaded: true});
+        self.setState({ textLoaded: true });
       });
 
       this.setState({ sessionID: session });
       this.handleSessionIDChange(session);
 
-
       const nameurl = ENDPOINT + "getName/" + session;
-    var self=this
+      var self = this;
 
-    //to load file name if it exists
-    axios.get(nameurl).then(function(response) {
-        console.log(response.data.name);
+      //to load file name if it exists
+      axios
+        .get(nameurl)
+        .then(function(response) {
+          console.log(response.data);
 
-        if(response.data.name === undefined){
-          console.log(1)
-          self.setState({fileName: 'untitled document'})
-        }
-        else{
-          console.log(2)
-          self.setState({fileName: response.data.name}, () =>{
-            console.log(3)
-            }
-          )
-        }
-        self.setState({titleLoaded: true})
-
-      })
-        .catch(function (error) {
-        self.setState({titleLoaded: true})
-        // handle error
-    })
+          if (response.data === undefined) {
+            console.log(1);
+            self.setState({ fileName: "untitled document" });
+          } else {
+            console.log(2);
+            self.setState({ fileName: response.data }, () => {
+              console.log(3);
+            });
+          }
+          self.setState({ titleLoaded: true });
+        })
+        .catch(function(error) {
+          self.setState({ titleLoaded: true });
+          // handle error
+        });
     }
 
     //get the name of the user
     Auth.currentAuthenticatedUser()
       .then(user => {
+        console.log(user);
         this.setState(
           {
             user_name: user.attributes.name,
@@ -261,7 +262,7 @@ class SplitText extends React.Component {
             this.packageMessage("", "join")
         );
 
-        const userURL = ENDPOINT + "updateSessions/" + user.attributes.name;
+        const userURL = ENDPOINT + "updateSessions/" + user.attributes.email; //user.attributes.name;
 
         let sessionID = this.state.sessionID;
         let data = { session: sessionID };
@@ -432,24 +433,24 @@ class SplitText extends React.Component {
       inputfun: function(prompt) {
         self.setState(prevState => ({
           lines: [...prevState.lines, prompt],
-          waitingForInput: true,
+          waitingForInput: true
         }));
         document.getElementById("std-input").focus();
-        return new Promise(function (resolve, reject) {
-          document.getElementById("std-input").onkeyup = (e) => {
+        return new Promise(function(resolve, reject) {
+          document.getElementById("std-input").onkeyup = e => {
             // console.log(e.keyCode);
             if (e.keyCode == 13) {
-
               //add input to lines
-              self.setState(prevState => ({
-                lines: [...prevState.lines, `> ${e.target.value}`],
-                waitingForInput: false,
-              }), () => resolve(e.target.value));
-              //clear the input 
-
-              
+              self.setState(
+                prevState => ({
+                  lines: [...prevState.lines, `> ${e.target.value}`],
+                  waitingForInput: false
+                }),
+                () => resolve(e.target.value)
+              );
+              //clear the input
             }
-          }
+          };
         });
         // var interval = setInterval(function() {
         //   if (self.state.inputEntered) {
@@ -464,9 +465,18 @@ class SplitText extends React.Component {
     });
 
     try {
-      Sk.misceval.asyncToPromise(function() {
-        return Sk.importMainWithBody("<stdin>", false, input, true);
-      }).then(() => self.setState(prevState => ({lines: [...prevState.lines, '<<<<<<<<<< Program finished running >>>>>>>>>>']})));
+      Sk.misceval
+        .asyncToPromise(function() {
+          return Sk.importMainWithBody("<stdin>", false, input, true);
+        })
+        .then(() =>
+          self.setState(prevState => ({
+            lines: [
+              ...prevState.lines,
+              "<<<<<<<<<< Program finished running >>>>>>>>>>"
+            ]
+          }))
+        );
     } catch (e) {
       console.log(e);
       this.setState(
@@ -508,8 +518,6 @@ class SplitText extends React.Component {
   //////                                                    //////
   //////   Functions that handle state changes/updates      //////
   //////                                                    //////
-
-  
 
   /////       for both input and output panes
   /////         updates the state
@@ -648,9 +656,8 @@ class SplitText extends React.Component {
         Oy! Looks like you're trying to code on a mobile device. Please try
         accessing this programming tool with a tablet or computer.
       </div>
-    ) : ( this.state.textLoaded && this.state.titleLoaded ? 
-       
-      (<div>
+    ) : this.state.textLoaded && this.state.titleLoaded ? (
+      <div>
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
             <Toast
@@ -755,17 +762,9 @@ class SplitText extends React.Component {
             />
           </Row>
         </Container>
-      </div>) 
-      : (<Container fluid className="vh-100 d-flex flex-column justify-content-center align-items-center">
-        <div>
-          <Spinner animation="grow" variant="warning"/>
-          <Spinner animation="grow" variant="danger"/>
-          <Spinner animation="grow" variant="primary"/>
-        </div>
-        <h1 className="h1">Loading</h1>
-        
-        
-        </Container>)
+      </div>
+    ) : (
+      <Loading />
     );
   }
 }

@@ -1,9 +1,5 @@
 import React from "react";
 import "./TextOutput.css";
-// import {Terminal} from 'xterm';
-// import "xterm/css/xterm.css";
-// const term = new Terminal();
-import Terminal from 'terminal-in-react'
 
 class TextOutput extends React.Component {
   constructor(props) {

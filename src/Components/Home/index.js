@@ -2,16 +2,26 @@ import React from "react";
 import { Auth } from "aws-amplify";
 import axios from "axios";
 
-import { Container, Row, Toast, Col, Button, Card } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Toast,
+  Col,
+  Button,
+  Card,
+  Badge,
+  Accordion
+} from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
 import { AmplifySignOut } from "@aws-amplify/ui-react";
-import { ArrowForwardRounded } from "@material-ui/icons";
+import { ArrowForwardRounded, ExitToAppRounded } from "@material-ui/icons";
 import { ENDPOINT } from "../endpoints";
 import "./Home.css";
 import { Add } from "@material-ui/icons";
 import code_window from "../../resources/code_window.png";
+import Loading from "../Loading/";
+import { Link } from "react-router-dom";
 var async = require("async");
-
 
 class Home extends React.Component {
   constructor(props) {
@@ -21,6 +31,8 @@ class Home extends React.Component {
       user_name: String,
       user_id: String,
       prevSessions: [],
+      doneLoading: false,
+      allForks: [],
     };
   }
 
@@ -28,7 +40,7 @@ class Home extends React.Component {
     //get the name of the user
     Auth.currentAuthenticatedUser()
       .then(user => {
-        console.log("user", user);
+        //console.log("user", user);
         this.setState(
           {
             user_name: user.attributes.name,
@@ -57,47 +69,103 @@ class Home extends React.Component {
 
   getUserSessions = () => {
     console.log(this.state.user_name);
-    const url = ENDPOINT + "getSessions/" + this.state.user_name;
+    const url = ENDPOINT + "getSessions/" + this.state.user.attributes.email;
     var self = this;
     axios.get(url).then(function(response) {
-      console.log(response.data);
-      async.map(response.data, function(sessionID, callback) {
-        console.log(sessionID);
-        const nameURL = ENDPOINT + "getName/" + sessionID;
-        let sessionObj = {sessionID};
+      async.map(
+        response.data,
+        function(sessionID, callback) {
+          const nameURL = ENDPOINT + "getName/" + sessionID;
+          let sessionObj = { sessionID };
 
-        //to load file name if it exists
-        axios
-          .get(nameURL)
-          .then(function(response) {
-            console.log(response.data);
+          //to load file name if it exists
+          axios
+            .get(nameURL)
+            .then(function(response) {
+              if (response.data === "") {
+                // console.error("no file name associated")
+                sessionObj.title = "Untitled";
+              } else {
+                sessionObj.title = response.data;
+              }
 
-            if (response.data.name === undefined) {
-              // console.error("no file name associated")
-              sessionObj.title = "Untitled"
-            } else {
-              sessionObj.title = response.data.name;
-            }
-            callback(null, sessionObj);
-          })
-          .catch(function(error) {
-            // handle error
-            console.log(error);
-          });
-        //const forksURL = ENDPOINT + 
-        
-      }, function(err, sessionObjs) {
-        console.log(sessionObjs);
-        //sessionObj is an array of objects, each with the fields sessionID and title
-        self.setState({prevSessions: sessionObjs})
-      });
+              // callback(null, sessionObj);
+              const forksURL = ENDPOINT + "getChildren/" + sessionID;
+
+              return axios.get(forksURL);
+            })
+            .then(function(response) {
+              sessionObj.forks = response.data || [];
+
+              const timestampURL = ENDPOINT + "getLastEdit/" + sessionID;
+
+              return axios.get(timestampURL);
+            })
+            .then(function(response) {
+              console.log("last edit", response.data);
+              sessionObj.lastEditTimeStamp = response.data;
+              async.map(
+                sessionObj.forks,
+                function(fork, callbackChild) {
+                  self.setState(prevState => ({allForks: [...prevState.allForks, fork]}));
+                  const nameurl = ENDPOINT + "getName/" + fork;
+                  let childObj = { sessionID: fork };
+
+                  //to load file name if it exists
+                  axios.get(nameurl).then(function(response) {
+                    if (response.data === "") {
+                      // console.error("no file name associated")
+                      childObj.title = "Untitled";
+                    } else {
+                      childObj.title = response.data;
+                    }
+                    callbackChild(null, childObj);
+                  });
+                },
+                function(err, newForks) {
+                  sessionObj.forks = newForks;
+                  callback(err, sessionObj);
+                }
+              );
+            })
+
+            // .then(function(response) {
+            //   console.log("last edit", response.data);
+            //   sessionObj.lastEditTimeStamp = response.data;
+            //   callback(null, sessionObj);
+            // })
+
+            .catch(function(error) {
+              // handle error
+              console.log(error);
+            });
+
+          // const timestampURL = ENDPOINT + "getLastEdit/" + sessionID;
+
+          // axios
+          //   .get(timestampURL)
+          //   .then(function(response) {
+          //     console.log("last edit", response.data);
+          //     sessionObj.lastEditTimeStamp = response.data;
+          //   })
+          //   .catch(function(error) {
+          //     console.log(error);
+          //   });
+        },
+        function(err, sessionObjs) {
+          console.log(sessionObjs);
+
+          //sessionObj is an array of objects, each with the fields sessionID and title
+          self.setState({ prevSessions: sessionObjs, doneLoading: true });
+        }
+      );
     });
   };
 
   componentWillUnmount() {}
 
   render() {
-    return (
+    return this.state.doneLoading ? (
       <Container className="justify-content-center vh-100">
         <Row
           noGutters={true}
@@ -123,34 +191,75 @@ class Home extends React.Component {
           <br />
           <Row className="w-70 d-flex flex-nowrap flex-row justify-content-between  align-items-start">
             <Col md="3">
-              <Card onClick={this.makeNewSession}>
+              <Card>
                 <Card.Title className="h2 m-2">
                   {" "}
                   Ready to pair-program?
                 </Card.Title>
                 <Card.Text className="m-2">
-                  Click here to create a new coding session!
+                  <Button variant="light" onClick={this.makeNewSession}>
+                    Click here to create a new coding session!
+                  </Button>
                 </Card.Text>
                 {/* <div> */}
                 {/* <span className="h4">Create a new coding session!</span> */}
                 {/* <ArrowForwardRounded fontSize="large" /> */}
-                <Card.Img variant="bottom" src={code_window} />
+                {/* <Card.Img variant="bottom" src={code_window} /> */}
                 {/* <Button>
                       <Add fontSize="large" />
                     </Button> */}
                 {/* </div> */}
               </Card>
             </Col>
-            <Col md="7">
+            <Col md="9">
               <Card>
                 <Card.Title className="h4 m-2">
                   <div>Previous sessions</div>
-                 
                 </Card.Title>
                 <Card.Body>
-                  {this.state.prevSessions.map(({sessionID, title}) => (
-                    <div key={sessionID} >{title}</div>
-                  ))}
+                  <Accordion >
+                    {this.state.prevSessions.filter(({sessionID}) => this.state.allForks.indexOf(sessionID) === -1)
+                    .map(
+                      ({ sessionID, title, forks, lastEditTimeStamp }, parent_i) => (
+                        <Card variant="outline-primary" key={sessionID}>
+                          <Card.Header className="d-flex w-100 flex-row justify-content-between">
+                            {title}
+                            <div>
+                              {forks.length > 0 && (
+                                <Accordion.Toggle
+                                  as={Button}
+                                  variant="link"
+                                  eventKey={`${parent_i}`}
+                                >
+                                  See forks
+                                </Accordion.Toggle>
+                              )}
+                              <Link to={`/${sessionID}`}>
+                                <ExitToAppRounded />
+                              </Link>
+                            </div>
+                          </Card.Header>
+                          {forks.map((fork, i) => (
+                            <Accordion.Collapse
+                              eventKey={`${parent_i}`}
+                              key={i}
+                            >
+                              <Card.Body className="d-flex w-100 flex-row justify-content-between">
+                                <div>{fork.title}</div>
+                                <Link to={`/${fork.sessionID}`}>
+                                  <ExitToAppRounded />
+                                </Link>
+                              </Card.Body>
+                            </Accordion.Collapse>
+                          ))}
+
+                          <div>
+                            {/* <Badge variant="danger">Last edit: {lastEditTimeStamp}</Badge> */}
+                          </div>
+                        </Card>
+                      )
+                    )}
+                  </Accordion>
                 </Card.Body>
               </Card>
             </Col>
@@ -159,6 +268,8 @@ class Home extends React.Component {
           <Row></Row>
         </Container>
       </Container>
+    ) : (
+      <Loading />
     );
   }
 }

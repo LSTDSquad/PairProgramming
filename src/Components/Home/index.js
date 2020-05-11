@@ -138,6 +138,7 @@ class Home extends React.Component {
             .catch(function(error) {
               // handle error
               console.log(error);
+              callback(error, sessionObj);
             });
 
           // const timestampURL = ENDPOINT + "getLastEdit/" + sessionID;
@@ -231,6 +232,8 @@ class Home extends React.Component {
                                   variant="link"
                                   eventKey={`${parent_i}`}
                                 >
+                            {/* <Badge variant="danger">Last edit: {lastEditTimeStamp}</Badge> */}
+
                                   See forks
                                 </Accordion.Toggle>
                               )}
@@ -253,9 +256,7 @@ class Home extends React.Component {
                             </Accordion.Collapse>
                           ))}
 
-                          <div>
-                            {/* <Badge variant="danger">Last edit: {lastEditTimeStamp}</Badge> */}
-                          </div>
+                        
                         </Card>
                       )
                     )}

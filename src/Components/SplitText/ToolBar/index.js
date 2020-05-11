@@ -134,7 +134,7 @@ class ToolBar extends React.Component {
         // data = {timestamp: String(new Date())};
         // axios.post(lastEditurl, data).then( response => {
         //   console.log(response);
-        //   window.location.reload(true);
+          window.location.reload(true);
         // })
         
       },

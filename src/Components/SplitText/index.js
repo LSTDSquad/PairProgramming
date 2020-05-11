@@ -3,7 +3,7 @@ import SplitPane from "react-split-pane";
 import TextOutput from "./TextOutput/";
 import TextInput from "./TextInput/";
 import ToolBar from "./ToolBar/";
-import Loading from "../Loading/"
+import Loading from "../Loading/";
 import PubNub from "pubnub";
 import axios from "axios";
 import Sk from "skulpt";
@@ -149,12 +149,11 @@ class SplitText extends React.Component {
         } else if (
           (message.Type === "comment") &
           (message.Who !== this.state.userID)
-        ){
-          //I'm not sure if this is good form to call 
+        ) {
+          //I'm not sure if this is good form to call
           //child functions from parent?
           this.inputRef.current.recieveComment(message.What);
-        }
-          else if (
+        } else if (
           (message.Type === "confused") &
           (message.Who !== this.state.userID)
         ) {
@@ -479,20 +478,39 @@ class SplitText extends React.Component {
           return Sk.importMainWithBody("<stdin>", false, input, true);
         })
         .then(() =>
-          self.setState(prevState => ({
-            lines: [
-              ...prevState.lines,
-              "<<<<<<<<<< Program finished running >>>>>>>>>>"
-            ]
-          }))
+          self.setState(
+            prevState => ({
+              lines: [
+                ...prevState.lines,
+                "<<<<<<<<<< Program finished running >>>>>>>>>>"
+              ]
+            }),
+            () => self.packageMessage(self.state.lines, "codeOutput")
+          )
+        )
+        .catch(e =>
+          self.setState(
+            prevState => ({
+              lines: [
+                ...prevState.lines,
+                e.toString(),
+                "<<<<<<<<<< Program finished running >>>>>>>>>>"
+              ]
+            }),
+            () => self.packageMessage(this.state.lines, "codeOutput")
+          )
         );
     } catch (e) {
       console.log(e);
-      this.setState(
+      self.setState(
         prevState => ({
-          lines: [...prevState.lines, e.toString()]
+          lines: [
+            ...prevState.lines,
+            e.toString(),
+            "<<<<<<<<<< Program finished running >>>>>>>>>>"
+          ]
         }),
-        () => this.packageMessage(this.state.lines, "codeOutput")
+        () => self.packageMessage(this.state.lines, "codeOutput")
       );
     }
 

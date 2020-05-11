@@ -404,7 +404,8 @@ class TextInput extends React.Component {
       return;
     }
     this.setState({ commentError: false });
-    // console.log(this.state.selected);
+    console.log(this.state.selected,this.state.commentMsg);
+
     // let { start, end } = this.state.selected;
     let newToast = {
       type: "comment",
@@ -412,6 +413,9 @@ class TextInput extends React.Component {
       show: true,
       ...this.state.selected
     };
+
+    this.props.packageMessage(newToast, "comment");
+
     this.props.addToast(newToast);
     this.setState({ showComment: false, commentMsg: "" });
 
@@ -430,6 +434,12 @@ class TextInput extends React.Component {
       );
     }
   };
+
+  recieveComment = (comment) =>{
+    //recieve comment from other user and create toast
+    this.props.addToast(comment);
+    this.setState({ showComment: false, commentMsg: "" });
+  }
 
   getCommentPopover = ({ ...props }) => (
     <Popover {...props} className="confused-popover">

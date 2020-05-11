@@ -27,6 +27,7 @@ class SplitText extends React.Component {
     super(props);
     //used for splitPane, i think. (textOutput)
     this.outputRef = React.createRef();
+    this.inputRef = React.createRef();
 
     //BINDINGS
     this.handleTextChange = this.handleTextChange.bind(this);
@@ -146,6 +147,14 @@ class SplitText extends React.Component {
           // console.log(message.What);
           this.setState({ lines: message.What });
         } else if (
+          (message.Type === "comment") &
+          (message.Who !== this.state.userID)
+        ){
+          //I'm not sure if this is good form to call 
+          //child functions from parent?
+          this.inputRef.current.recieveComment(message.What);
+        }
+          else if (
           (message.Type === "confused") &
           (message.Who !== this.state.userID)
         ) {
@@ -700,7 +709,7 @@ class SplitText extends React.Component {
               <TextInput
                 side="left"
                 text={text}
-                ref="input"
+                ref={this.inputRef}
                 isPilot={isPilot}
                 onTextChange={this.handleTextChange}
                 sessionID={sessionID}

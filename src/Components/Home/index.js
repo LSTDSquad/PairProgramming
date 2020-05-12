@@ -32,7 +32,7 @@ class Home extends React.Component {
       user_id: String,
       prevSessions: [],
       doneLoading: false,
-      allForks: [],
+      allForks: []
     };
   }
 
@@ -71,98 +71,102 @@ class Home extends React.Component {
     console.log(this.state.user_name);
     const url = ENDPOINT + "getSessions/" + this.state.user.attributes.email;
     var self = this;
-    axios.get(url).then(function(response) {
-      async.map(
-        response.data,
-        function(sessionID, callback) {
-          const nameURL = ENDPOINT + "getName/" + sessionID;
-          let sessionObj = { sessionID };
+    axios
+      .get(url)
+      .then(function(response) {
+        async.map(
+          response.data,
+          function(sessionID, callback) {
+            const nameURL = ENDPOINT + "getName/" + sessionID;
+            let sessionObj = { sessionID };
 
-          //to load file name if it exists
-          axios
-            .get(nameURL)
-            .then(function(response) {
-              if (response.data === "") {
-                // console.error("no file name associated")
-                sessionObj.title = "Untitled";
-              } else {
-                sessionObj.title = response.data;
-              }
-
-              // callback(null, sessionObj);
-              const forksURL = ENDPOINT + "getChildren/" + sessionID;
-
-              return axios.get(forksURL);
-            })
-            .then(function(response) {
-              sessionObj.forks = response.data || [];
-
-              const timestampURL = ENDPOINT + "getLastEdit/" + sessionID;
-
-              return axios.get(timestampURL);
-            })
-            .then(function(response) {
-              console.log("last edit", response.data);
-              sessionObj.lastEditTimeStamp = response.data;
-              async.map(
-                sessionObj.forks,
-                function(fork, callbackChild) {
-                  self.setState(prevState => ({allForks: [...prevState.allForks, fork]}));
-                  const nameurl = ENDPOINT + "getName/" + fork;
-                  let childObj = { sessionID: fork };
-
-                  //to load file name if it exists
-                  axios.get(nameurl).then(function(response) {
-                    if (response.data === "") {
-                      // console.error("no file name associated")
-                      childObj.title = "Untitled";
-                    } else {
-                      childObj.title = response.data;
-                    }
-                    callbackChild(null, childObj);
-                  });
-                },
-                function(err, newForks) {
-                  sessionObj.forks = newForks;
-                  callback(err, sessionObj);
+            //to load file name if it exists
+            axios
+              .get(nameURL)
+              .then(function(response) {
+                if (response.data === "") {
+                  // console.error("no file name associated")
+                  sessionObj.title = "Untitled";
+                } else {
+                  sessionObj.title = response.data;
                 }
-              );
-            })
 
-            // .then(function(response) {
-            //   console.log("last edit", response.data);
-            //   sessionObj.lastEditTimeStamp = response.data;
-            //   callback(null, sessionObj);
-            // })
+                // callback(null, sessionObj);
+                const forksURL = ENDPOINT + "getChildren/" + sessionID;
 
-            .catch(function(error) {
-              // handle error
-              console.log(error);
-              callback(error, sessionObj);
-            });
+                return axios.get(forksURL);
+              })
+              .then(function(response) {
+                sessionObj.forks = response.data || [];
 
-          // const timestampURL = ENDPOINT + "getLastEdit/" + sessionID;
+                const timestampURL = ENDPOINT + "getLastEdit/" + sessionID;
 
-          // axios
-          //   .get(timestampURL)
-          //   .then(function(response) {
-          //     console.log("last edit", response.data);
-          //     sessionObj.lastEditTimeStamp = response.data;
-          //   })
-          //   .catch(function(error) {
-          //     console.log(error);
-          //   });
-        },
-        function(err, sessionObjs) {
-          console.log(sessionObjs);
+                return axios.get(timestampURL);
+              })
+              .then(function(response) {
+                console.log("last edit", response.data);
+                sessionObj.lastEditTimeStamp = response.data;
+                async.map(
+                  sessionObj.forks,
+                  function(fork, callbackChild) {
+                    self.setState(prevState => ({
+                      allForks: [...prevState.allForks, fork]
+                    }));
+                    const nameurl = ENDPOINT + "getName/" + fork;
+                    let childObj = { sessionID: fork };
 
-          //sessionObj is an array of objects, each with the fields sessionID and title
-          self.setState({ prevSessions: sessionObjs, doneLoading: true });
-        }
-      );
-    })
-    //in case they don't have an account in the userTable yet. 
-    .catch(err => self.setState({doneLoading: true}));
+                    //to load file name if it exists
+                    axios.get(nameurl).then(function(response) {
+                      if (response.data === "") {
+                        // console.error("no file name associated")
+                        childObj.title = "Untitled";
+                      } else {
+                        childObj.title = response.data;
+                      }
+                      callbackChild(null, childObj);
+                    });
+                  },
+                  function(err, newForks) {
+                    sessionObj.forks = newForks;
+                    callback(err, sessionObj);
+                  }
+                );
+              })
+
+              // .then(function(response) {
+              //   console.log("last edit", response.data);
+              //   sessionObj.lastEditTimeStamp = response.data;
+              //   callback(null, sessionObj);
+              // })
+
+              .catch(function(error) {
+                // handle error
+                console.log(error);
+                callback(error, sessionObj);
+              });
+
+            // const timestampURL = ENDPOINT + "getLastEdit/" + sessionID;
+
+            // axios
+            //   .get(timestampURL)
+            //   .then(function(response) {
+            //     console.log("last edit", response.data);
+            //     sessionObj.lastEditTimeStamp = response.data;
+            //   })
+            //   .catch(function(error) {
+            //     console.log(error);
+            //   });
+          },
+          function(err, sessionObjs) {
+            console.log(sessionObjs);
+
+            //sessionObj is an array of objects, each with the fields sessionID and title
+            self.setState({ prevSessions: sessionObjs, doneLoading: true });
+          }
+        );
+      })
+      //in case they don't have an account in the userTable yet.
+      .catch(err => self.setState({ doneLoading: true }));
   };
 
   componentWillUnmount() {}
@@ -194,7 +198,7 @@ class Home extends React.Component {
           <br />
           <Row className="w-70 d-flex flex-nowrap flex-row justify-content-between  align-items-start">
             <Col md="3">
-              <Card>
+              <Card bg="success" text="white">
                 <Card.Title className="h2 m-2">
                   {" "}
                   Ready to pair-program?
@@ -213,55 +217,85 @@ class Home extends React.Component {
                     </Button> */}
                 {/* </div> */}
               </Card>
+
+              <br />
+              <Card bg="secondary" text="white">
+                <Card.Title className="h2 m-2">
+                  {" "}
+                  Want to learn how to pair-program with PearProgram?
+                </Card.Title>
+                <Card.Text className="m-2">
+                  <a href="https://docs.google.com/document/d/1no_wxlU8qIZmAHOmlS1v3skXLd-_0O0hr1z6h-WoUwA/edit?usp=sharing">
+                    <Button variant="light">Read the guide</Button>
+                  </a>
+                </Card.Text>
+                {/* <div> */}
+                {/* <span className="h4">Create a new coding session!</span> */}
+                {/* <ArrowForwardRounded fontSize="large" /> */}
+                {/* <Card.Img variant="bottom" src={code_window} /> */}
+                {/* <Button>
+                      <Add fontSize="large" />
+                    </Button> */}
+                {/* </div> */}
+              </Card>
             </Col>
             <Col md="9">
-              <Card>
+              <Card bg="primary" text="white">
                 <Card.Title className="h4 m-2">
                   <div>Previous sessions</div>
                 </Card.Title>
-                <Card.Body>
-                  <Accordion >
-                    {this.state.prevSessions.filter(({sessionID}) => this.state.allForks.indexOf(sessionID) === -1)
-                    .map(
-                      ({ sessionID, title, forks, lastEditTimeStamp }, parent_i) => (
-                        <Card variant="outline-primary" key={sessionID}>
-                          <Card.Header className="d-flex w-100 flex-row justify-content-between">
-                            {title}
-                            <div>
-                              {forks.length > 0 && (
-                                <Accordion.Toggle
-                                  as={Button}
-                                  variant="link"
-                                  eventKey={`${parent_i}`}
-                                >
-                            {/* <Badge variant="danger">Last edit: {lastEditTimeStamp}</Badge> */}
+                <Card.Body className="text-dark">
+                  <Accordion>
+                    {this.state.prevSessions
+                      .filter(
+                        ({ sessionID }) =>
+                          this.state.allForks.indexOf(sessionID) === -1
+                      )
+                      .map(
+                        (
+                          { sessionID, title, forks, lastEditTimeStamp },
+                          parent_i
+                        ) => (
+                          <Card variant="outline-primary" key={sessionID}>
+                            <Card.Header className="d-flex w-100 flex-row justify-content-between">
+                              {title}
+                              <div>
+                                
 
-                                  See forks
-                                </Accordion.Toggle>
-                              )}
-                              <Link to={`/${sessionID}`}>
-                                <ExitToAppRounded />
-                              </Link>
-                            </div>
-                          </Card.Header>
-                          {forks.map((fork, i) => (
-                            <Accordion.Collapse
-                              eventKey={`${parent_i}`}
-                              key={i}
-                            >
-                              <Card.Body className="d-flex w-100 flex-row justify-content-between">
-                                <div>{fork.title}</div>
-                                <Link to={`/${fork.sessionID}`}>
+                                {forks.length > 0 && (
+                                  <Accordion.Toggle
+                                    as={Button}
+                                    variant="link"
+                                    eventKey={`${parent_i}`}
+                                  >
+                                    See forks
+                                  </Accordion.Toggle>
+                                )}
+                                <Badge variant="secondary" fontSize="md">
+                                  Last edit: {getTimeDiff(lastEditTimeStamp)}
+                                </Badge>
+                                {` `}
+                                <Link to={`/${sessionID}`}>
                                   <ExitToAppRounded />
                                 </Link>
-                              </Card.Body>
-                            </Accordion.Collapse>
-                          ))}
-
-                        
-                        </Card>
-                      )
-                    )}
+                              </div>
+                            </Card.Header>
+                            {forks.map((fork, i) => (
+                              <Accordion.Collapse
+                                eventKey={`${parent_i}`}
+                                key={i}
+                              >
+                                <Card.Body className="d-flex w-100 flex-row justify-content-between">
+                                  <div>{fork.title}</div>
+                                  <Link to={`/${fork.sessionID}`}>
+                                    <ExitToAppRounded />
+                                  </Link>
+                                </Card.Body>
+                              </Accordion.Collapse>
+                            ))}
+                          </Card>
+                        )
+                      )}
                   </Accordion>
                 </Card.Body>
               </Card>
@@ -278,3 +312,29 @@ class Home extends React.Component {
 }
 
 export default Home;
+
+const MS_PER_HOUR = 1000 * 60 * 60;
+const HOURS_PER_DAY = 24;
+
+//expect time1 to be a string
+//returns string like "8 hours ago" or "1 day ago"
+const getTimeDiff = (time1) => {
+  const now = Date.now();
+  if (time1 === "") return "unknown";
+  const timeMS = Date.parse(time1);
+  // const timeMS = date.getValue();
+  try {
+    const diff = now - timeMS;
+    const hoursSince = Math.floor(diff / MS_PER_HOUR);
+    if (hoursSince == 0) return "less than an hour ago";
+    if (hoursSince < HOURS_PER_DAY) {
+      return `${hoursSince} hour${hoursSince == 1 ? "" : "s"} ago`;
+    }
+    //it's more than 23 hours
+    const daysSince = Math.floor(hoursSince / HOURS_PER_DAY);
+    return `${daysSince} day${daysSince == 1 ? "" : "s"} ago`;
+  } catch (e) {
+    console.log(e);
+    return "unknown";
+  }
+};

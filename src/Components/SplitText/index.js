@@ -254,6 +254,10 @@ class SplitText extends React.Component {
           self.setState({ titleLoaded: true });
           // handle error
         });
+
+        
+
+
     }
 
     //get the name of the user
@@ -472,6 +476,7 @@ class SplitText extends React.Component {
       inputfunTakesPrompt: true
     });
 
+
     try {
       Sk.misceval
         .asyncToPromise(function() {
@@ -488,6 +493,7 @@ class SplitText extends React.Component {
             () => self.packageMessage(self.state.lines, "codeOutput")
           )
         )
+        //when there's a compile or runtime error 
         .catch(e =>
           self.setState(
             prevState => ({

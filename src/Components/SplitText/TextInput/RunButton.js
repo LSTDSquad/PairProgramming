@@ -20,4 +20,4 @@ class RunButton extends React.Component{
   }
 }
 
-export default RunButton
+export default RunButton;

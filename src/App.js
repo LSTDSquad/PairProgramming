@@ -7,6 +7,7 @@ import SplitText from "./Components/SplitText/";
 import Home from "./Components/Home/";
 import { HashRouter as Router, Route, Switch } from "react-router-dom";
 import Amplify from "aws-amplify";
+import {I18n} from "aws-amplify";
 import awsconfig from "./aws-exports";
 import { withAuthenticator } from "aws-amplify-react"; // or 'aws-amplify-react-native';
 import "@aws-amplify/ui/dist/style.css";
@@ -63,9 +64,27 @@ const signUpConfig = {
   ]
 };
 
+const myTheme = {
+  signInButton: {'backgroundColor': '#28a745'},
+  container: {'color': 'pink'},
+
+}
+
+const authLabels = {
+  en: {
+
+    'Sign Up': 'Create a new PearProgram Account',
+    'My Customized Sign Up': 'Create a PearProgram Account',
+    'Sign in to your account': 'Welcome to PearProgram!\nSign into your PearProgram Account',
+  }
+}
+
+I18n.setLanguage('en');
+I18n.putVocabularies(authLabels);
+
 export default withAuthenticator(App, {
   signUpConfig,
   includeGreetings: false,
-  usernameAttributes: "email"
-  //theme: {myCustomTheme}
+  usernameAttributes: "email",
+  theme: myTheme,
 });

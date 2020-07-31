@@ -47,7 +47,7 @@ class TextOutput extends React.Component {
     {text}
     </div>);
 
-    return <div className="output-text">
+    return <div className="output-text" >
     {listItems}
     {/* <span>> </span><span contentEditable="true" ></span> */}
     {/* <div contentEditable="true" 

@@ -69,6 +69,16 @@ class SplitText extends React.Component {
     this.baseState = this.state;
     this.toggleTimer = null;
 
+    //this allows us to "open files" 
+    Sk.inBrowser = true;
+
+    //not working 
+    // Sk.externalLibraries = {
+    //   doctest: {
+    //     path: 'https://raw.githubusercontent.com/python/cpython/master/Lib/doctest.py',
+    //     dependencies: [],
+    //   }
+    // }
     //////                                       //////
     //////      Initial Pubnub setup             //////
     //////                                       //////
@@ -473,7 +483,7 @@ class SplitText extends React.Component {
         // }, 500);
         // // return window.prompt(prompt, "");
       },
-      inputfunTakesPrompt: true
+      inputfunTakesPrompt: true,
     });
 
 
@@ -795,6 +805,7 @@ class SplitText extends React.Component {
             />
           </Row>
         </Container>
+        <div id="hello.txt" style={{display: 'none'}}>{`hello\nworld\n`}</div>
       </div>
     ) : (
       <Loading />

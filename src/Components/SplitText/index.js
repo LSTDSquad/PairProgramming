@@ -42,6 +42,7 @@ class SplitText extends React.Component {
 
     this.state = {
       textLoaded: false,
+      startTime: String(),
       titleLoaded: false,
       text: "# happy coding!",
       sessionID: this.props.match.params.sessionID, //new session will default to 'unsaved' as the session ID
@@ -209,7 +210,18 @@ class SplitText extends React.Component {
   }
 
   componentDidMount() {
-    window.addEventListener("beforeunload", this.unsubscribeChannel);
+    window.addEventListener("beforeunload", (event) => {
+    // Cancel the event as stated by the standard.
+    event.preventDefault();
+    // Chrome requires returnValue to be set.
+    event.returnValue = '';
+
+    this.unsubscribeChannel()
+  });
+
+
+
+    this.setState({startTime: String(new Date())})
 
     //in case someone is trying to view on their phone.
     if (window.matchMedia("(max-width: 767px)").matches) {
@@ -375,6 +387,7 @@ class SplitText extends React.Component {
       type == "codeOutput" ||
       type == "confused" ||
       type == "resolve" ||
+      type == "comment" ||
       type == "toggleRequest"
     ) {
       const url = ENDPOINT + "updateTimeStamps/" + this.state.sessionID;
@@ -400,9 +413,59 @@ class SplitText extends React.Component {
     );
   }
 
+   putSessionLength = async () => {
+
+    const url = ENDPOINT + "updateSessionLength/" + this.state.sessionID;
+  
+    let who = this.state.user_name;
+    let data = { start: this.state.startTime, end: String(new Date()), who };
+
+    axios.put(url, data).then(
+      response => {
+        const message = response.data;
+        console.log(message);
+      },
+      error => {
+        console.log(error);
+      })
+
+  };
+
   unsubscribeChannel = () => {
+
     this.packageMessage("", "leave");
     this.PubNub.unsubscribeAll();
+
+  
+    console.log("calling...")
+    const done = this.putSessionLength()
+    console.log(done)
+    // const blob = new Blob([JSON.stringify(data)],headers);
+    // console.log(blob);
+
+    // var client = new XMLHttpRequest();
+    // client.open("PUT", url, false); // third parameter indicates sync xhr. :(
+    // client.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
+    // client.send(data);
+
+
+
+    // if (client.status === 200) {
+    //   console.log(client.responseText);
+    // }
+
+
+    //navigator.sendBeacon(url, data2);
+
+    // axios.put(url, data).then(
+    //   response => {
+    //     const message = response.data;
+    //     console.log(message);
+    //   },
+    //   error => {
+    //     console.log(error);
+    //   })
+
   };
 
   //////                                       //////
@@ -534,8 +597,8 @@ class SplitText extends React.Component {
         },
         error => {
           console.log(error);
-        }
-      );
+        });
+        
     }
   }
 
@@ -655,14 +718,18 @@ class SplitText extends React.Component {
   };
 
   componentWillUnmount() {
+
     //mostly removes users from PubNub channels on browserclose/refresh (not 100% successful)
     // this.setTimeout(3000);
     this.packageMessage("", "leave");
     this.unsubscribeChannel();
     window.removeEventListener("beforeunload", this.unsubscribeChannel);
+
   }
 
+
   basicSetState = stateChange => this.setState(stateChange);
+
 
   render() {
     const {

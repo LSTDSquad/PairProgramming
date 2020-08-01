@@ -5,15 +5,15 @@ class TextOutput extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      inputVal: "",
-    }
+      inputVal: ""
+    };
     this.handleChange = this.handleChange.bind(this);
   }
 
   componentDidUpdate(prevProps) {
     console.log(this.props.waitingForInput);
     if (!this.props.waitingForInput && this.state.inputVal) {
-      this.setState({inputVal: ""})
+      this.setState({ inputVal: "" });
     }
   }
 
@@ -23,48 +23,59 @@ class TextOutput extends React.Component {
     this.props.onTextChange(e.target.value);
   }
 
-  handleInputChange = (e) => {
-    this.setState({inputVal: e.target.value})
-  }
+  handleInputChange = e => {
+    this.setState({ inputVal: e.target.value });
+  };
 
-  handleInputSubmit= (e) => {
+  handleInputSubmit = e => {
     e.preventDefault();
     console.log(e);
-  }
-
-  // keyPress = (e) => {
-  //   if (e.keyCode == 13) {
-  //     // this.setState({inputVal: ""});
-  //   }
-  // }
-
+  };
   render() {
     const text = this.props.text;
-    const listItems = text.map((text, i) => 
-    <div key={i} 
-    //it's white for regular, green for input, red for error 
-    style={{color: text.indexOf('Error: ') >= 0 ? 'red' : (text.indexOf('>') == 0 ? '#28a745' : 'white')}}>
-    {text}
-    </div>);
+    const listItems = text.map((text, i) => (
+      <div
+        key={i}
+        //it's white for regular, green for input, red for error
+        style={{
+          color:
+            text.indexOf("Error: ") >= 0
+              ? "red"
+              : text.indexOf(">") == 0
+              ? "#28a745"
+              : "white"
+        }}
+      >
+        {text}
+      </div>
+    ));
 
-    return <div className="output-text" >
-    {listItems}
-    {/* <span>> </span><span contentEditable="true" ></span> */}
-    {/* <div contentEditable="true" 
+    return (
+      <div className="output-text">
+        {listItems}
+        {/* <span>> </span><span contentEditable="true" ></span> */}
+        {/* <div contentEditable="true" 
     className="std-input"
     onKeyDown={this.keyPress}
     ></div> */}
-  {/* hidden={this.props.waitingForInput ? "false" : "true"} */}
-    <textarea style={{display: this.props.waitingForInput ? "inherit" : "none"}} id="std-input" className="std-input"  value={this.state.inputVal} onChange={this.handleInputChange}/>
-    
-    {/* <form onSubmit={this.handleInputSubmit}>
+        {/* hidden={this.props.waitingForInput ? "false" : "true"} */}
+        <textarea
+          style={{ display: this.props.waitingForInput ? "inherit" : "none" }}
+          id="std-input"
+          className="std-input"
+          value={this.state.inputVal}
+          onChange={this.handleInputChange}
+        />
+
+        {/* <form onSubmit={this.handleInputSubmit}>
         <label>
           <input type="text" value={this.state.inputVal} onChange={this.handleInputChange} />
         </label>
         <input type="submit" value=""/>
 
       </form> */}
-    </div>;
+      </div>
+    );
     // return (
     //   <Terminal
     //       color='white'

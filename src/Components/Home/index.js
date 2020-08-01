@@ -5,20 +5,15 @@ import axios from "axios";
 import {
   Container,
   Row,
-  Toast,
   Col,
   Button,
   Card,
   Badge,
   Accordion
 } from "react-bootstrap";
-import { Switch, FormControlLabel } from "@material-ui/core";
-import { AmplifySignOut } from "@aws-amplify/ui-react";
-import { ArrowForwardRounded, ExitToAppRounded } from "@material-ui/icons";
+import { ExitToAppRounded } from "@material-ui/icons";
 import { ENDPOINT } from "../endpoints";
 import "./Home.css";
-import { Add } from "@material-ui/icons";
-import code_window from "../../resources/code_window.png";
 import Loading from "../Loading/";
 import { Link } from "react-router-dom";
 var async = require("async");
@@ -26,7 +21,6 @@ var async = require("async");
 class Home extends React.Component {
   constructor(props) {
     super(props);
-    // console.log(props);
     this.state = {
       user_name: String,
       user_id: String,
@@ -40,7 +34,6 @@ class Home extends React.Component {
     //get the name of the user
     Auth.currentAuthenticatedUser()
       .then(user => {
-        //console.log("user", user);
         this.setState(
           {
             user_name: user.attributes.name,
@@ -68,7 +61,6 @@ class Home extends React.Component {
   };
 
   getUserSessions = () => {
-    console.log(this.state.user_name);
     const url = ENDPOINT + "getSessions/" + this.state.user.attributes.email;
     var self = this;
     axios
@@ -104,7 +96,6 @@ class Home extends React.Component {
                 return axios.get(timestampURL);
               })
               .then(function(response) {
-                console.log("last edit", response.data);
                 sessionObj.lastEditTimeStamp = response.data;
                 async.map(
                   sessionObj.forks,
@@ -118,7 +109,6 @@ class Home extends React.Component {
                     //to load file name if it exists
                     axios.get(nameurl).then(function(response) {
                       if (response.data === "") {
-                        // console.error("no file name associated")
                         childObj.title = "Untitled";
                       } else {
                         childObj.title = response.data;
@@ -132,34 +122,13 @@ class Home extends React.Component {
                   }
                 );
               })
-
-              // .then(function(response) {
-              //   console.log("last edit", response.data);
-              //   sessionObj.lastEditTimeStamp = response.data;
-              //   callback(null, sessionObj);
-              // })
-
               .catch(function(error) {
                 // handle error
                 console.log(error);
                 callback(error, sessionObj);
               });
-
-            // const timestampURL = ENDPOINT + "getLastEdit/" + sessionID;
-
-            // axios
-            //   .get(timestampURL)
-            //   .then(function(response) {
-            //     console.log("last edit", response.data);
-            //     sessionObj.lastEditTimeStamp = response.data;
-            //   })
-            //   .catch(function(error) {
-            //     console.log(error);
-            //   });
           },
           function(err, sessionObjs) {
-            console.log(sessionObjs);
-
             //sessionObj is an array of objects, each with the fields sessionID and title
             self.setState({ prevSessions: sessionObjs, doneLoading: true });
           }
@@ -168,8 +137,6 @@ class Home extends React.Component {
       //in case they don't have an account in the userTable yet.
       .catch(err => self.setState({ doneLoading: true }));
   };
-
-  componentWillUnmount() {}
 
   render() {
     return this.state.doneLoading ? (
@@ -208,14 +175,6 @@ class Home extends React.Component {
                     Click here to create a new coding session!
                   </Button>
                 </Card.Text>
-                {/* <div> */}
-                {/* <span className="h4">Create a new coding session!</span> */}
-                {/* <ArrowForwardRounded fontSize="large" /> */}
-                {/* <Card.Img variant="bottom" src={code_window} /> */}
-                {/* <Button>
-                      <Add fontSize="large" />
-                    </Button> */}
-                {/* </div> */}
               </Card>
 
               <br />
@@ -229,14 +188,6 @@ class Home extends React.Component {
                     <Button variant="light">Read the guide</Button>
                   </a>
                 </Card.Text>
-                {/* <div> */}
-                {/* <span className="h4">Create a new coding session!</span> */}
-                {/* <ArrowForwardRounded fontSize="large" /> */}
-                {/* <Card.Img variant="bottom" src={code_window} /> */}
-                {/* <Button>
-                      <Add fontSize="large" />
-                    </Button> */}
-                {/* </div> */}
               </Card>
             </Col>
             <Col md="9">
@@ -322,17 +273,16 @@ const getTimeDiff = (time1) => {
   const now = Date.now();
   if (time1 === "") return "unknown";
   const timeMS = Date.parse(time1);
-  // const timeMS = date.getValue();
   try {
     const diff = now - timeMS;
     const hoursSince = Math.floor(diff / MS_PER_HOUR);
-    if (hoursSince == 0) return "less than an hour ago";
+    if (hoursSince === 0) return "less than an hour ago";
     if (hoursSince < HOURS_PER_DAY) {
-      return `${hoursSince} hour${hoursSince == 1 ? "" : "s"} ago`;
+      return `${hoursSince} hour${hoursSince === 1 ? "" : "s"} ago`;
     }
     //it's more than 23 hours
     const daysSince = Math.floor(hoursSince / HOURS_PER_DAY);
-    return `${daysSince} day${daysSince == 1 ? "" : "s"} ago`;
+    return `${daysSince} day${daysSince === 1 ? "" : "s"} ago`;
   } catch (e) {
     console.log(e);
     return "unknown";

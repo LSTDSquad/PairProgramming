@@ -1,6 +1,6 @@
 import React from "react";
 import axios from "axios";
-import { Button, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { ENDPOINT } from "../../endpoints";
 
 class CopyButton extends React.Component {
@@ -32,14 +32,8 @@ class CopyButton extends React.Component {
   };
 
   addFork = child => {
-
-    console.log(this.props.sessionID, child);
-
     const userURL = ENDPOINT + "updateChildren/" + this.props.sessionID;
-
-        let sessionID = this.state.sessionID;
         let data = { child: child };
-
         axios.put(userURL, data).then(
           response => {
             const message = response.data;
@@ -50,7 +44,6 @@ class CopyButton extends React.Component {
           }
         );
   }
-
 
   render() {
     return (
@@ -66,15 +59,6 @@ class CopyButton extends React.Component {
             Fork
           </Button>
         </OverlayTrigger>
-        {/* <Modal
-          size="md"
-          show={this.state.copyMsg}
-          onHide={() => this.setState({ copyMsg: false })}
-        >
-          <Modal.Header >
-            <Modal.Title>Created a copy of this session! You are now in the new session.</Modal.Title>
-          </Modal.Header>
-        </Modal> */}
       </div>
     );
   }

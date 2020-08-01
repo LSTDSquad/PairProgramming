@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Overlay,  Tooltip, Button } from "react-bootstrap";
+import { Overlay, Tooltip, Button } from "react-bootstrap";
 
 /*
 THIS COMPONENT USES REACT HOOKS! 

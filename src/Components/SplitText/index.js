@@ -15,7 +15,7 @@ import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { Auth } from "aws-amplify";
 
-import { Container, Row, Toast, Spinner } from "react-bootstrap";
+import { Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
 
 import { ENDPOINT } from "../endpoints";
@@ -70,10 +70,10 @@ class SplitText extends React.Component {
     this.baseState = this.state;
     this.toggleTimer = null;
 
-    //this allows us to "open files" 
+    //this allows us to "open files"
     Sk.inBrowser = true;
 
-    //not working 
+    //not working
     // Sk.externalLibraries = {
     //   doctest: {
     //     path: 'https://raw.githubusercontent.com/python/cpython/master/Lib/doctest.py',
@@ -177,7 +177,7 @@ class SplitText extends React.Component {
         } else if (message.Type === "toggleRequest") {
           if ((message.Who !== this.state.userID) & this.state.isPilot) {
             this.toggleAlert(message.Who, message.UserName);
-          } else if (message.Who == this.state.userID) {
+          } else if (message.Who === this.state.userID) {
             //it is the current user
             this.setState({ showCopilotToggleMsg: true });
 
@@ -220,25 +220,23 @@ class SplitText extends React.Component {
   }
 
   componentDidMount() {
-    window.addEventListener("beforeunload", (event) => {
-    // Cancel the event as stated by the standard.
-    event.preventDefault();
-    // Chrome requires returnValue to be set.
-    event.returnValue = '';
+    window.addEventListener("beforeunload", event => {
+      // Cancel the event as stated by the standard.
+      event.preventDefault();
+      // Chrome requires returnValue to be set.
+      event.returnValue = "";
 
-    this.unsubscribeChannel()
-  });
+      this.unsubscribeChannel();
+    });
 
-
-
-    this.setState({startTime: String(new Date())})
+    this.setState({ startTime: String(new Date()) });
 
     //in case someone is trying to view on their phone.
     if (window.matchMedia("(max-width: 767px)").matches) {
       this.setState({ onMobile: true });
     }
     let session = this.props.match.params.sessionID;
-    if (this.props.match.path != "/") {
+    if (this.props.match.path !== "/") {
       //must be a valid session
       console.log("session", session);
       const url = ENDPOINT + "getData/" + session;
@@ -253,7 +251,6 @@ class SplitText extends React.Component {
       this.handleSessionIDChange(session);
 
       const nameurl = ENDPOINT + "getName/" + session;
-      var self = this;
 
       //to load file name if it exists
       axios
@@ -276,10 +273,6 @@ class SplitText extends React.Component {
           self.setState({ titleLoaded: true });
           // handle error
         });
-
-        
-
-
     }
 
     //get the name of the user
@@ -394,11 +387,11 @@ class SplitText extends React.Component {
     };
 
     if (
-      type == "codeOutput" ||
-      type == "confused" ||
-      type == "resolve" ||
-      type == "comment" ||
-      type == "toggleRequest"
+      type === "codeOutput" ||
+      type === "confused" ||
+      type === "resolve" ||
+      type === "comment" ||
+      type === "toggleRequest"
     ) {
       const url = ENDPOINT + "updateTimeStamps/" + this.state.sessionID;
       let who = this.state.user_name;
@@ -423,10 +416,9 @@ class SplitText extends React.Component {
     );
   }
 
-   putSessionLength = async () => {
-
+  putSessionLength = async () => {
     const url = ENDPOINT + "updateSessionLength/" + this.state.sessionID;
-  
+
     let who = this.state.user_name;
     let data = { start: this.state.startTime, end: String(new Date()), who };
 
@@ -437,45 +429,17 @@ class SplitText extends React.Component {
       },
       error => {
         console.log(error);
-      })
-
+      }
+    );
   };
 
   unsubscribeChannel = () => {
-
     this.packageMessage("", "leave");
     this.PubNub.unsubscribeAll();
 
-  
-    console.log("calling...")
-    const done = this.putSessionLength()
-    console.log(done)
-    // const blob = new Blob([JSON.stringify(data)],headers);
-    // console.log(blob);
-
-    // var client = new XMLHttpRequest();
-    // client.open("PUT", url, false); // third parameter indicates sync xhr. :(
-    // client.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
-    // client.send(data);
-
-
-
-    // if (client.status === 200) {
-    //   console.log(client.responseText);
-    // }
-
-
-    //navigator.sendBeacon(url, data2);
-
-    // axios.put(url, data).then(
-    //   response => {
-    //     const message = response.data;
-    //     console.log(message);
-    //   },
-    //   error => {
-    //     console.log(error);
-    //   })
-
+    console.log("calling...");
+    const done = this.putSessionLength();
+    console.log(done);
   };
 
   //////                                       //////
@@ -502,8 +466,9 @@ class SplitText extends React.Component {
       if (
         Sk.builtinFiles === undefined ||
         Sk.builtinFiles["files"][x] === undefined
-      )
+      ) {
         throw "File not found: '" + x + "'";
+      }
       return Sk.builtinFiles["files"][x];
     };
 
@@ -523,8 +488,7 @@ class SplitText extends React.Component {
         document.getElementById("std-input").focus();
         return new Promise(function(resolve, reject) {
           document.getElementById("std-input").onkeyup = e => {
-            // console.log(e.keyCode);
-            if (e.keyCode == 13) {
+            if (e.keyCode === 13) {
               //add input to lines
               self.setState(
                 prevState => ({
@@ -546,9 +510,8 @@ class SplitText extends React.Component {
         // }, 500);
         // // return window.prompt(prompt, "");
       },
-      inputfunTakesPrompt: true,
+      inputfunTakesPrompt: true
     });
-
 
     try {
       Sk.misceval
@@ -566,7 +529,7 @@ class SplitText extends React.Component {
             () => self.packageMessage(self.state.lines, "codeOutput")
           )
         )
-        //when there's a compile or runtime error 
+        //when there's a compile or runtime error
         .catch(e =>
           self.setState(
             prevState => ({
@@ -594,7 +557,7 @@ class SplitText extends React.Component {
     }
 
     let sessionID = this.state.sessionID;
-    if (this.props.path != "/") {
+    if (this.props.path !== "/") {
       //if this session exists already, update the entry in dynamoDB
       const url = ENDPOINT + "updateRunCount/" + sessionID;
 
@@ -607,8 +570,8 @@ class SplitText extends React.Component {
         },
         error => {
           console.log(error);
-        });
-        
+        }
+      );
     }
   }
 
@@ -679,7 +642,7 @@ class SplitText extends React.Component {
     );
 
     let sessionID = this.state.sessionID;
-    if (this.props.path != "/") {
+    if (this.props.path !== "/") {
       //if this session exists already, update the entry in dynamoDB
       const url1 = ENDPOINT + "updateToggleCount/" + sessionID;
 
@@ -728,18 +691,14 @@ class SplitText extends React.Component {
   };
 
   componentWillUnmount() {
-
     //mostly removes users from PubNub channels on browserclose/refresh (not 100% successful)
     // this.setTimeout(3000);
     this.packageMessage("", "leave");
     this.unsubscribeChannel();
     window.removeEventListener("beforeunload", this.unsubscribeChannel);
-
   }
 
-
   basicSetState = stateChange => this.setState(stateChange);
-
 
   render() {
     const {
@@ -872,7 +831,7 @@ class SplitText extends React.Component {
             />
           </Row>
         </Container>
-        <div id="hello.txt" style={{display: 'none'}}>{`hello\nworld\n`}</div>
+        <div id="hello.txt" style={{ display: "none" }}>{`hello\nworld\n`}</div>
       </div>
     ) : (
       <Loading />

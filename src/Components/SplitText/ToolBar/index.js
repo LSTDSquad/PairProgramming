@@ -17,12 +17,9 @@ import {
 // import { Drawer } from "@material-ui/core";
 import axios from "axios";
 import { ENDPOINT } from "../../endpoints";
-import {Link} from "react-router-dom"
-
-import { AmplifySignOut } from "@aws-amplify/ui-react";
-
+import { Link } from "react-router-dom";
 import CopyButton from "./CopyButton";
-
+import TeammateCount from "./TeammateCount";
 import "./ToolBar.css";
 import HoverClickPopover from "../../HoverClickPopover";
 
@@ -44,15 +41,8 @@ class ToolBar extends React.Component {
     this.state = {
       //used for the hamburger menu
       drawerOpen: false,
-      fileName: this.props.title,
+      fileName: this.props.title
     };
-  }
-
-  componentDidMount() {
-
-
-    
-
   }
 
   ///// for the hamburger menu
@@ -77,21 +67,16 @@ class ToolBar extends React.Component {
   };
 
   //change file name
-  handleNameChange = (e) =>{
-    console.log(e.target.value)
-    
-    this.setState({fileName: e.target.value}, () => {
-      
+  handleNameChange = e => {
+    this.setState({ fileName: e.target.value }, () => {
       //This needs to be reworked a little
       //GoogleDocs makes it seem much smoother!
-      
-
       let data = { name: this.state.fileName };
       let sessionID = this.props.sessionID;
 
       const url = ENDPOINT + "updateName/" + sessionID;
 
-      console.log(url,data)
+      console.log(url, data);
 
       axios.put(url, data).then(
         response => {
@@ -102,26 +87,26 @@ class ToolBar extends React.Component {
           console.log(error);
         }
       );
-    })
-  }
+    });
+  };
 
-  //when use clicks away from filename input 
+  //when use clicks away from filename input
   moveAway = () => {
-    if(this.state.fileName === ""){ 
-          this.setState({fileName: "untitled document"})
-      }
-  }
+    if (this.state.fileName === "") {
+      this.setState({ fileName: "untitled document" });
+    }
+  };
 
   //goodle docs style where the whole name highlights if the title is "untitled document"
-  handleRenameClick = (e) =>{
+  handleRenameClick = e => {
     e.preventDefault();
-    console.log(e.target.value)
-    if(this.state.fileName === "untitled document"){
-      e.target.select()
+    console.log(e.target.value);
+    if (this.state.fileName === "untitled document") {
+      e.target.select();
     }
-  }
+  };
 
-  makeNewSession = (e) => {
+  makeNewSession = e => {
     e.preventDefault();
     const url = ENDPOINT + "setData";
     let data = { text: "# happy coding!" };
@@ -134,9 +119,8 @@ class ToolBar extends React.Component {
         // data = {timestamp: String(new Date())};
         // axios.post(lastEditurl, data).then( response => {
         //   console.log(response);
-          window.location.reload(true);
+        window.location.reload(true);
         // })
-        
       },
       error => {
         console.log(error);
@@ -157,9 +141,6 @@ class ToolBar extends React.Component {
         }
       >
         {/* Hamburger Menu
-
-
-
          */}
         {/* <Button variant="light" onClick={() => this.toggleDrawer(true)}>
           <Menu />
@@ -180,12 +161,15 @@ class ToolBar extends React.Component {
               <HomeRounded fontSize="large" />
             </Button>
           </Link>
-        <Form onSubmit={(e) => e.preventDefault()}>
-                <Form.Control type="text"  value={this.state.fileName} 
-                 onChange = {this.handleNameChange} 
-                 onClick = {this.handleRenameClick}
-                 onBlur = {this.moveAway}/>
-              </Form>
+          <Form onSubmit={e => e.preventDefault()}>
+            <Form.Control
+              type="text"
+              value={this.state.fileName}
+              onChange={this.handleNameChange}
+              onClick={this.handleRenameClick}
+              onBlur={this.moveAway}
+            />
+          </Form>
           <HoverClickPopover
             popover={({ ...props }) => (
               <Popover {...props}>
@@ -218,9 +202,6 @@ class ToolBar extends React.Component {
               <GetApp fontSize="large" />
             </Button>
           </OverlayTrigger>
-   
-          
-
         </div>
         <div>
           {this.props.isPilot ? (
@@ -314,12 +295,16 @@ class ToolBar extends React.Component {
           </label>
         </div>
         <div className="right-side-toolbar">
+          <TeammateCount userArray={this.props.userArray} />
           <OverlayTrigger
             trigger={["hover", "focus"]}
             overlay={<Tooltip>Create a new session</Tooltip>}
             placement="bottom"
           >
-            <Button onClick={this.makeNewSession} className="bg-light text-dark">
+            <Button
+              onClick={this.makeNewSession}
+              className="bg-light text-dark"
+            >
               <Add />
             </Button>
           </OverlayTrigger>

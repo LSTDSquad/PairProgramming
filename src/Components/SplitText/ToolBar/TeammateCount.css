@@ -1,0 +1,18 @@
+.teammates-icon {
+    margin: 0px 10px 0px 10px;
+    align-self: flex-end;
+}
+
+.teammates-container {
+    display: flex;
+    align-items: center;
+    margin: 10pt;
+    height: 100%;
+    flex-direction: column;
+}
+
+.teammates-number {
+    align-self: flex-end;
+    font-size: 10pt;
+    margin-right: 5pt;
+}

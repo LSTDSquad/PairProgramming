@@ -278,7 +278,7 @@ class TextInput extends React.Component {
       );
 
       const updateLastEditURL = ENDPOINT + "updateLastEdit/" + sessionID;
-      let editTimestamp = {timestamp: String(new Date())};
+      let editTimestamp = { timestamp: String(new Date()) };
       axios.put(updateLastEditURL, editTimestamp).then(
         response => {
           const message = response.data;
@@ -288,7 +288,6 @@ class TextInput extends React.Component {
           console.log(error);
         }
       );
-
     }
   }
 
@@ -417,7 +416,7 @@ class TextInput extends React.Component {
       return;
     }
     this.setState({ commentError: false });
-    console.log(this.state.selected,this.state.commentMsg);
+    console.log(this.state.selected, this.state.commentMsg);
 
     // let { start, end } = this.state.selected;
     let newToast = {
@@ -448,11 +447,11 @@ class TextInput extends React.Component {
     }
   };
 
-  recieveComment = (comment) =>{
+  recieveComment = comment => {
     //recieve comment from other user and create toast
     this.props.addToast(comment);
     this.setState({ showComment: false, commentMsg: "" });
-  }
+  };
 
   getCommentPopover = ({ ...props }) => (
     <Popover {...props} className="confused-popover">
@@ -541,7 +540,6 @@ class TextInput extends React.Component {
           hoverContent={
             <div>Click to ask your partner a question about the code</div>
           }
-          showPopover={this.state.showConfused}
           onClick={() => this.setState({ showConfused: true })}
           buttonContent={<HelpOutlineRounded />}
           usePopoverStateOutside={true}
@@ -555,7 +553,6 @@ class TextInput extends React.Component {
           buttonClass="comment-btn"
           showPopover={this.state.showComment} //to close the confused popover once submitted.
           hoverContent={<div>Click to make a public comment on the code</div>}
-          showPopover={this.state.showComment}
           onClick={() => this.setState({ showComment: true })}
           buttonContent={<CommentRounded />}
           usePopoverStateOutside={true}
@@ -576,27 +573,28 @@ class TextInput extends React.Component {
 
         {this.state.annotations && this.state.annotations.length > 0 && (
           <OverlayTrigger
-          trigger={["hover", "focus"]}
-          overlay={<Tooltip>Resolve the question</Tooltip>}
-          placement="right"
-        >
-          <Button
-            variant="success"
-            className="resolve-btn"
-            onClick={() => {
-              this.setState({ markers: [], annotations: [] }, () => {
-                var resolve = {
-                  markers: this.state.markers,
-                  annotations: this.state.annotations,
-                  showConfused: false
-                };
-                this.props.packageMessage(resolve, "resolve");
-              });
-              this.session.setAnnotations([]);
-            }}
+            trigger={["hover", "focus"]}
+            overlay={<Tooltip>Resolve the question</Tooltip>}
+            placement="right"
           >
-            <DoneRounded />
-          </Button></OverlayTrigger>
+            <Button
+              variant="success"
+              className="resolve-btn"
+              onClick={() => {
+                this.setState({ markers: [], annotations: [] }, () => {
+                  var resolve = {
+                    markers: this.state.markers,
+                    annotations: this.state.annotations,
+                    showConfused: false
+                  };
+                  this.props.packageMessage(resolve, "resolve");
+                });
+                this.session.setAnnotations([]);
+              }}
+            >
+              <DoneRounded />
+            </Button>
+          </OverlayTrigger>
         )}
       </Container>
     );

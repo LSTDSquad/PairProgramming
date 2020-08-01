@@ -14,6 +14,8 @@ import MyToast from "./MyToast";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { Auth } from "aws-amplify";
+import { Widget, addResponseMessage, renderCustomComponent} from 'react-chat-widget';
+import 'react-chat-widget/lib/styles.css';
 
 import { Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
@@ -21,6 +23,7 @@ import { Switch, FormControlLabel } from "@material-ui/core";
 import { ENDPOINT } from "../endpoints";
 
 const MAX_TOGGLE_WAIT = 10000; //10 seconds is the max amount of time before toggle gets handed over to copilot
+
 
 class SplitText extends React.Component {
   constructor(props) {
@@ -138,6 +141,14 @@ class SplitText extends React.Component {
             ...(this.state.cursors[message.Who] = what)
           });
         } else if (
+          (message.Type === "chat") &
+          (message.Who !== this.state.userID)
+        ) {
+
+           //this function is what allows partner's messages to be seen
+           addResponseMessage(message.What);
+        }
+        else if (
           (message.Type === "text") &
           (message.Who !== this.state.userID)
         ) {
@@ -284,9 +295,11 @@ class SplitText extends React.Component {
             user_name: user.attributes.name,
             userArray: [{ id: this.state.userID, name: user.attributes.name }]
           },
-          () =>
+          () =>{
             //announce to everyone that you've joined!
             this.packageMessage("", "join")
+
+          }
         );
 
         const userURL = ENDPOINT + "updateSessions/" + user.attributes.email; //user.attributes.name;
@@ -391,7 +404,8 @@ class SplitText extends React.Component {
       type === "confused" ||
       type === "resolve" ||
       type === "comment" ||
-      type === "toggleRequest"
+      type === "toggleRequest"||
+      type === "chat"
     ) {
       const url = ENDPOINT + "updateTimeStamps/" + this.state.sessionID;
       let who = this.state.user_name;
@@ -700,6 +714,20 @@ class SplitText extends React.Component {
 
   basicSetState = stateChange => this.setState(stateChange);
 
+    ////                              ////
+   ////      Chat Stuff              ////
+  ////                              ////
+
+  handleNewUserMessage = (newMessage) => {
+    console.log(`New message incoming! ${newMessage}`);
+    
+    // package chat text and send through PubNub
+    this.packageMessage(newMessage,"chat");
+
+  };
+
+
+
   render() {
     const {
       text,
@@ -727,6 +755,11 @@ class SplitText extends React.Component {
       </div>
     ) : this.state.textLoaded && this.state.titleLoaded ? (
       <div>
+        <Widget
+          handleNewUserMessage={this.handleNewUserMessage}
+          title = "PearProgram Chat"
+          subtitle = ""
+        />
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
             <Toast

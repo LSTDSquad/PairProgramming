@@ -23,6 +23,7 @@
     "react": "^16.13.1",
     "react-ace": "^8.1.0",
     "react-bootstrap": "^1.0.0",
+    "react-chat-widget": "^3.0.5",
     "react-confirm-alert": "^2.6.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.1.2",

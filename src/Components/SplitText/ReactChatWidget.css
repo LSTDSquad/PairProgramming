@@ -1,0 +1,14 @@
+/*
+for overrides
+*/
+.rcw-widget-container > .rcw-conversation-container {
+    box-shadow: none;
+}
+.rcw-conversation-container > .rcw-header {
+    background-color: #007bff;
+}
+
+.rcw-widget-container > .rcw-launcher {
+    background-color: #007bff;
+    box-shadow: none;
+}

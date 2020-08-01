@@ -16,6 +16,7 @@ import "react-confirm-alert/src/react-confirm-alert.css";
 import { Auth } from "aws-amplify";
 import { Widget, addResponseMessage, renderCustomComponent} from 'react-chat-widget';
 import 'react-chat-widget/lib/styles.css';
+import './ReactChatWidget.css';
 
 import { Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
@@ -146,7 +147,7 @@ class SplitText extends React.Component {
         ) {
 
            //this function is what allows partner's messages to be seen
-           addResponseMessage(message.What);
+           addResponseMessage(`${message.UserName}: ${message.What}`);
         }
         else if (
           (message.Type === "text") &

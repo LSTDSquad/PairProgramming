@@ -728,6 +728,22 @@ class SplitText extends React.Component {
     // package chat text and send through PubNub
     this.packageMessage(newMessage,"chat");
 
+    const url = ENDPOINT + "updateChat/" + this.state.sessionID;
+    let who = this.state.user_name;
+    let data = { message: String(new Date()), who, newMessage};
+    console.log(1, data);
+
+    axios.put(url, data).then(
+      response => {
+        const message = response.data;
+        console.log(message);
+      },
+      error => {
+        console.log(error);
+      }
+    );
+
+
   };
 
 

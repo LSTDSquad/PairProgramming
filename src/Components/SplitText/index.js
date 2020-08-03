@@ -96,6 +96,8 @@ class SplitText extends React.Component {
       presenceTimeout: 20
     });
 
+    this.MessageAuthor = ({author}) => <div className="author-message">{author}</div>;
+
     //add PubNub listener to handle messages
     this.PubNub.addListener({
       message: ({ channel, message }) => {
@@ -145,9 +147,10 @@ class SplitText extends React.Component {
           (message.Type === "chat") &
           (message.Who !== this.state.userID)
         ) {
-
+          //this is what lets you know who send the message
+          renderCustomComponent(this.MessageAuthor, {author: message.UserName}, false);
            //this function is what allows partner's messages to be seen
-           addResponseMessage(`${message.UserName}: ${message.What}`);
+           addResponseMessage(`${message.What}`);
         }
         else if (
           (message.Type === "text") &

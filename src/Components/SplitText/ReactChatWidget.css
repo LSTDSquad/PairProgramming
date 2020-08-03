@@ -12,3 +12,8 @@ for overrides
     background-color: #007bff;
     box-shadow: none;
 }
+
+.rcw-message > .author-message {
+    margin-bottom: -10px;
+    color: #007bff;
+}

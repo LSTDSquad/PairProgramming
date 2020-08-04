@@ -48,7 +48,7 @@ class SplitText extends React.Component {
     this.pilotHandoff = this.pilotHandoff.bind(this);
     this.basicSetState = this.basicSetState.bind(this);
     this.handleDownloadChange = this.handleDownloadChange.bind(this);
-    this.changeFirstTimerModalState = this.changeFirstTimerModalState.bind(this);
+    this.changeShowFirstTimerModal = this.changeShowFirstTimerModal.bind(this);
     const userID = Math.round(Math.random() * 1000000).toString();
 
     this.state = {
@@ -77,7 +77,7 @@ class SplitText extends React.Component {
       fileName: "",
       waitingForInput: false,
       showDownloadForm: false,
-      isFirstSessionEver: false,
+      isFirstSessionEver: false
     };
 
     this.baseState = this.state;
@@ -318,8 +318,7 @@ class SplitText extends React.Component {
           ENDPOINT + "getSessions/" + user.attributes.email;
         axios.get(getSessionsUrl).then(
           response => {
-            if (response.data.length > 0) {
-              //change to be opposite later
+            if (response.data.length === 0) {
               this.setState({ isFirstSessionEver: true });
             }
             //now, update the sessions
@@ -776,8 +775,8 @@ class SplitText extends React.Component {
     this.setState({ showDownloadForm: newValue });
   }
 
-  changeFirstTimerModalState(newValue) {
-    this.setState({isFirstSessionEver: newValue})
+  changeShowFirstTimerModal(newValue) {
+    this.setState({ isFirstSessionEver: newValue });
   }
 
   render() {
@@ -806,53 +805,17 @@ class SplitText extends React.Component {
         accessing this programming tool with a tablet or computer.
       </div>
     ) : this.state.textLoaded && this.state.titleLoaded ? (
-      <div>
+      <div >
         <PredownloadModal
           show={this.state.showDownloadForm}
           handleDownloadChange={this.handleDownloadChange}
           handleFinishDownload={this.handleFinishDownload}
         />
-        <FirstTimerModal 
+        <FirstTimerModal
           show={this.state.isFirstSessionEver}
-          changeFirstTimerModalState={this.changeFirstTimerModalState}
-          />
-        {/* <Modal
-          show={this.state.showDownloadForm}
-          onHide={() => this.setState({ showDownloadForm: false })}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>
-              Share your experience with us to finish downloading
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div className="iframe-container">
-              <iframe
-                src="https://docs.google.com/forms/d/e/1FAIpQLScakCr22MNhfORl2fa2Z3_S0euVI4iuDJkp4jjEYt3xSmViYg/viewform?embedded=true"
-                width="100%"
-                height="500"
-                frameborder="0"
-                marginheight="0"
-                marginwidth="0"
-              >
-                Loading…
-              </iframe>
-            </div>
-
-            <Button
-              variant="light"
-              type="submit"
-              onClick={this.handleFinishDownload}
-            >
-              I have submitted the form...now finish downloading!
-            </Button>
-          </Modal.Body>
-        </Modal> */}
-        <Widget
-          handleNewUserMessage={this.handleNewUserMessage}
-          title="Teammate Chat"
-          subtitle=""
+          changeFirstTimerModalState={this.changeShowFirstTimerModal}
         />
+
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
             <Toast
@@ -879,10 +842,11 @@ class SplitText extends React.Component {
               pilotHandoff={this.pilotHandoff}
               handleDownload={this.handleDownload}
               title={this.state.fileName}
+              changeShowFirstTimerModal={this.changeShowFirstTimerModal}
               // handleToggle={this.toggleRole}
             />
           </Row>
-          <Row noGutters={true}>
+          <Row noGutters={true}  className="split-text-container">
             <SplitPane
               //One side input, other side output, once we get app to run code?
               split="vertical"
@@ -954,6 +918,12 @@ class SplitText extends React.Component {
                 />
               }
               label="See past questions"
+            />
+            <Widget
+              handleNewUserMessage={this.handleNewUserMessage}
+              title="Teammate Chat"
+              subtitle=""
+             
             />
           </Row>
         </Container>

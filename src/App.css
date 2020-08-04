@@ -93,5 +93,7 @@
   --amplify-primary-tint: #3b9aff;
   --amplify-primary-shade: #003e81;
   --amplify-font-family: -apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+  --my-bootstrap-yellow: #ffc107;
+  --my-bootstrap-red: #dc3545;
 }
 

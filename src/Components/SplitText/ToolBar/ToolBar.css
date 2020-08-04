@@ -28,3 +28,8 @@
 .role-display {
     font-size: 1.4em;
 }
+
+svg.MuiSvgIcon-root.toolbar-icon  {
+    font-size: 50px;
+    color: white;
+}

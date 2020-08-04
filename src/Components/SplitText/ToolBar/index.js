@@ -13,7 +13,8 @@ import {
   SwapHoriz,
   GetApp,
   EmojiObjectsRounded,
-  Add
+  Add,
+  HelpOutlineRounded
 } from "@material-ui/icons";
 // import { Drawer } from "@material-ui/core";
 import axios from "axios";
@@ -34,6 +35,7 @@ import HoverClickPopover from "../../HoverClickPopover";
 /////     packageMessage
 /////     handleIDChange
 /////     userArray
+/////     changeShowFirstTimerModal
 ///
 class ToolBar extends React.Component {
   constructor(props) {
@@ -311,7 +313,8 @@ class ToolBar extends React.Component {
         </div>
         <div className="right-side-toolbar">
           <TeammateCount userArray={this.props.userArray} />
-          <OverlayTrigger
+          {/* CREATING NEW SESSION */}
+          {/* <OverlayTrigger
             trigger={["hover", "focus"]}
             overlay={<Tooltip>Create a new session</Tooltip>}
             placement="bottom"
@@ -322,7 +325,7 @@ class ToolBar extends React.Component {
             >
               <Add />
             </Button>
-          </OverlayTrigger>
+          </OverlayTrigger> */}
           <CopyButton
             //component to save session to backend
             text={this.props.text}
@@ -330,7 +333,8 @@ class ToolBar extends React.Component {
             sessionID={this.props.sessionID}
             onSessionIDChange={this.props.handleIDChange}
           />
-          <Button
+          {/* LOGGING OUT */}
+          {/* <Button
             className="m-2 bg-dark"
             onClick={() => {
               this.state.user.signOut();
@@ -338,8 +342,12 @@ class ToolBar extends React.Component {
             }}
           >
             Log out
+          </Button> */}
+          <Button 
+            onClick={() => this.props.changeShowFirstTimerModal(true)}
+            >
+            <HelpOutlineRounded className="toolbar-icon"></HelpOutlineRounded>
           </Button>
-          {/* <AmplifySignOut /> */}
         </div>
       </Navbar>
     );

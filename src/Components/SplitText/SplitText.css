@@ -1,3 +1,7 @@
+.split-text-container > .rcw-widget-container {
+    z-index: 10;
+}
+
 button.chat-btn {
     position: absolute;
     bottom: 0px;

@@ -1,0 +1,19 @@
+/* .my-modal-container {
+    z-index: 15;
+} */
+
+.my-modal-footer.modal-footer {
+    display: flex;
+    /* flex-direction: row; */
+    justify-content: space-between;
+    flex-wrap: nowrap;
+
+}
+
+button.first-next-button {
+    margin-left: auto;
+}
+
+button.finish-modal-button {
+    white-space: nowrap;
+}

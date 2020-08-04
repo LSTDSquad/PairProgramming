@@ -22,7 +22,7 @@ const TeammateCount = props => {
       >
               <div className="teammates-container">
           <span className="teammates-number">{userArray.length}</span>
-          <PeopleAltRounded className="teammates-icon" fontSize="medium" />
+          <PeopleAltRounded className="teammates-icon" />
         </div>
         
       </OverlayTrigger>

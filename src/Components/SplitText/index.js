@@ -14,17 +14,20 @@ import MyToast from "./MyToast";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { Auth } from "aws-amplify";
-import { Widget, addResponseMessage, renderCustomComponent} from 'react-chat-widget';
-import 'react-chat-widget/lib/styles.css';
-import './ReactChatWidget.css';
+import {
+  Widget,
+  addResponseMessage,
+  renderCustomComponent
+} from "react-chat-widget";
+import "react-chat-widget/lib/styles.css";
+import "./ReactChatWidget.css";
 
-import { Container, Row, Toast } from "react-bootstrap";
+import { Form, Button, Modal, Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
 
 import { ENDPOINT } from "../endpoints";
 
 const MAX_TOGGLE_WAIT = 10000; //10 seconds is the max amount of time before toggle gets handed over to copilot
-
 
 class SplitText extends React.Component {
   constructor(props) {
@@ -68,7 +71,8 @@ class SplitText extends React.Component {
       showCopilotToggleMsg: false,
       msRemaining: MAX_TOGGLE_WAIT,
       fileName: "",
-      waitingForInput: false
+      waitingForInput: false,
+      showDownloadForm: false
     };
 
     this.baseState = this.state;
@@ -96,12 +100,13 @@ class SplitText extends React.Component {
       presenceTimeout: 20
     });
 
-    this.MessageAuthor = ({author}) => <div className="author-message">{author}</div>;
+    this.MessageAuthor = ({ author }) => (
+      <div className="author-message">{author}</div>
+    );
 
     //add PubNub listener to handle messages
     this.PubNub.addListener({
       message: ({ channel, message }) => {
-        // console.log(message);
         if (message.Type === "join" && message.Who !== this.state.userID) {
           console.log(message.Who, "joining");
           //notify everyone besides the person who joined
@@ -111,7 +116,7 @@ class SplitText extends React.Component {
           this.setState({ userArray: userArr });
           this.packageMessage(userArr, "userArray"); //to tell the person who just joined what the userARray is
         } else if (message.Type === "userArray") {
-          console.log(message.What, "user Array");
+          // console.log(message.What, "user Array");
           //after the first person joins, they will get this package
           //this could also be used whenever someone else updates the user array.
           this.setState({ userArray: message.What }, () => this.assignRole());
@@ -119,7 +124,7 @@ class SplitText extends React.Component {
           message.Type === "leave" &&
           message.Who !== this.state.userID
         ) {
-          console.log(message.Who, "leaving");
+          // console.log(message.Who, "leaving");
           let userArr = this.state.userArray;
           const i = userArr.map(user => user.id).indexOf(message.Who);
           if (i !== -1) {
@@ -132,13 +137,13 @@ class SplitText extends React.Component {
           message.Who !== this.state.userID
         ) {
           //if message containing cursor change info comes in, update cursor object in setState
-          console.log(
-            "cursor message",
-            "curr user",
-            this.state.userID,
-            "origin:",
-            message.Who
-          );
+          // console.log(
+          //   "cursor message",
+          //   "curr user",
+          //   this.state.userID,
+          //   "origin:",
+          //   message.Who
+          // );
           let what = { msg: message.What, name: message.UserName };
           this.setState({
             ...(this.state.cursors[message.Who] = what)
@@ -148,11 +153,14 @@ class SplitText extends React.Component {
           (message.Who !== this.state.userID)
         ) {
           //this is what lets you know who send the message
-          renderCustomComponent(this.MessageAuthor, {author: message.UserName}, false);
-           //this function is what allows partner's messages to be seen
-           addResponseMessage(`${message.What}`);
-        }
-        else if (
+          renderCustomComponent(
+            this.MessageAuthor,
+            { author: message.UserName },
+            false
+          );
+          //this function is what allows partner's messages to be seen
+          addResponseMessage(`${message.What}`);
+        } else if (
           (message.Type === "text") &
           (message.Who !== this.state.userID)
         ) {
@@ -253,7 +261,7 @@ class SplitText extends React.Component {
     let session = this.props.match.params.sessionID;
     if (this.props.match.path !== "/") {
       //must be a valid session
-      console.log("session", session);
+      // console.log("session", session);
       const url = ENDPOINT + "getData/" + session;
       var self = this;
 
@@ -271,16 +279,12 @@ class SplitText extends React.Component {
       axios
         .get(nameurl)
         .then(function(response) {
-          console.log(response.data);
+          // console.log(response.data);
 
           if (response.data === undefined) {
-            console.log(1);
             self.setState({ fileName: "untitled document" });
           } else {
-            console.log(2);
-            self.setState({ fileName: response.data }, () => {
-              console.log(3);
-            });
+            self.setState({ fileName: response.data }, () => {});
           }
           self.setState({ titleLoaded: true });
         })
@@ -293,16 +297,15 @@ class SplitText extends React.Component {
     //get the name of the user
     Auth.currentAuthenticatedUser()
       .then(user => {
-        console.log(user);
+        // console.log(user);
         this.setState(
           {
             user_name: user.attributes.name,
             userArray: [{ id: this.state.userID, name: user.attributes.name }]
           },
-          () =>{
+          () => {
             //announce to everyone that you've joined!
-            this.packageMessage("", "join")
-
+            this.packageMessage("", "join");
           }
         );
 
@@ -314,7 +317,7 @@ class SplitText extends React.Component {
         axios.put(userURL, data).then(
           response => {
             const message = response.data;
-            console.log(message);
+            // console.log(message);
           },
           error => {
             console.log(error);
@@ -343,7 +346,7 @@ class SplitText extends React.Component {
       axios.put(url1, data).then(
         response => {
           const message = response.data;
-          console.log(message);
+          // console.log(message);
         },
         error => {
           console.log(error);
@@ -408,18 +411,18 @@ class SplitText extends React.Component {
       type === "confused" ||
       type === "resolve" ||
       type === "comment" ||
-      type === "toggleRequest"||
+      type === "toggleRequest" ||
       type === "chat"
     ) {
       const url = ENDPOINT + "updateTimeStamps/" + this.state.sessionID;
       let who = this.state.user_name;
       let data = { event: String(new Date()), who, type };
-      console.log(1, data);
+      // console.log(1, data);
 
       axios.put(url, data).then(
         response => {
           const message = response.data;
-          console.log(message);
+          // console.log(message);
         },
         error => {
           console.log(error);
@@ -584,7 +587,7 @@ class SplitText extends React.Component {
       axios.put(url, data).then(
         response => {
           const message = response.data;
-          console.log(message);
+          // console.log(message);
         },
         error => {
           console.log(error);
@@ -594,6 +597,11 @@ class SplitText extends React.Component {
   }
 
   handleDownload = () => {
+    this.setState({ showDownloadForm: true });
+  };
+
+  handleFinishDownload = () => {
+    this.setState({ showDownloadForm: false });
     const element = document.createElement("a");
     const file = new Blob([this.state.text], { type: "text/x-python" });
     element.href = URL.createObjectURL(file);
@@ -652,7 +660,7 @@ class SplitText extends React.Component {
     axios.put(url, data).then(
       response => {
         const message = response.data;
-        console.log(message);
+        // console.log(message);
       },
       error => {
         console.log(error);
@@ -669,7 +677,7 @@ class SplitText extends React.Component {
       axios.put(url1, data).then(
         response => {
           const message = response.data;
-          console.log(message);
+          // console.log(message);
         },
         error => {
           console.log(error);
@@ -718,15 +726,12 @@ class SplitText extends React.Component {
 
   basicSetState = stateChange => this.setState(stateChange);
 
-    ////                              ////
-   ////      Chat Stuff              ////
+  ////                              ////
+  ////      Chat Stuff              ////
   ////                              ////
 
-  handleNewUserMessage = (newMessage) => {
-    console.log(`New message incoming! ${newMessage}`);
-    
-    // package chat text and send through PubNub
-    this.packageMessage(newMessage,"chat");
+  handleNewUserMessage = newMessage => {
+    // console.log(`New message incoming! ${newMessage}`);
 
     const url = ENDPOINT + "updateChat/" + this.state.sessionID;
     let who = this.state.user_name;
@@ -744,9 +749,9 @@ class SplitText extends React.Component {
     );
 
 
+    // package chat text and send through PubNub
+    this.packageMessage(newMessage, "chat");
   };
-
-
 
   render() {
     const {
@@ -775,10 +780,47 @@ class SplitText extends React.Component {
       </div>
     ) : this.state.textLoaded && this.state.titleLoaded ? (
       <div>
+        <Modal
+          show={this.state.showDownloadForm}
+          onHide={() => this.setState({ showDownloadForm: false })}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>
+              Share your experience with us to finish downloading
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="iframe-container">
+              <iframe
+                src="https://docs.google.com/forms/d/e/1FAIpQLScakCr22MNhfORl2fa2Z3_S0euVI4iuDJkp4jjEYt3xSmViYg/viewform?embedded=true"
+                width="100%"
+                height="500"
+                frameborder="0"
+                marginheight="0"
+                marginwidth="0"
+              >
+                Loading…
+              </iframe>
+            </div>
+            {/* <Form onSubmit={this.handleFinishDownload}>
+              <Form.Group controlId="formBasicCheckbox">
+                <Form.Check type="checkbox" label="I have filled out and clicked 'submit' on the form" />
+              </Form.Group> */}
+            <Button
+              variant="primary"
+              type="submit"
+              onClick={this.handleFinishDownload}
+            >
+              I have submitted the form...now finish downloading!
+            </Button>
+            {/* </Form> */}
+         
+          </Modal.Body>
+        </Modal>
         <Widget
           handleNewUserMessage={this.handleNewUserMessage}
-          title = "PearProgram Chat"
-          subtitle = ""
+          title="Teammate Chat"
+          subtitle=""
         />
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>

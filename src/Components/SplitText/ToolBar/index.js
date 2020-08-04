@@ -7,6 +7,7 @@ import {
   OverlayTrigger,
   Tooltip
 } from "react-bootstrap";
+import { Auth } from "aws-amplify";
 import {
   HomeRounded,
   SwapHoriz,
@@ -41,8 +42,22 @@ class ToolBar extends React.Component {
     this.state = {
       //used for the hamburger menu
       drawerOpen: false,
-      fileName: this.props.title
+      fileName: this.props.title,
+      user: null, //from aws auth
     };
+  }
+
+  componentDidMount () {
+    //get the name of the user
+    Auth.currentAuthenticatedUser()
+      .then(user => {
+        this.setState(
+          {
+            user: user
+          }
+        );
+      })
+      .catch(err => console.log(err));
   }
 
   ///// for the hamburger menu

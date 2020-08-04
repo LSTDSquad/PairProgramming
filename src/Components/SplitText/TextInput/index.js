@@ -84,7 +84,10 @@ class TextInput extends React.Component {
     };
     ace_div.onmouseup = () => {
       //after 500ms, clickedRecently is false.
-      setTimeout(() => this.setState({ clickedRecently: false }), 500);
+      const timer = setTimeout(() => {
+        this.setState({ clickedRecently: false })
+        clearTimeout(timer);
+      }, 500);
     };
 
     this.session = this.editor.getSession();
@@ -108,8 +111,11 @@ class TextInput extends React.Component {
         keyCode === 40
       ) {
         currentComponent.setState({ clickedRecently: true });
-        setTimeout(
-          () => currentComponent.setState({ clickedRecently: false }),
+        const timer = setTimeout(
+          () => {
+            currentComponent.setState({ clickedRecently: false });
+            clearTimeout(timer);
+          },
           500
         );
       }
@@ -148,7 +154,7 @@ class TextInput extends React.Component {
     for (const userID of Object.keys(this.curMgr._cursors)) {
       //remove other user's cursors from previous session from the cursor manager on sessionID change
       if (Object.keys(this.props.cursors).includes(userID) === false) {
-        console.log("removed cursor");
+        // console.log("removed cursor");
         this.curMgr.removeCursor(userID);
       }
     }
@@ -178,7 +184,7 @@ class TextInput extends React.Component {
           JSON.stringify(this.curMgr._cursors[key]._position)
       ) {
         //move their cursor on this window
-        console.log("setting cursor", key, value, this.curMgr._cursors[key]);
+        // console.log("setting cursor", key, value, this.curMgr._cursors[key]);
         this.curMgr.setCursor(key, { row: value.row, column: value.column });
       }
     }
@@ -212,9 +218,9 @@ class TextInput extends React.Component {
     }
 
     //to give the document time to register the mouse click!
-    setTimeout(
+    const timer = setTimeout(
       () => {
-        console.log(event.type, this.state.clickedRecently);
+        // console.log(event.type, this.state.clickedRecently);
         //If the cursor changes due to arrow key movement
         // 37-40 are the key codes corresponding to arrow keys
         // 0 corresponds to mouse click //actually i dont' think it does
@@ -222,7 +228,7 @@ class TextInput extends React.Component {
           //it genuinely thinks it's changing the cursor. event type stays as changeCursor.
           event.preventDefault();
           var cursorPosition = e.getCursor();
-          console.log(cursorPosition);
+          // console.log(cursorPosition);
           //current issue: somehow it thinks there are mouse clicks when there really arent'
           this.props.packageMessage(cursorPosition, "cursor");
         }
@@ -252,6 +258,7 @@ class TextInput extends React.Component {
           this.props.packageMessage(e, "text"); //synch text through pubnub
           this.handleTextChange(e); //save updated text to dynamoDB
         }
+        clearTimeout(timer);
         //the cursor thing is only a problem for the copilots. the pilot when typing is totally ok.
         //300ms is about enough time to make sure the clickedRecently state is already set.
       },
@@ -270,7 +277,7 @@ class TextInput extends React.Component {
       axios.put(updateTextURL, data).then(
         response => {
           const message = response.data;
-          console.log(message);
+          // console.log(message);
         },
         error => {
           console.log(error);
@@ -282,7 +289,7 @@ class TextInput extends React.Component {
       axios.put(updateLastEditURL, editTimestamp).then(
         response => {
           const message = response.data;
-          console.log(message);
+          // console.log(message);
         },
         error => {
           console.log(error);
@@ -316,7 +323,7 @@ class TextInput extends React.Component {
         response => {
           // console.log(response);
           const message = response.data;
-          console.log(message);
+          // console.log(message);
         },
         error => {
           console.log(error);
@@ -416,7 +423,7 @@ class TextInput extends React.Component {
       return;
     }
     this.setState({ commentError: false });
-    console.log(this.state.selected, this.state.commentMsg);
+    // console.log(this.state.selected, this.state.commentMsg);
 
     // let { start, end } = this.state.selected;
     let newToast = {

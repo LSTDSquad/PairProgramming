@@ -26,7 +26,8 @@ class Home extends React.Component {
       user_id: String,
       prevSessions: [],
       doneLoading: false,
-      allForks: []
+      allForks: [],
+      user: null,
     };
   }
 

@@ -4,6 +4,8 @@ import TextOutput from "./TextOutput/";
 import TextInput from "./TextInput/";
 import ToolBar from "./ToolBar/";
 import Loading from "../Loading/";
+import PredownloadModal from "./PredownloadModal";
+import FirstTimerModal from "./FirstTimerModal";
 import PubNub from "pubnub";
 import axios from "axios";
 import Sk from "skulpt";
@@ -45,6 +47,8 @@ class SplitText extends React.Component {
     this.packageMessage = this.packageMessage.bind(this);
     this.pilotHandoff = this.pilotHandoff.bind(this);
     this.basicSetState = this.basicSetState.bind(this);
+    this.handleDownloadChange = this.handleDownloadChange.bind(this);
+    this.changeFirstTimerModalState = this.changeFirstTimerModalState.bind(this);
     const userID = Math.round(Math.random() * 1000000).toString();
 
     this.state = {
@@ -72,7 +76,8 @@ class SplitText extends React.Component {
       msRemaining: MAX_TOGGLE_WAIT,
       fileName: "",
       waitingForInput: false,
-      showDownloadForm: false
+      showDownloadForm: false,
+      isFirstSessionEver: false,
     };
 
     this.baseState = this.state;
@@ -309,18 +314,33 @@ class SplitText extends React.Component {
           }
         );
 
-        const userURL = ENDPOINT + "updateSessions/" + user.attributes.email; //user.attributes.name;
-
-        let sessionID = this.state.sessionID;
-        let data = { session: sessionID };
-
-        axios.put(userURL, data).then(
+        const getSessionsUrl =
+          ENDPOINT + "getSessions/" + user.attributes.email;
+        axios.get(getSessionsUrl).then(
           response => {
-            const message = response.data;
-            // console.log(message);
+            if (response.data.length > 0) {
+              //change to be opposite later
+              this.setState({ isFirstSessionEver: true });
+            }
+            //now, update the sessions
+            const userURL =
+              ENDPOINT + "updateSessions/" + user.attributes.email;
+
+            let sessionID = this.state.sessionID;
+            let data = { session: sessionID };
+
+            axios.put(userURL, data).then(
+              response => {
+                const message = response.data;
+                // console.log(message);
+              },
+              error => {
+                console.log(error);
+              }
+            );
           },
           error => {
-            console.log(error);
+            console.error(error);
           }
         );
       })
@@ -735,7 +755,7 @@ class SplitText extends React.Component {
 
     const url = ENDPOINT + "updateChat/" + this.state.sessionID;
     let who = this.state.user_name;
-    let data = { message: String(new Date()), who, newMessage};
+    let data = { message: String(new Date()), who, newMessage };
     console.log(1, data);
 
     axios.put(url, data).then(
@@ -748,10 +768,17 @@ class SplitText extends React.Component {
       }
     );
 
-
     // package chat text and send through PubNub
     this.packageMessage(newMessage, "chat");
   };
+
+  handleDownloadChange(newValue) {
+    this.setState({ showDownloadForm: newValue });
+  }
+
+  changeFirstTimerModalState(newValue) {
+    this.setState({isFirstSessionEver: newValue})
+  }
 
   render() {
     const {
@@ -780,7 +807,16 @@ class SplitText extends React.Component {
       </div>
     ) : this.state.textLoaded && this.state.titleLoaded ? (
       <div>
-        <Modal
+        <PredownloadModal
+          show={this.state.showDownloadForm}
+          handleDownloadChange={this.handleDownloadChange}
+          handleFinishDownload={this.handleFinishDownload}
+        />
+        <FirstTimerModal 
+          show={this.state.isFirstSessionEver}
+          changeFirstTimerModalState={this.changeFirstTimerModalState}
+          />
+        {/* <Modal
           show={this.state.showDownloadForm}
           onHide={() => this.setState({ showDownloadForm: false })}
         >
@@ -802,21 +838,16 @@ class SplitText extends React.Component {
                 Loading…
               </iframe>
             </div>
-            {/* <Form onSubmit={this.handleFinishDownload}>
-              <Form.Group controlId="formBasicCheckbox">
-                <Form.Check type="checkbox" label="I have filled out and clicked 'submit' on the form" />
-              </Form.Group> */}
+
             <Button
-              variant="primary"
+              variant="light"
               type="submit"
               onClick={this.handleFinishDownload}
             >
               I have submitted the form...now finish downloading!
             </Button>
-            {/* </Form> */}
-         
           </Modal.Body>
-        </Modal>
+        </Modal> */}
         <Widget
           handleNewUserMessage={this.handleNewUserMessage}
           title="Teammate Chat"

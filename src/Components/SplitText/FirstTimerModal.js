@@ -22,7 +22,7 @@ const introductionAndGuidelines = () => {
       width="100%"
       height="600"
       frameBorder="0"
-      src="https://docs.google.com/document/d/e/2PACX-1vQHLb35Va8gyIQH3RLhlCKJHz94jfNlPtZx13LPmaul3UJYzgE5Om7HJ0g1hgnlMeSRVMy68NEOMUfh/pub?embedded=true"
+      src="https://docs.google.com/document/d/e/2PACX-1vTyfkipq9maxBADkQEUA_QSqoG-xBZQFyXE02MbLJeZe9pq2TeETYHnrIONG70AyVCDY2_cM-ZLB0Z7/pub?embedded=true"
     ></iframe>
   );
 };
@@ -66,9 +66,8 @@ const FirstTimerModal = props => {
           <Button
             className={pageNumber === 0 ? "first-next-button" : ""}
             onClick={() => {
-                console.log(pageNumber);
-                setPageNumber(pageNumber + 1);
-                
+              console.log(pageNumber);
+              setPageNumber(pageNumber + 1);
             }}
           >
             Next

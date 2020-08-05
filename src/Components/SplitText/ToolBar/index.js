@@ -219,6 +219,7 @@ class ToolBar extends React.Component {
               <GetApp fontSize="large" />
             </Button>
           </OverlayTrigger>
+          <Button onClick={this.props.handleInterrupt} lassName="copy-btn" type="button" variant="light" id = "interrupt-button">Stop Code</Button>
         </div>
         <div>
           {this.props.isPilot ? (

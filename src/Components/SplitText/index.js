@@ -6,6 +6,7 @@ import ToolBar from "./ToolBar/";
 import Loading from "../Loading/";
 import PredownloadModal from "./PredownloadModal";
 import FirstTimerModal from "./FirstTimerModal";
+import RemindingTipModal from "./RemindingTipModal";
 import PubNub from "pubnub";
 import axios from "axios";
 import Sk from "skulpt";
@@ -30,6 +31,8 @@ import { Switch, FormControlLabel } from "@material-ui/core";
 import { ENDPOINT } from "../endpoints";
 
 const MAX_TOGGLE_WAIT = 10000; //10 seconds is the max amount of time before toggle gets handed over to copilot
+const MS_BETWEEN_TIME_CHECKS = 60 * 1000; //60 seconds 
+const MINUTES_BETWEEN_TIPS = 10;
 
 class SplitText extends React.Component {
   constructor(props) {
@@ -49,6 +52,7 @@ class SplitText extends React.Component {
     this.basicSetState = this.basicSetState.bind(this);
     this.handleDownloadChange = this.handleDownloadChange.bind(this);
     this.changeShowFirstTimerModal = this.changeShowFirstTimerModal.bind(this);
+    this.changeShowRemindingTip = this.changeShowRemindingTip.bind(this);
     const userID = Math.round(Math.random() * 1000000).toString();
 
     this.state = {
@@ -77,11 +81,14 @@ class SplitText extends React.Component {
       fileName: "",
       waitingForInput: false,
       showDownloadForm: false,
-      isFirstSessionEver: false
+      isFirstSessionEver: false,
+      showRemindingTip: false,
+      tipMessage: "",
     };
 
     this.baseState = this.state;
     this.toggleTimer = null;
+    this.remindingTipsInterval = null;
 
     //this allows us to "open files"
     Sk.inBrowser = true;
@@ -205,28 +212,35 @@ class SplitText extends React.Component {
         } else if (message.Type === "toggleRequest") {
           if ((message.Who !== this.state.userID) & this.state.isPilot) {
             this.toggleAlert(message.Who, message.UserName);
-          } else if (message.Who === this.state.userID) {
+          } else if (message.Who === this.state.userID && this.toggleTimer === null) {
             //it is the current user
             this.setState({ showCopilotToggleMsg: true });
-
+            
+            //this timer is cleared in assignRole
             this.toggleTimer = setInterval(() => {
               if (this.state.msRemaining > 0) {
+                //decrement the number of milliseconds that's displayed
                 this.setState({ msRemaining: this.state.msRemaining - 1000 });
               } else {
-                this.setState({
-                  showCopilotToggleMsg: false
-                });
+                //time is up! 
+                // this.setState({
+                //   showCopilotToggleMsg: false
+                // });
                 let timer;
                 timer = setTimeout(() => {
+                  //reset
                   this.setState({ msRemaining: MAX_TOGGLE_WAIT });
                   clearTimeout(timer);
+                  //clear the countdown
                 }, 300);
               }
             }, 1000);
           }
         } else if (message.Type === "toggleResponse") {
+          //the pilot declined and you're the copilot
           if ((message.What === "decline") & this.state.showCopilotToggleMsg) {
             clearInterval(this.toggleTimer);
+            this.toggleTimer = null;
             this.setState({
               showCopilotToggleMsg: false
             });
@@ -344,10 +358,30 @@ class SplitText extends React.Component {
         );
       })
       .catch(err => console.log(err));
-  }
 
+      //set once! 
+      //for the reminder tips that pop up 
+      this.remindingTipsInterval = setInterval(() => {
+        const now = new Date();
+        // console.log("now", now);
+        //tip on the 00:10, :20, etc. of the time 
+        if (now.getMinutes() % MINUTES_BETWEEN_TIPS == 0) {
+            this.changeShowRemindingTip(true);
+            //make a global array that has the tip messages. length 6
+            //based on getMinutes() / MINUTES_BETWEEN_TIPS
+            this.setState({tipMessage: "insert tip here"})
+        }
+       }, MS_BETWEEN_TIME_CHECKS);
+  }
+  /**
+   * togglePilot
+   * this happens to those who are switching from pilot to copilot. they
+   * send a userArray packageMessage to let others know that they are now a ilot. 
+   * params id and name: those of the requester. 
+   */
   togglePilot = (id, name) => {
     let userArr = this.state.userArray;
+    //requester: the index of the requester
     const requester = userArr.map(user => user.id).indexOf(id);
     userArr[0] = { id, name };
     userArr[requester] = { id: this.state.userID, name: this.state.user_name };
@@ -373,13 +407,17 @@ class SplitText extends React.Component {
       );
     }
   };
-
+  /**
+   * toggleAlert
+   * happens to the pilot if the copilot wants to switch roles 
+   */
   toggleAlert = (id, name) => {
     //function to bypass Chrome blocking alerts on background windows
 
     let currentComponent = this;
 
     var toggleTimeout = setTimeout(function() {
+      //switch because time is up! 
       currentComponent.togglePilot(id, name);
 
       confirmAlert({
@@ -387,6 +425,7 @@ class SplitText extends React.Component {
         message: "You timed out and are now co-pilot",
         buttons: [{ label: "Ok" }]
       });
+      clearTimeout(toggleTimeout);
     }, MAX_TOGGLE_WAIT); //10 second timeout for no pilot response
 
     confirmAlert({
@@ -405,9 +444,9 @@ class SplitText extends React.Component {
         {
           label: "No",
           onClick: () => {
-            clearTimeout(toggleTimeout);
             console.log("remain");
             this.packageMessage("decline", "toggleResponse");
+            clearTimeout(toggleTimeout);
           }
         }
       ]
@@ -520,6 +559,7 @@ class SplitText extends React.Component {
     Sk.configure({
       output: this.outf,
       read: builtinRead,
+      // execLimit: 8000,
       inputfun: function(prompt) {
         self.setState(prevState => ({
           lines: [...prevState.lines, prompt],
@@ -660,7 +700,7 @@ class SplitText extends React.Component {
   }
 
   //from pilot to copilot
-  pilotHandoff() {
+  pilotHandoff = () => {
     //swap with the second one
     let userArr = this.state.userArray;
     userArr[0] = userArr[1];
@@ -704,21 +744,31 @@ class SplitText extends React.Component {
       );
     }
   }
-
+  /**
+   * assigns role based on the user Array.
+   * if you're the copilot and you get notified of the userArray change from the pilot 
+   * because of your toggle request, then THIS is how you make the toggleTimer 
+   * null again and hide the copilot toggle msg
+   */
   assignRole = () => {
     //assign role based on userArray
     if (
       this.state.userArray.map(user => user.id).indexOf(this.state.userID) === 0
     ) {
+      //now is the pilot 
       this.setState({ isPilot: true });
+      //wait until here! to turn off the copilot toggle msg
       if (this.state.showCopilotToggleMsg) {
+        //you were the copilot waiting for the handoff! 
         clearInterval(this.toggleTimer);
+        this.toggleTimer = null;
         this.setState({
           showCopilotToggleMsg: false,
           msRemaining: MAX_TOGGLE_WAIT
         });
       }
     } else {
+      //you're not the pilot 
       this.setState({ isPilot: false });
     }
   };
@@ -741,6 +791,7 @@ class SplitText extends React.Component {
     this.packageMessage("", "leave");
     this.unsubscribeChannel();
     window.removeEventListener("beforeunload", this.unsubscribeChannel);
+    clearInterval(this.remindingTipsInterval);
   }
 
   basicSetState = stateChange => this.setState(stateChange);
@@ -779,6 +830,10 @@ class SplitText extends React.Component {
     this.setState({ isFirstSessionEver: newValue });
   }
 
+  changeShowRemindingTip(newValue) {
+    this.setState({showRemindingTip: newValue})
+  }
+
   render() {
     const {
       text,
@@ -815,7 +870,11 @@ class SplitText extends React.Component {
           show={this.state.isFirstSessionEver}
           changeFirstTimerModalState={this.changeShowFirstTimerModal}
         />
-
+        <RemindingTipModal
+        show={this.state.showRemindingTip}
+        changeShowRemindingTip={this.changeShowRemindingTip}
+        tipMessage={this.state.tipMessage}
+        />
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
             <Toast

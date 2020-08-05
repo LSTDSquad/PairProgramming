@@ -77,7 +77,8 @@ class SplitText extends React.Component {
       fileName: "",
       waitingForInput: false,
       showDownloadForm: false,
-      isFirstSessionEver: false
+      isFirstSessionEver: false,
+      stopExecution: false
     };
 
     this.baseState = this.state;
@@ -499,9 +500,17 @@ class SplitText extends React.Component {
     }
   };
 
+
+  handleInterrupt = () => {
+        
+        this.setState({stopExecution : true})
+      }
+
   /////   runCode handles using the current text in state
   /////            and running it as python code
   runCode() {
+  	console.log("run code")
+  	this.setState({stopExecution: false},()=>{
     const builtinRead = x => {
       if (
         Sk.builtinFiles === undefined ||
@@ -517,30 +526,57 @@ class SplitText extends React.Component {
       lines: [...prevState.lines, "pair-programming-session:~ $ run"]
     }));
     var self = this;
+
     Sk.configure({
       output: this.outf,
+      KeyboardInterrupt: true,
+      yieldLimit: 100,
+      execLimit: 20000,
       read: builtinRead,
       inputfun: function(prompt) {
         self.setState(prevState => ({
           lines: [...prevState.lines, prompt],
           waitingForInput: true
         }));
-        document.getElementById("std-input").focus();
-        return new Promise(function(resolve, reject) {
-          document.getElementById("std-input").onkeyup = e => {
-            if (e.keyCode === 13) {
-              //add input to lines
-              self.setState(
-                prevState => ({
-                  lines: [...prevState.lines, `> ${e.target.value}`],
-                  waitingForInput: false
-                }),
-                () => resolve(e.target.value)
-              );
-              //clear the input
-            }
-          };
-        });
+
+        document.getElementById("interrupt-button").onclick = e => {
+
+    		return new Promise(function(resolve, reject) {
+
+    			console.log("stopped", 1)
+
+    			self.setState(prevState =>({
+    				lines:[...prevState.lines,  "Execution Interrupted"],
+    				waitingForInput: false,
+    				stopExecution: false
+    			}),
+    			() => resolve("Execution Interrupted"))
+    		})
+    	}
+
+
+        // if(self.state.stopExecution===false){
+	        document.getElementById("std-input").focus();
+	        return new Promise(function(resolve, reject) {
+
+	        	console.log("input", 2)
+
+		          document.getElementById("std-input").onkeyup = e => {
+		            if (e.keyCode === 13 ) {
+		              //add input to lines
+		              self.setState(
+		                prevState => ({
+		                  lines: [...prevState.lines, `> ${e.target.value}`],
+		                  waitingForInput: false,
+		                  stopExecution: false
+		                }),
+		                () => resolve(e.target.value)
+		              );
+		              //clear the input
+		            }
+		          };
+	        });
+
         // var interval = setInterval(function() {
         //   if (self.state.inputEntered) {
         //     console.log(self.state.inputEntered);
@@ -553,12 +589,15 @@ class SplitText extends React.Component {
       inputfunTakesPrompt: true
     });
 
+
     try {
-      Sk.misceval
-        .asyncToPromise(function() {
-          return Sk.importMainWithBody("<stdin>", false, input, true);
-        })
-        .then(() =>
+      Sk.misceval.asyncToPromise(function() {
+            return Sk.importMainWithBody("<stdin>",false,input,true);
+        }, {"*": () => {if (this.state.stopExecution) {
+            throw "Execution interrupted"
+            // this.setState({stopExecution: false})
+          }}})
+        .then(() =>{console.log("run 1")
           self.setState(
             prevState => ({
               lines: [
@@ -567,12 +606,13 @@ class SplitText extends React.Component {
               ]
             }),
             () => self.packageMessage(self.state.lines, "codeOutput")
-          )
+          )}
         )
         //when there's a compile or runtime error
-        .catch(e =>
+        .catch(e =>{console.log("catch 2")
           self.setState(
             prevState => ({
+              stopExecution:false,
               lines: [
                 ...prevState.lines,
                 e.toString(),
@@ -580,12 +620,13 @@ class SplitText extends React.Component {
               ]
             }),
             () => self.packageMessage(this.state.lines, "codeOutput")
-          )
+          )}
         );
     } catch (e) {
-      console.log(e);
+      console.log("catch 3");
       self.setState(
         prevState => ({
+          stopExecution:false,
           lines: [
             ...prevState.lines,
             e.toString(),
@@ -595,6 +636,7 @@ class SplitText extends React.Component {
         () => self.packageMessage(this.state.lines, "codeOutput")
       );
     }
+	})
 
     let sessionID = this.state.sessionID;
     if (this.props.path !== "/") {
@@ -837,6 +879,7 @@ class SplitText extends React.Component {
               text={text}
               userArray={this.state.userArray}
               history={history}
+              handleInterrupt = {this.handleInterrupt}
               packageMessage={this.packageMessage}
               handleIDChange={this.handleSessionIDChange}
               pilotHandoff={this.pilotHandoff}

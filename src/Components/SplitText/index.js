@@ -509,7 +509,8 @@ class SplitText extends React.Component {
   /////   runCode handles using the current text in state
   /////            and running it as python code
   runCode() {
-  	console.log("run code")
+
+  	//set stopExecution to false whenever run is clicked
   	this.setState({stopExecution: false},()=>{
     const builtinRead = x => {
       if (
@@ -540,10 +541,8 @@ class SplitText extends React.Component {
         }));
 
         document.getElementById("interrupt-button").onclick = e => {
-
+        	//allow for interrupt when user input is required
     		return new Promise(function(resolve, reject) {
-
-    			console.log("stopped", 1)
 
     			self.setState(prevState =>({
     				lines:[...prevState.lines,  "Execution Interrupted"],
@@ -558,8 +557,6 @@ class SplitText extends React.Component {
         // if(self.state.stopExecution===false){
 	        document.getElementById("std-input").focus();
 	        return new Promise(function(resolve, reject) {
-
-	        	console.log("input", 2)
 
 		          document.getElementById("std-input").onkeyup = e => {
 		            if (e.keyCode === 13 ) {
@@ -594,10 +591,10 @@ class SplitText extends React.Component {
       Sk.misceval.asyncToPromise(function() {
             return Sk.importMainWithBody("<stdin>",false,input,true);
         }, {"*": () => {if (this.state.stopExecution) {
-            throw "Execution interrupted"
-            // this.setState({stopExecution: false})
+            throw "Execution Interrupted"
+            // allow for general interrupt 
           }}})
-        .then(() =>{console.log("run 1")
+        .then(() =>{
           self.setState(
             prevState => ({
               lines: [
@@ -609,7 +606,7 @@ class SplitText extends React.Component {
           )}
         )
         //when there's a compile or runtime error
-        .catch(e =>{console.log("catch 2")
+        .catch(e =>{
           self.setState(
             prevState => ({
               stopExecution:false,
@@ -623,7 +620,7 @@ class SplitText extends React.Component {
           )}
         );
     } catch (e) {
-      console.log("catch 3");
+      
       self.setState(
         prevState => ({
           stopExecution:false,

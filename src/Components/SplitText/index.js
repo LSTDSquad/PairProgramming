@@ -17,6 +17,7 @@ import MyToast from "./MyToast";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { Auth } from "aws-amplify";
+import { RemindingTipMessages } from "../../utilities/SessionUtilities";
 import {
   Widget,
   addResponseMessage,
@@ -24,14 +25,14 @@ import {
 } from "react-chat-widget";
 import "react-chat-widget/lib/styles.css";
 import "./ReactChatWidget.css";
-
+import {isMobile} from 'react-device-detect';
 import { Form, Button, Modal, Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
 
 import { ENDPOINT } from "../endpoints";
 
 const MAX_TOGGLE_WAIT = 10000; //10 seconds is the max amount of time before toggle gets handed over to copilot
-const MS_BETWEEN_TIME_CHECKS = 60 * 1000; //60 seconds 
+const MS_BETWEEN_TIME_CHECKS = 60 * 1000; //60 seconds
 const MINUTES_BETWEEN_TIPS = 10;
 
 class SplitText extends React.Component {
@@ -74,7 +75,6 @@ class SplitText extends React.Component {
       confusionStatus: {},
       resolve: {},
       seeToasts: true,
-      onMobile: false,
       user_name: "",
       showCopilotToggleMsg: false,
       msRemaining: MAX_TOGGLE_WAIT,
@@ -85,6 +85,7 @@ class SplitText extends React.Component {
       stopExecution: false,
       showRemindingTip: false,
       tipMessage: "",
+      isRunningCode: false,
     };
 
     this.baseState = this.state;
@@ -213,17 +214,20 @@ class SplitText extends React.Component {
         } else if (message.Type === "toggleRequest") {
           if ((message.Who !== this.state.userID) & this.state.isPilot) {
             this.toggleAlert(message.Who, message.UserName);
-          } else if (message.Who === this.state.userID && this.toggleTimer === null) {
+          } else if (
+            message.Who === this.state.userID &&
+            this.toggleTimer === null
+          ) {
             //it is the current user
             this.setState({ showCopilotToggleMsg: true });
-            
+
             //this timer is cleared in assignRole
             this.toggleTimer = setInterval(() => {
               if (this.state.msRemaining > 0) {
                 //decrement the number of milliseconds that's displayed
                 this.setState({ msRemaining: this.state.msRemaining - 1000 });
               } else {
-                //time is up! 
+                //time is up!
                 // this.setState({
                 //   showCopilotToggleMsg: false
                 // });
@@ -274,10 +278,6 @@ class SplitText extends React.Component {
 
     this.setState({ startTime: String(new Date()) });
 
-    //in case someone is trying to view on their phone.
-    if (window.matchMedia("(max-width: 767px)").matches) {
-      this.setState({ onMobile: true });
-    }
     let session = this.props.match.params.sessionID;
     if (this.props.match.path !== "/") {
       //must be a valid session
@@ -329,56 +329,56 @@ class SplitText extends React.Component {
           }
         );
 
-        const getSessionsUrl =
-          ENDPOINT + "getSessions/" + user.attributes.email;
-        axios.get(getSessionsUrl).then(
+        // const getSessionsUrl =
+        //   ENDPOINT + "getSessions/" + user.attributes.email;
+        // axios.get(getSessionsUrl).then(
+        //   response => {
+        //     if (response.data.length === 0) {
+        this.changeShowFirstTimerModal(true);
+        // }
+        //now, update the sessions
+        const userURL = ENDPOINT + "updateSessions/" + user.attributes.email;
+
+        let sessionID = this.state.sessionID;
+        let data = { session: sessionID };
+
+        axios.put(userURL, data).then(
           response => {
-            if (response.data.length === 0) {
-              this.setState({ isFirstSessionEver: true });
-            }
-            //now, update the sessions
-            const userURL =
-              ENDPOINT + "updateSessions/" + user.attributes.email;
-
-            let sessionID = this.state.sessionID;
-            let data = { session: sessionID };
-
-            axios.put(userURL, data).then(
-              response => {
-                const message = response.data;
-                // console.log(message);
-              },
-              error => {
-                console.log(error);
-              }
-            );
+            const message = response.data;
+            // console.log(message);
           },
           error => {
-            console.error(error);
+            console.log(error);
           }
         );
+        //   },
+        //   error => {
+        //     console.error(error);
+        //   }
+        // );
       })
       .catch(err => console.log(err));
 
-      //set once! 
-      //for the reminder tips that pop up 
-      this.remindingTipsInterval = setInterval(() => {
-        const now = new Date();
-        // console.log("now", now);
-        //tip on the 00:10, :20, etc. of the time 
-        if (now.getMinutes() % MINUTES_BETWEEN_TIPS == 0) {
-            this.changeShowRemindingTip(true);
-            //make a global array that has the tip messages. length 6
-            //based on getMinutes() / MINUTES_BETWEEN_TIPS
-            this.setState({tipMessage: "insert tip here"})
-        }
-       }, MS_BETWEEN_TIME_CHECKS);
+    //set once!
+    //for the reminder tips that pop up
+    this.remindingTipsInterval = setInterval(() => {
+      const now = new Date();
+      // console.log("now", now);
+      //tip on the 00:10, :20, etc. of the time
+      if (now.getMinutes() % MINUTES_BETWEEN_TIPS == 0) {
+        this.changeShowRemindingTip(true);
+        //make a global array that has the tip messages. length 6
+        //based on getMinutes() / MINUTES_BETWEEN_TIPS
+        const tipNum = Math.floor(now.getMinutes() / 10);
+        this.setState({ tipMessage: RemindingTipMessages[tipNum] });
+      }
+    }, MS_BETWEEN_TIME_CHECKS);
   }
   /**
    * togglePilot
    * this happens to those who are switching from pilot to copilot. they
-   * send a userArray packageMessage to let others know that they are now a ilot. 
-   * params id and name: those of the requester. 
+   * send a userArray packageMessage to let others know that they are now a ilot.
+   * params id and name: those of the requester.
    */
   togglePilot = (id, name) => {
     let userArr = this.state.userArray;
@@ -410,7 +410,7 @@ class SplitText extends React.Component {
   };
   /**
    * toggleAlert
-   * happens to the pilot if the copilot wants to switch roles 
+   * happens to the pilot if the copilot wants to switch roles
    */
   toggleAlert = (id, name) => {
     //function to bypass Chrome blocking alerts on background windows
@@ -418,7 +418,7 @@ class SplitText extends React.Component {
     let currentComponent = this;
 
     var toggleTimeout = setTimeout(function() {
-      //switch because time is up! 
+      //switch because time is up!
       currentComponent.togglePilot(id, name);
 
       confirmAlert({
@@ -539,141 +539,138 @@ class SplitText extends React.Component {
     }
   };
 
-
   handleInterrupt = () => {
-        
-        this.setState({stopExecution : true})
-      }
+    this.setState({ stopExecution: true });
+  };
 
   /////   runCode handles using the current text in state
   /////            and running it as python code
   runCode() {
+    //set stopExecution to false whenever run is clicked
+    this.setState({ stopExecution: false, isRunningCode: true }, () => {
+      const builtinRead = x => {
+        if (
+          Sk.builtinFiles === undefined ||
+          Sk.builtinFiles["files"][x] === undefined
+        ) {
+          throw "File not found: '" + x + "'";
+        }
+        return Sk.builtinFiles["files"][x];
+      };
 
-  	//set stopExecution to false whenever run is clicked
-  	this.setState({stopExecution: false},()=>{
-    const builtinRead = x => {
-      if (
-        Sk.builtinFiles === undefined ||
-        Sk.builtinFiles["files"][x] === undefined
-      ) {
-        throw "File not found: '" + x + "'";
-      }
-      return Sk.builtinFiles["files"][x];
-    };
+      var input = this.state.text;
+      this.setState(prevState => ({
+        lines: [...prevState.lines, "pair-programming-session:~ $ run"]
+      }));
+      var self = this;
 
-    var input = this.state.text;
-    this.setState(prevState => ({
-      lines: [...prevState.lines, "pair-programming-session:~ $ run"]
-    }));
-    var self = this;
+      Sk.configure({
+        output: this.outf,
+        KeyboardInterrupt: true,
+        yieldLimit: 100,
+        execLimit: 20000,
+        read: builtinRead,
+        // execLimit: 8000,
+        inputfun: function(prompt) {
+          self.setState(prevState => ({
+            lines: [...prevState.lines, prompt],
+            waitingForInput: true
+          }));
 
-    Sk.configure({
-      output: this.outf,
-      KeyboardInterrupt: true,
-      yieldLimit: 100,
-      execLimit: 20000,
-      read: builtinRead,
-      // execLimit: 8000,
-      inputfun: function(prompt) {
-        self.setState(prevState => ({
-          lines: [...prevState.lines, prompt],
-          waitingForInput: true
-        }));
+          document.getElementById("interrupt-button").onclick = e => {
+            //allow for interrupt when user input is required
+            return new Promise(function(resolve, reject) {
+              self.setState(
+                prevState => ({
+                  lines: [...prevState.lines, "Execution Interrupted", "<<<<<<<<<< Program finished running >>>>>>>>>>"],
+                  waitingForInput: false,
+                  stopExecution: false,
+                  isRunningCode: false,
+                }),
+                () => resolve("Execution Interrupted")
+              );
+            });
+          };
 
-        document.getElementById("interrupt-button").onclick = e => {
-        	//allow for interrupt when user input is required
-    		return new Promise(function(resolve, reject) {
+          // if(self.state.stopExecution===false){
+          document.getElementById("std-input").focus();
+          return new Promise(function(resolve, reject) {
+            document.getElementById("std-input").onkeyup = e => {
+              if (e.keyCode === 13) {
+                //add input to lines
+                self.setState(
+                  prevState => ({
+                    lines: [...prevState.lines, `> ${e.target.value}`],
+                    waitingForInput: false,
+                    stopExecution: false
+                  }),
+                  () => resolve(e.target.value)
+                );
+                //clear the input
+              }
+            };
+          });
+        },
+        inputfunTakesPrompt: true
+      });
 
-    			self.setState(prevState =>({
-    				lines:[...prevState.lines,  "Execution Interrupted"],
-    				waitingForInput: false,
-    				stopExecution: false
-    			}),
-    			() => resolve("Execution Interrupted"))
-    		})
-    	}
-
-
-        // if(self.state.stopExecution===false){
-	        document.getElementById("std-input").focus();
-	        return new Promise(function(resolve, reject) {
-
-		          document.getElementById("std-input").onkeyup = e => {
-		            if (e.keyCode === 13 ) {
-		              //add input to lines
-		              self.setState(
-		                prevState => ({
-		                  lines: [...prevState.lines, `> ${e.target.value}`],
-		                  waitingForInput: false,
-		                  stopExecution: false
-		                }),
-		                () => resolve(e.target.value)
-		              );
-		              //clear the input
-		            }
-		          };
-	        });
-
-        // var interval = setInterval(function() {
-        //   if (self.state.inputEntered) {
-        //     console.log(self.state.inputEntered);
-        //     clearInterval(interval)
-        //     return self.state.inputEntered;
-        //   }
-        // }, 500);
-        // // return window.prompt(prompt, "");
-      },
-      inputfunTakesPrompt: true
-    });
-
-
-    try {
-      Sk.misceval.asyncToPromise(function() {
-            return Sk.importMainWithBody("<stdin>",false,input,true);
-        }, {"*": () => {if (this.state.stopExecution) {
-            throw "Execution Interrupted"
-            // allow for general interrupt 
-          }}})
-        .then(() =>{
-          self.setState(
-            prevState => ({
-              lines: [
-                ...prevState.lines,
-                "<<<<<<<<<< Program finished running >>>>>>>>>>"
-              ]
-            }),
-            () => self.packageMessage(self.state.lines, "codeOutput")
-          )}
-        )
-        //when there's a compile or runtime error
-        .catch(e =>{
-          self.setState(
-            prevState => ({
-              stopExecution:false,
-              lines: [
-                ...prevState.lines,
-                e.toString(),
-                "<<<<<<<<<< Program finished running >>>>>>>>>>"
-              ]
-            }),
-            () => self.packageMessage(this.state.lines, "codeOutput")
-          )}
+      try {
+        Sk.misceval
+          .asyncToPromise(
+            function() {
+              return Sk.importMainWithBody("<stdin>", false, input, true);
+            },
+            {
+              "*": () => {
+                if (this.state.stopExecution) {
+                  throw "Execution Interrupted";
+                  // allow for general interrupt
+                }
+              }
+            }
+          )
+          .then(() => {
+            self.setState(
+              prevState => ({
+                lines: [
+                  ...prevState.lines,
+                  "<<<<<<<<<< Program finished running >>>>>>>>>>"
+                ],
+                isRunningCode: false,
+              }),
+              () => self.packageMessage(self.state.lines, "codeOutput")
+            );
+          })
+          //when there's a compile or runtime error
+          .catch(e => {
+            self.setState(
+              prevState => ({
+                stopExecution: false,
+                isRunningCode: false,
+                lines: [
+                  ...prevState.lines,
+                  e.toString(),
+                  "<<<<<<<<<< Program finished running >>>>>>>>>>"
+                ]
+              }),
+              () => self.packageMessage(this.state.lines, "codeOutput")
+            );
+          });
+      } catch (e) {
+        self.setState(
+          prevState => ({
+            stopExecution: false,
+            lines: [
+              ...prevState.lines,
+              e.toString(),
+              "<<<<<<<<<< Program finished running >>>>>>>>>>"
+            ]
+          }),
+          () => self.packageMessage(this.state.lines, "codeOutput")
         );
-    } catch (e) {
-      
-      self.setState(
-        prevState => ({
-          stopExecution:false,
-          lines: [
-            ...prevState.lines,
-            e.toString(),
-            "<<<<<<<<<< Program finished running >>>>>>>>>>"
-          ]
-        }),
-        () => self.packageMessage(this.state.lines, "codeOutput")
-      );
-    }
-	})
+      }
+
+    });
 
     let sessionID = this.state.sessionID;
     if (this.props.path !== "/") {
@@ -782,11 +779,11 @@ class SplitText extends React.Component {
         }
       );
     }
-  }
+  };
   /**
    * assigns role based on the user Array.
-   * if you're the copilot and you get notified of the userArray change from the pilot 
-   * because of your toggle request, then THIS is how you make the toggleTimer 
+   * if you're the copilot and you get notified of the userArray change from the pilot
+   * because of your toggle request, then THIS is how you make the toggleTimer
    * null again and hide the copilot toggle msg
    */
   assignRole = () => {
@@ -794,11 +791,11 @@ class SplitText extends React.Component {
     if (
       this.state.userArray.map(user => user.id).indexOf(this.state.userID) === 0
     ) {
-      //now is the pilot 
+      //now is the pilot
       this.setState({ isPilot: true });
       //wait until here! to turn off the copilot toggle msg
       if (this.state.showCopilotToggleMsg) {
-        //you were the copilot waiting for the handoff! 
+        //you were the copilot waiting for the handoff!
         clearInterval(this.toggleTimer);
         this.toggleTimer = null;
         this.setState({
@@ -807,7 +804,7 @@ class SplitText extends React.Component {
         });
       }
     } else {
-      //you're not the pilot 
+      //you're not the pilot
       this.setState({ isPilot: false });
     }
   };
@@ -870,7 +867,7 @@ class SplitText extends React.Component {
   }
 
   changeShowRemindingTip(newValue) {
-    this.setState({showRemindingTip: newValue})
+    this.setState({ showRemindingTip: newValue });
   }
 
   render() {
@@ -893,13 +890,13 @@ class SplitText extends React.Component {
       setTimeout(() => (container.scrollTop = container.scrollHeight), 100);
     }
 
-    return this.state.onMobile ? (
+    return isMobile ? (
       <div>
         Oy! Looks like you're trying to code on a mobile device. Please try
         accessing this programming tool with a tablet or computer.
       </div>
     ) : this.state.textLoaded && this.state.titleLoaded ? (
-      <div >
+      <div>
         <PredownloadModal
           show={this.state.showDownloadForm}
           handleDownloadChange={this.handleDownloadChange}
@@ -910,9 +907,9 @@ class SplitText extends React.Component {
           changeFirstTimerModalState={this.changeShowFirstTimerModal}
         />
         <RemindingTipModal
-        show={this.state.showRemindingTip}
-        changeShowRemindingTip={this.changeShowRemindingTip}
-        tipMessage={this.state.tipMessage}
+          show={this.state.showRemindingTip}
+          changeShowRemindingTip={this.changeShowRemindingTip}
+          tipMessage={this.state.tipMessage}
         />
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
@@ -935,7 +932,7 @@ class SplitText extends React.Component {
               text={text}
               userArray={this.state.userArray}
               history={history}
-              handleInterrupt = {this.handleInterrupt}
+              handleInterrupt={this.handleInterrupt}
               packageMessage={this.packageMessage}
               handleIDChange={this.handleSessionIDChange}
               pilotHandoff={this.pilotHandoff}
@@ -945,7 +942,7 @@ class SplitText extends React.Component {
               // handleToggle={this.toggleRole}
             />
           </Row>
-          <Row noGutters={true}  className="split-text-container">
+          <Row noGutters={true} className="split-text-container">
             <SplitPane
               //One side input, other side output, once we get app to run code?
               split="vertical"
@@ -971,6 +968,8 @@ class SplitText extends React.Component {
                 addToast={this.addToast}
                 user_name={this.state.user_name}
                 packageMessage={this.packageMessage}
+                isRunningCode={this.state.isRunningCode}
+                handleInterrupt={this.handleInterrupt}
               />
               <TextOutput
                 side="right"
@@ -1022,7 +1021,6 @@ class SplitText extends React.Component {
               handleNewUserMessage={this.handleNewUserMessage}
               title="Teammate Chat"
               subtitle=""
-             
             />
           </Row>
         </Container>

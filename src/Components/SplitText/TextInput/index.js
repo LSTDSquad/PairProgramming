@@ -26,7 +26,8 @@ import {
   SendRounded,
   HelpOutlineRounded,
   DoneRounded,
-  CommentRounded
+  CommentRounded,
+  StopRounded
 } from "@material-ui/icons";
 import { ENDPOINT } from "../../endpoints";
 import HoverClickPopover from "../../HoverClickPopover";
@@ -85,7 +86,7 @@ class TextInput extends React.Component {
     ace_div.onmouseup = () => {
       //after 500ms, clickedRecently is false.
       const timer = setTimeout(() => {
-        this.setState({ clickedRecently: false })
+        this.setState({ clickedRecently: false });
         clearTimeout(timer);
       }, 500);
     };
@@ -111,13 +112,10 @@ class TextInput extends React.Component {
         keyCode === 40
       ) {
         currentComponent.setState({ clickedRecently: true });
-        const timer = setTimeout(
-          () => {
-            currentComponent.setState({ clickedRecently: false });
-            clearTimeout(timer);
-          },
-          500
-        );
+        const timer = setTimeout(() => {
+          currentComponent.setState({ clickedRecently: false });
+          clearTimeout(timer);
+        }, 500);
       }
     });
 
@@ -564,19 +562,36 @@ class TextInput extends React.Component {
           buttonContent={<CommentRounded />}
           usePopoverStateOutside={true}
         />
-        <OverlayTrigger
-          trigger={["hover", "focus"]}
-          overlay={<Tooltip>Run code</Tooltip>}
-          placement="right"
-        >
-          <Button
-            variant="success"
-            className="run"
-            onClick={this.props.handleRun}
+        {this.props.isRunningCode ? (
+          <OverlayTrigger
+            trigger={["hover", "focus"]}
+            overlay={<Tooltip>Stop execution</Tooltip>}
+            placement="right"
           >
-            <PlayArrowRounded />
-          </Button>
-        </OverlayTrigger>
+            <Button
+              id="interrupt-button"
+              variant="danger"
+              className="run"
+              onClick={this.props.handleInterrupt}
+            >
+              <StopRounded />
+            </Button>
+          </OverlayTrigger>
+        ) : (
+          <OverlayTrigger
+            trigger={["hover", "focus"]}
+            overlay={<Tooltip>Run code</Tooltip>}
+            placement="right"
+          >
+            <Button
+              variant="success"
+              className="run"
+              onClick={this.props.handleRun}
+            >
+              <PlayArrowRounded />
+            </Button>
+          </OverlayTrigger>
+        )}
 
         {this.state.annotations && this.state.annotations.length > 0 && (
           <OverlayTrigger

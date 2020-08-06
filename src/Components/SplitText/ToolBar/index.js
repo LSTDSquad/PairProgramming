@@ -192,10 +192,10 @@ class ToolBar extends React.Component {
               <Popover {...props}>
                 <Popover.Title>Pair programming tips</Popover.Title>
                 <Popover.Content>
-                  <div>Talk frequently... communication is key!</div>
-                  <div>There's no such thing as a silly question</div>
-                  <div>Be supportive of one another</div>
-                  <div>Acknowledge that learning how to code is hard!</div>
+                  <div>Remember to switch roles often!</div>
+                  <div>The goal is for both partners to understand all of the code!</div>
+                  <div>Learning to code is hard! Help each other when you are stuck</div>
+                  <div>Be supportive and respectful</div>
                 </Popover.Content>
               </Popover>
             )}
@@ -219,7 +219,7 @@ class ToolBar extends React.Component {
               <GetApp fontSize="large" />
             </Button>
           </OverlayTrigger>
-          <Button onClick={this.props.handleInterrupt} lassName="copy-btn" type="button" variant="light" id = "interrupt-button">Stop Code</Button>
+          {/* <Button onClick={this.props.handleInterrupt} className="copy-btn" type="button" variant="light" id="interrupt-button">Stop Code</Button> */}
         </div>
         <div>
           {this.props.isPilot ? (
@@ -345,9 +345,12 @@ class ToolBar extends React.Component {
             Log out
           </Button> */}
           <Button 
+            variant={this.props.isPilot ? "primary" : "warning"}
             onClick={() => this.props.changeShowFirstTimerModal(true)}
             >
-            <HelpOutlineRounded className="toolbar-icon"></HelpOutlineRounded>
+            <HelpOutlineRounded className="toolbar-icon">
+
+            </HelpOutlineRounded>
           </Button>
         </div>
       </Navbar>

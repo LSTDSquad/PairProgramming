@@ -10,21 +10,19 @@ const RemindingTipModal = props => {
 
   const { show, changeShowRemindingTip, tipMessage } = props;
 
-  return show ? (
+  return (
     <Modal
-      size="sm"
+      size="lg"
       show={show}
       onHide={() => changeShowRemindingTip(false)}
       scrollable={true}
       className="my-modal-container"
     >
       <Modal.Header closeButton>
-        <Modal.Title>Don't forget to....</Modal.Title>
+        <Modal.Title>A fruitful tip </Modal.Title>
       </Modal.Header>
       <Modal.Body>{tipMessage}</Modal.Body>
     </Modal>
-  ) : (
-    <div />
   );
 };
 export default RemindingTipModal;

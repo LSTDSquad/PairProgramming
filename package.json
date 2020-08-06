@@ -25,6 +25,7 @@
     "react-bootstrap": "^1.0.0",
     "react-chat-widget": "^3.0.5",
     "react-confirm-alert": "^2.6.1",
+    "react-device-detect": "^1.13.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.1.2",
     "react-scripts": "^3.4.1",

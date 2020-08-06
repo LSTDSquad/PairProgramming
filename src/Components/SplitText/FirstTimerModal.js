@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { Button, Modal } from "react-bootstrap";
+import { EmojiObjectsRounded } from "@material-ui/icons";
 
 import "./MyModals.css";
+import confusionButtonPNG from "../../resources/confusion_button.png";
+import chatButtonPNG from "../../resources/chat_button.png";
 
 const pairProgrammingVideoBody = () => {
   return (
@@ -18,12 +21,31 @@ const pairProgrammingVideoBody = () => {
 
 const introductionAndGuidelines = () => {
   return (
-    <iframe
-      width="100%"
-      height="600"
-      frameBorder="0"
-      src="https://docs.google.com/document/d/e/2PACX-1vTyfkipq9maxBADkQEUA_QSqoG-xBZQFyXE02MbLJeZe9pq2TeETYHnrIONG70AyVCDY2_cM-ZLB0Z7/pub?embedded=true"
-    ></iframe>
+    <h4>
+      <EmojiObjectsRounded fontSize="large" />
+      The goal of Pair Programming is to help your partner to understand all of
+      the code{" "}
+    </h4>
+  );
+};
+
+const pointOutChat = () => {
+  return (
+    <h4>
+      <EmojiObjectsRounded fontSize="large" />
+      Use the chat feature <img height="50" src={chatButtonPNG} /> to talk to
+      your partner
+    </h4>
+  );
+};
+
+const pointOutConfusion = () => {
+  return (
+    <h4>
+      <EmojiObjectsRounded fontSize="large" />
+      If you have a question, use the question feature{" "}
+      <img height="50" src={confusionButtonPNG} /> to let your partner know
+    </h4>
   );
 };
 
@@ -31,7 +53,12 @@ const FirstTimerModal = props => {
   //initial page is 0
   let [pageNumber, setPageNumber] = useState(0);
 
-  const pageMapping = [pairProgrammingVideoBody, introductionAndGuidelines];
+  const pageMapping = [
+    pairProgrammingVideoBody,
+    introductionAndGuidelines,
+    pointOutChat,
+    pointOutConfusion
+  ];
 
   const { show, changeFirstTimerModalState } = props;
 
@@ -39,7 +66,13 @@ const FirstTimerModal = props => {
     <Modal
       size="xl"
       show={show}
-      onHide={() => changeFirstTimerModalState(false)}
+      onHide={() => {
+          changeFirstTimerModalState(false);
+          const timer = setTimeout(() => {
+              setPageNumber(0);
+              clearTimeout(timer);
+          }, 500);
+    }}
       scrollable={true}
       className="my-modal-container"
     >

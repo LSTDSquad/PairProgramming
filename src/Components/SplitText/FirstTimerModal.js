@@ -35,6 +35,8 @@ const pointOutChat = () => {
       <EmojiObjectsRounded fontSize="large" />
       Use the chat feature <img height="50" src={chatButtonPNG} /> to talk to
       your partner
+      <br/>
+      You'll know when they've joined through the "people" icon at the top right. 
     </h4>
   );
 };

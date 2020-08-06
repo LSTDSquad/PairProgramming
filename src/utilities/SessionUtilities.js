@@ -26,9 +26,9 @@ const RemindingTipMessages = {
     English: `Remember to switch roles about every 10 minutes 
         Both partners should get a chance to be pilot and co-pilot`,
     Turkish: `Her 10 dakikada bir rol değiştirmeyi unutmayın
-        Her iki (ortak da (partner de) pilot ve yardımcı pilot olma şansına sahip olmalı`,
+    Her iki (ortak da (partner de) pilot ve yardımcı pilot olma şansına sahip olmalı`,
     Czech: `Nezapomeňte přepínat role každých 10 minut
-        Oba partneři by měli dostat šanci být pilotem a spolu-pilotem`
+    Oba partneři by měli dostat šanci být “pilotem” a “spolu-pilotem”`
   }),
   1: tipToJSX({
     English: `Partners that have the most success communicate a lot 
@@ -37,9 +37,10 @@ const RemindingTipMessages = {
     Turkish: `En başarılı ( olan ortaklar (partnerler) çok iletişim kurar
         Birbirinize destek olun
         Saygılı ol(un) `,
-    Czech: `Partneři, kteří mají největší úspěch, hodně komunikují
-        Podporujte jeden druhého
-        Buďte uctiví`
+        
+    Czech: `Partneři, kteří mezi sebou často komunikují, mají největší úspěch
+    Podporujte jeden druhého
+    Buďte uctiví`
   }),
 
   2: tipToJSX({
@@ -50,8 +51,8 @@ const RemindingTipMessages = {
   Eşinizin (partnerinizin) sorularını anlamak için dinleyin.
   Anlayışınızı geliştirmenize yardımcı olacak sorular sorun.`,
     Czech: `Poslech je důležitý pro úspěch!
-  Poslouchejte, abyste porozuměli otázkám svého partnera.
-  Zeptejte se, které vám pomohou lépe porozumět.`
+    Poslouchejte, abyste porozuměli otázkám svého partnera.
+    Zeptejte se na to, co vám není jasné.`
   }),
   3: tipToJSX({
     English: `Asking questions helps you learn more!
@@ -60,9 +61,9 @@ const RemindingTipMessages = {
     Turkish: `Soru sormak daha fazla öğrenmenize yardımcı olur!
     Sorular her iki ortağın da daha fazla bilgi edinmesine yardımcı olur.
     Bir sorunu veya karışıklığı açıklarken net olun`,
-    Czech: `Dotazy vám pomohou dozvědět se více!
-    Dotazy pomáhají oběma partnerům dozvědět se více.
-    Při popisu problému nebo zmatku buďte jasní`
+    Czech: ` Čím víc se ptáte, tím víc se učíte
+    Otázky pomáhají oběma partnerům lépe se učít.
+    Při popisu problému/Pokud jste s něčím zmateni, buďte co nejjasnější`
   }),
   4: tipToJSX({
     English: `Be patient with one another and be supportive
@@ -72,8 +73,8 @@ const RemindingTipMessages = {
   Eş programlama (I'd check if it's how they refer to it in turkish ) bazen yavaş olabilir.
   Yanlış anlaşılmaya izin ver (be tolerant-tolerans goster - more true to meaning - )`,
     Czech: `Buďte trpěliví a buďte podporující
-  Párové programování se může občas cítit pomalu.
-  Počítejte s nedorozuměním`
+    Párové programování se může občas cítit pomalu.
+    Počítejte s nedorozuměním`
   }),
 
   5: tipToJSX({
@@ -84,8 +85,7 @@ const RemindingTipMessages = {
   Rolleri sık sık değiştirmeyi unutmayın
   Bir saattir çalışıyorsun - belki kısa bir ara verirsin?`,
     Czech: `Oba partneři by měli rozumět každému řádku kódu!
-  Nezapomeňte často měnit role
-  Pracoval jste hodinu - možná si uděláte krátkou přestávku?`
+    Nezapomeňte často měnit role`
   })
 };
 

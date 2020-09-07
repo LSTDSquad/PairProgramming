@@ -15,8 +15,8 @@ const tipToJSX = ({ English, Turkish, Czech }) => {
   return (
     <div>
       {blurbToJSX(English)}
-      {blurbToJSX(Turkish)}
-      {blurbToJSX(Czech)}
+      {/* {blurbToJSX(Turkish)}
+      {blurbToJSX(Czech)} */}
     </div>
   );
 };

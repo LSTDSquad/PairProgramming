@@ -949,7 +949,7 @@ class SplitText extends React.Component {
               minSize={500}
               defaultSize={window.innerWidth / 2}
               style={{ bottom: 0, top: 70, height: "auto" }} //window.innerHeight-80}}
-              pane2Style={{ overflow: "scroll", backgroundColor: "#292a2e" }}
+              pane2Style={{ overflow: "scroll", backgroundColor: "#292a2e", overflowX: "hidden" }}
               resizerStyle={{ border: "5px solid blue" }}
             >
               <TextInput

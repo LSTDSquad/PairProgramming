@@ -44,6 +44,8 @@ class TextOutput extends React.Component {
               : text.indexOf(">") == 0
               ? "#28a745"
               : "white"
+            , 
+          wordWrap: "break-word"
         }}
       >
         {text}

@@ -273,10 +273,7 @@ class TextInput extends React.Component {
       const updateTextURL = ENDPOINT + "updateData/" + sessionID;
 
       axios.put(updateTextURL, data).then(
-        response => {
-          const message = response.data;
-          // console.log(message);
-        },
+        _ => {},
         error => {
           console.log(error);
         }
@@ -285,10 +282,7 @@ class TextInput extends React.Component {
       const updateLastEditURL = ENDPOINT + "updateLastEdit/" + sessionID;
       let editTimestamp = { timestamp: String(new Date()) };
       axios.put(updateLastEditURL, editTimestamp).then(
-        response => {
-          const message = response.data;
-          // console.log(message);
-        },
+        _ => {},
         error => {
           console.log(error);
         }
@@ -318,11 +312,7 @@ class TextInput extends React.Component {
       const url = ENDPOINT + "updateConfusionCount/" + sessionID;
 
       axios.put(url).then(
-        response => {
-          // console.log(response);
-          const message = response.data;
-          // console.log(message);
-        },
+        _ => {},
         error => {
           console.log(error);
         }
@@ -377,7 +367,6 @@ class TextInput extends React.Component {
   };
 
   receiveConfused = () => {
-    // const {selected, confusedMsg} = this.props.confusionStatus;
     this.processConfused(this.props.confusionStatus);
   };
 
@@ -397,7 +386,6 @@ class TextInput extends React.Component {
                 }}
                 size="md"
                 type="text"
-                // placeholder="briefly describe your confusion."
               ></Form.Control>
               <Button variant="primary" type="submit">
                 <SendRounded />
@@ -421,9 +409,6 @@ class TextInput extends React.Component {
       return;
     }
     this.setState({ commentError: false });
-    // console.log(this.state.selected, this.state.commentMsg);
-
-    // let { start, end } = this.state.selected;
     let newToast = {
       type: "comment",
       msg: this.state.commentMsg,
@@ -442,9 +427,7 @@ class TextInput extends React.Component {
       const url = ENDPOINT + "updateCommentCount/" + sessionID;
 
       axios.put(url).then(
-        response => {
-          // console.log(response);
-        },
+        _ => {},
         error => {
           console.log(error);
         }

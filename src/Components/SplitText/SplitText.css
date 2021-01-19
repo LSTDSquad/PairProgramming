@@ -85,6 +85,6 @@ button.chat-btn {
 .copilot-toggle-msg {
     position: absolute;
     top: 80px;
-    z-index: 2;
+    z-index: 7;
     max-width: max-content !important;
 }

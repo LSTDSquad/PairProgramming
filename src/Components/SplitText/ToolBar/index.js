@@ -13,7 +13,6 @@ import {
   SwapHoriz,
   GetApp,
   EmojiObjectsRounded,
-  Add,
   HelpOutlineRounded
 } from "@material-ui/icons";
 // import { Drawer } from "@material-ui/core";

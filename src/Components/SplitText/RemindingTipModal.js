@@ -1,12 +1,9 @@
-import React, { useState } from "react";
-import { Button, Modal } from "react-bootstrap";
+import React from "react";
+import {  Modal } from "react-bootstrap";
 
 import "./MyModals.css";
 
 const RemindingTipModal = props => {
-  //   let [show, setShow] = useState(false);
-
-  //   const pageMapping = [pairProgrammingVideoBody, introductionAndGuidelines];
 
   const { show, changeShowRemindingTip, tipMessage } = props;
 

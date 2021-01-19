@@ -41,7 +41,7 @@ class TextOutput extends React.Component {
           color:
             text.indexOf("Error: ") >= 0
               ? "red"
-              : text.indexOf(">") == 0
+              : text.indexOf(">") === 0
               ? "#28a745"
               : "white"
             , 

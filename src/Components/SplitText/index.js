@@ -26,7 +26,7 @@ import {
 import "react-chat-widget/lib/styles.css";
 import "./ReactChatWidget.css";
 import {isMobile} from 'react-device-detect';
-import { Form, Button, Modal, Container, Row, Toast } from "react-bootstrap";
+import { Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
 
 import { ENDPOINT } from "../endpoints";
@@ -343,10 +343,7 @@ class SplitText extends React.Component {
         let data = { session: sessionID };
 
         axios.put(userURL, data).then(
-          response => {
-            const message = response.data;
-            // console.log(message);
-          },
+          _ => {},
           error => {
             console.log(error);
           }
@@ -365,7 +362,7 @@ class SplitText extends React.Component {
       const now = new Date();
       // console.log("now", now);
       //tip on the 00:10, :20, etc. of the time
-      if (now.getMinutes() % MINUTES_BETWEEN_TIPS == 0) {
+      if (now.getMinutes() % MINUTES_BETWEEN_TIPS === 0) {
         this.changeShowRemindingTip(true);
         //make a global array that has the tip messages. length 6
         //based on getMinutes() / MINUTES_BETWEEN_TIPS
@@ -398,10 +395,7 @@ class SplitText extends React.Component {
       let data = { timeStamp: String(new Date()) };
 
       axios.put(url1, data).then(
-        response => {
-          const message = response.data;
-          // console.log(message);
-        },
+        _ => {},
         error => {
           console.log(error);
         }
@@ -476,13 +470,9 @@ class SplitText extends React.Component {
       const url = ENDPOINT + "updateTimeStamps/" + this.state.sessionID;
       let who = this.state.user_name;
       let data = { event: String(new Date()), who, type };
-      // console.log(1, data);
 
       axios.put(url, data).then(
-        response => {
-          const message = response.data;
-          // console.log(message);
-        },
+        _ => {},
         error => {
           console.log(error);
         }
@@ -553,7 +543,7 @@ class SplitText extends React.Component {
           Sk.builtinFiles === undefined ||
           Sk.builtinFiles["files"][x] === undefined
         ) {
-          throw "File not found: '" + x + "'";
+          throw new Error("File not found: '" + x + "'");
         }
         return Sk.builtinFiles["files"][x];
       };
@@ -623,7 +613,7 @@ class SplitText extends React.Component {
             {
               "*": () => {
                 if (this.state.stopExecution) {
-                  throw "Execution Interrupted";
+                  throw new Error("Execution Interrupted");
                   // allow for general interrupt
                 }
               }
@@ -680,10 +670,7 @@ class SplitText extends React.Component {
       let data = { timeStamp: String(new Date()) };
 
       axios.put(url, data).then(
-        response => {
-          const message = response.data;
-          // console.log(message);
-        },
+        _ => {},
         error => {
           console.log(error);
         }
@@ -753,10 +740,7 @@ class SplitText extends React.Component {
     let data = { event: String(new Date()), who, type };
 
     axios.put(url, data).then(
-      response => {
-        const message = response.data;
-        // console.log(message);
-      },
+      _ => {},
       error => {
         console.log(error);
       }
@@ -770,10 +754,7 @@ class SplitText extends React.Component {
       let data = { timeStamp: String(new Date()) };
 
       axios.put(url1, data).then(
-        response => {
-          const message = response.data;
-          // console.log(message);
-        },
+        _ => {},
         error => {
           console.log(error);
         }

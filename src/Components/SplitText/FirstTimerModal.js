@@ -15,6 +15,7 @@ const pairProgrammingVideoBody = () => {
       frameBorder="0"
       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
       allowFullScreen
+      title="tutorial pair programming"
     ></iframe>
   );
 };
@@ -33,7 +34,7 @@ const pointOutChat = () => {
   return (
     <h4>
       <EmojiObjectsRounded fontSize="large" />
-      Use the chat feature <img height="50" src={chatButtonPNG} /> to talk to
+      Use the chat feature <img alt="chat button" height="50" src={chatButtonPNG} /> to talk to
       your partner
       <br/>
       You'll know when they've joined through the "people" icon at the top right. 
@@ -46,7 +47,7 @@ const pointOutConfusion = () => {
     <h4>
       <EmojiObjectsRounded fontSize="large" />
       If you have a question, use the question feature{" "}
-      <img height="50" src={confusionButtonPNG} /> to let your partner know
+      <img height="50" alt="question button" src={confusionButtonPNG} /> to let your partner know
     </h4>
   );
 };

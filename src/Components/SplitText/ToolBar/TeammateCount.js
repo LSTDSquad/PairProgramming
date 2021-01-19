@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
+import {  OverlayTrigger, Tooltip } from "react-bootstrap";
 import { PeopleAltRounded } from "@material-ui/icons";
 import "./TeammateCount.css";
 

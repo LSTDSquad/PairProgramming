@@ -1,51 +1,26 @@
 {
-    "env": {
-        "awscloudformation": {
-            "AuthRoleName": "amplify-pairprogramming-env-124720-authRole",
-            "UnauthRoleArn": "arn:aws:iam::102195872554:role/amplify-pairprogramming-env-124720-unauthRole",
-            "AuthRoleArn": "arn:aws:iam::102195872554:role/amplify-pairprogramming-env-124720-authRole",
-            "Region": "us-east-2",
-            "DeploymentBucketName": "amplify-pairprogramming-env-124720-deployment",
-            "UnauthRoleName": "amplify-pairprogramming-env-124720-unauthRole",
-            "StackName": "amplify-pairprogramming-env-124720",
-            "StackId": "arn:aws:cloudformation:us-east-2:102195872554:stack/amplify-pairprogramming-env-124720/aa497fc0-7ce5-11ea-b361-0247ef85be9c",
-            "AmplifyAppId": "d1tkneodyg1kgq"
-        },
-        "categories": {
-            "auth": {
-                "pairprogrammingc4b3a75a": {}
-            },
-            "hosting": {
-                "amplifyhosting": {
-                    "appId": "d1tkneodyg1kgq",
-                    "type": "cicd"
-                }
-            }
-        }
+  "master": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-pairprogramming-master-194356-authRole",
+      "UnauthRoleArn": "arn:aws:iam::102195872554:role/amplify-pairprogramming-master-194356-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::102195872554:role/amplify-pairprogramming-master-194356-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-pairprogramming-master-194356-deployment",
+      "UnauthRoleName": "amplify-pairprogramming-master-194356-unauthRole",
+      "StackName": "amplify-pairprogramming-master-194356",
+      "StackId": "arn:aws:cloudformation:us-east-2:102195872554:stack/amplify-pairprogramming-master-194356/f2ee0ba0-7cf5-11ea-84a9-0aeddbb89fe2",
+      "AmplifyAppId": "d1tkneodyg1kgq"
     },
-    "dev": {
-        "awscloudformation": {
-            "AuthRoleName": "amplify-pairprogramming-dev-164331-authRole",
-            "UnauthRoleArn": "arn:aws:iam::102195872554:role/amplify-pairprogramming-dev-164331-unauthRole",
-            "AuthRoleArn": "arn:aws:iam::102195872554:role/amplify-pairprogramming-dev-164331-authRole",
-            "Region": "us-west-2",
-            "DeploymentBucketName": "amplify-pairprogramming-dev-164331-deployment",
-            "UnauthRoleName": "amplify-pairprogramming-dev-164331-unauthRole",
-            "StackName": "amplify-pairprogramming-dev-164331",
-            "StackId": "arn:aws:cloudformation:us-west-2:102195872554:stack/amplify-pairprogramming-dev-164331/c20df990-7ea9-11ea-a0ef-0a5fa98e8810",
-            "AmplifyAppId": "d7qh82pmsgpdx"
-        },
-        "categories": {
-            "auth": {
-                "pairprogrammingc4b3a75a": {},
-                "userPoolGroups": {}
-            },
-            "hosting": {
-                "amplifyhosting": {
-                    "appId": "d7qh82pmsgpdx",
-                    "type": "cicd"
-                }
-            }
+    "categories": {
+      "auth": {
+        "pairprogrammingc4b3a75a": {}
+      },
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "d1tkneodyg1kgq",
+          "type": "cicd"
         }
+      }
     }
+  }
 }

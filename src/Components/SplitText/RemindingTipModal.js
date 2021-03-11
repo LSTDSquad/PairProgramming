@@ -3,6 +3,15 @@ import {  Modal } from "react-bootstrap";
 
 import "./MyModals.css";
 
+/**
+ * RemindingTipModal
+ * @param {*} props 
+ * Reminds every ~10 min. uses SessionUtilities.js. 
+ * Used by CSBridge2020. 
+ * Currently unused.
+ * 
+ */
+
 const RemindingTipModal = props => {
 
   const { show, changeShowRemindingTip, tipMessage } = props;

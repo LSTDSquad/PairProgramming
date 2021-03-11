@@ -5,15 +5,23 @@ for overrides
     box-shadow: none;
 }
 .rcw-conversation-container > .rcw-header {
-    background-color: #007bff;
+    background-color: #005f39;
 }
 
 .rcw-widget-container > .rcw-launcher {
-    background-color: #007bff;
+    background-color: #005f39;
     box-shadow: none;
 }
 
 .rcw-message > .author-message {
     margin-bottom: -10px;
-    color: #007bff;
+    color: #005f39;
+}
+
+.rcw-client > .rcw-message-text {
+    background-color: #cccccc;
+}
+
+.rcw-response > .rcw-message-text {
+    background-color: #c2ded3;
 }

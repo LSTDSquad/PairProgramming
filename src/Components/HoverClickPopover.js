@@ -1,7 +1,8 @@
 import React, { useState, useRef } from "react";
 import { Overlay, Tooltip, Button } from "react-bootstrap";
-
 /*
+HoverClickPopover:
+example: hovering over the comment and confused button 
 THIS COMPONENT USES REACT HOOKS! 
 */
 /*
@@ -56,7 +57,7 @@ const HoverClickPopover = props => {
       </Overlay>
       <Overlay
         target={target.current}
-        show={showPopover}
+        show={Boolean(showPopover)}
         placement="right"
         rootClose={true}
         onHide={() => {
@@ -65,7 +66,9 @@ const HoverClickPopover = props => {
             : setShowPopover(false);
         }}
       >
-        {props => thisProps.popover(props)}
+        
+        {// using the props within this Overlay! 
+        props => thisProps.popover(props)}
       </Overlay>
     </>
   );

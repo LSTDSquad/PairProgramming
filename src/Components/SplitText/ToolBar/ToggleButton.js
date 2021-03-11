@@ -3,6 +3,9 @@ import { Button } from "react-bootstrap";
 import { SwapHoriz } from "@material-ui/icons";
 import "./CSS/ToggleButton.css";
 
+/**
+ * Not currently being used....
+ */
 class ToggleButton extends React.Component {
   constructor(props) {
     super(props);

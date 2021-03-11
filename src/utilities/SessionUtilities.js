@@ -1,12 +1,18 @@
 import React from "react";
 
+/**
+ * Used for CS bridge 2020. Pops up every 10 minutes (based on the current time)
+ * Currently unused.
+ * @param {} param0 
+ */
+
 const tipToJSX = ({ English, Turkish, Czech }) => {
   const blurbToJSX = str => {
     const lines = str.split("\n");
     return (
       <div>
         {lines.map((line, i) => {
-          return i === 0 ? <h5>{line}</h5> : <div key={i}>{line}</div>;
+          return i === 0 ? <h5 key={i}>{line}</h5> : <div key={i}>{line}</div>;
         })}
       </div>
     );

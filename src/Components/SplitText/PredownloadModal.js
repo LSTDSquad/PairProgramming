@@ -3,6 +3,12 @@ import { Button, Modal } from "react-bootstrap";
 
 import "./MyModals.css";
 
+/**
+ * This file was made for CS bridge originally - before downloading, the user has to fill out a form. 
+ * Used by splittext.
+ * Currently unused. 
+ */
+
 const endSurveyBody = () => {
   return (
     <div className="iframe-container">

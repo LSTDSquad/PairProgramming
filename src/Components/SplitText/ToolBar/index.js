@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Navbar,
   Form,
@@ -15,7 +15,6 @@ import {
   EmojiObjectsRounded,
   HelpOutlineRounded
 } from "@material-ui/icons";
-// import { Drawer } from "@material-ui/core";
 import axios from "axios";
 import { ENDPOINT } from "../../endpoints";
 import { Link } from "react-router-dom";
@@ -24,119 +23,72 @@ import TeammateCount from "./TeammateCount";
 import "./ToolBar.css";
 import HoverClickPopover from "../../HoverClickPopover";
 
-/////     props:
-/////     isPilot
-/////     userID
-/////     sessionID
-/////     text
-/////     userNumber
-/////     history
-/////     packageMessage
-/////     handleIDChange
-/////     userArray
-/////     changeShowFirstTimerModal
-///
-class ToolBar extends React.Component {
-  constructor(props) {
-    super(props);
+/**
+ * example use:
+ *  <ToolBar
+      isPilot={isPilot}
+      userID={userID}
+      sessionID={sessionID}
+      text={text}
+      userArray={this.state.userArray}
+      history={history}
+      packageMessage={this.packageMessage}
+      handleIDChange={this.handleSessionIDChange}
+      pilotHandoff={this.pilotHandoff}
+      handleDownload={this.handleDownload}
+      title={this.state.fileName}
+      changeShowFirstTimerModal={this.changeShowFirstTimerModal}
+    />
+ */
+function ToolBar({ isPilot, userID, sessionID, editorRef, userArray, history,
+  packageMessage, handleIDChange, pilotHandoff, handleDownload,
+  title, changeShowFirstTimerModal }) {
+  //used for the hamburger menu
+  let [drawerOpen, setDrawerOpen] = useState(false);
+  let [fileName, setFileName] = useState(title);
+  let [user, setUser] = useState(null); //from aws auth
 
-    this.state = {
-      //used for the hamburger menu
-      drawerOpen: false,
-      fileName: this.props.title,
-      user: null, //from aws auth
-    };
-  }
-
-  componentDidMount () {
-    //get the name of the user
-    Auth.currentAuthenticatedUser()
-      .then(user => {
-        this.setState(
-          {
-            user: user
-          }
-        );
-      })
-      .catch(err => console.log(err));
-  }
+  useEffect(() => {
+    if (user === null) {
+      Auth.currentAuthenticatedUser()
+        .then(userID => setUser(userID))
+        .catch(err => console.log(err));
+    }
+  });
 
   ///// for the hamburger menu
-  toggleDrawer = open => {
-    this.setState({ drawerOpen: open });
+  const toggleDrawer = open => {
+    setDrawerOpen(open);
   };
 
   /////     handles the actual toggling for the pilot -> copilot
-  handleToggleClick = e => {
+  const handleToggleClick = e => {
     e.preventDefault();
-    if (this.props.isPilot) {
-      this.props.pilotHandoff();
+    if (isPilot) {
+      pilotHandoff();
     }
   };
 
   /////     handles the toggling for copilot -> pilot
-  requestToggle = e => {
+  const requestToggle = e => {
     e.preventDefault();
-    if (!this.props.isPilot) {
-      this.props.packageMessage(this.state, "toggleRequest");
+    if (!isPilot) {
+      //currently, fileName and user aren't even being used. 
+      packageMessage({ fileName, user }, "toggleRequest");
     }
   };
 
   //change file name
-  handleNameChange = e => {
-    this.setState({ fileName: e.target.value }, () => {
-      //This needs to be reworked a little
-      //GoogleDocs makes it seem much smoother!
-      let data = { name: this.state.fileName };
-      let sessionID = this.props.sessionID;
+  const handleNameChange = e => {
+    const fname = e.target.value;
+    setFileName(fname);
 
-      const url = ENDPOINT + "updateName/" + sessionID;
-
-      console.log(url, data);
-
-      axios.put(url, data).then(
-        response => {
-          const message = response.data;
-          console.log(message);
-        },
-        error => {
-          console.log(error);
-        }
-      );
-    });
-  };
-
-  //when use clicks away from filename input
-  moveAway = () => {
-    if (this.state.fileName === "") {
-      this.setState({ fileName: "untitled document" });
-    }
-  };
-
-  //goodle docs style where the whole name highlights if the title is "untitled document"
-  handleRenameClick = e => {
-    e.preventDefault();
-    console.log(e.target.value);
-    if (this.state.fileName === "untitled document") {
-      e.target.select();
-    }
-  };
-
-  makeNewSession = e => {
-    e.preventDefault();
-    const url = ENDPOINT + "setData";
-    let data = { text: "# happy coding!" };
-    axios.post(url, data).then(
+    //This needs to be reworked a little
+    //GoogleDocs makes it seem much smoother!
+    let data = { name: fname };
+    const url = ENDPOINT + "updateName/" + sessionID;
+    axios.put(url, data).then(
       response => {
-        let newSession = "/" + response.data.id;
-        this.props.handleIDChange(response.data.id);
-        this.props.history.push(newSession); //navigate to page referencing copy
-        // const lastEditurl = ENDPOINT + "updateLastEdit/" + response.data
-        // data = {timestamp: String(new Date())};
-        // axios.post(lastEditurl, data).then( response => {
-        //   console.log(response);
-        window.location.reload(true);
-        // })
       },
       error => {
         console.log(error);
@@ -144,21 +96,58 @@ class ToolBar extends React.Component {
     );
   };
 
-  render() {
-    return (
-      <Navbar
-        variant="light"
-        bg={this.props.isPilot ? "primary" : "warning"}
-        className="top-bar"
-        style={
-          this.props.isPilot
-            ? { color: "white", fontSize: "1.5em" }
-            : { fontSize: "1.5em" }
-        }
-      >
-        {/* Hamburger Menu
+  //when user clicks away from filename input
+  const moveAway = () => {
+    if (fileName === "") {
+      setFileName("Untitled document");
+    }
+  };
+
+  //goodle docs style where the whole name highlights if the title is "untitled document"
+  const handleRenameClick = e => {
+    e.preventDefault();
+    if (fileName === "untitled document") {
+      e.target.select();
+    }
+  };
+
+  //not currently used because there is no new sessino button in toolbar /
+  // const makeNewSession = e => {
+  //   e.preventDefault();
+  //   const url = ENDPOINT + "setData";
+  //   let data = { text: "# happy coding!" };
+  //   axios.post(url, data).then(
+  //     response => {
+  //       let newSession = "/" + response.data.id;
+  //       handleIDChange(response.data.id);
+  //       history.push(newSession); //navigate to page referencing copy
+  //       // const lastEditurl = ENDPOINT + "updateLastEdit/" + response.data
+  //       // data = {timestamp: String(new Date())};
+  //       // axios.post(lastEditurl, data).then( response => {
+  //       //   console.log(response);
+  //       window.location.reload(true);
+  //       // })
+  //     },
+  //     error => {
+  //       console.log(error);
+  //     }
+  //   );
+  // };
+
+  return (
+    <Navbar
+      variant="light"
+      bg={isPilot ? "primary" : "warning"}
+      className="top-bar"
+      style={
+        isPilot
+          ? { color: "white", fontSize: "1.5em" }
+          : { fontSize: "1.5em" }
+      }
+    >
+      {/* Hamburger Menu. experimental 
          */}
-        {/* <Button variant="light" onClick={() => this.toggleDrawer(true)}>
+      {/* <Button variant="light" onClick={() => this.toggleDrawer(true)}>
           <Menu />
         </Button>
         <Drawer
@@ -171,93 +160,78 @@ class ToolBar extends React.Component {
             <ListGroup.Item>Pair Programming Tips</ListGroup.Item>
           </ListGroup>
         </Drawer> */}
-        <div className="left-side-toolbar">
-          <Link to="/">
-            <Button className="home-button">
-              <HomeRounded fontSize="large" />
-            </Button>
-          </Link>
-          <Form onSubmit={e => e.preventDefault()}>
-            <Form.Control
-              type="text"
-              value={this.state.fileName}
-              onChange={this.handleNameChange}
-              onClick={this.handleRenameClick}
-              onBlur={this.moveAway}
-            />
-          </Form>
+      <div className="left-side-toolbar">
+        <Link to="/">
+          <Button className="home-button">
+            <HomeRounded fontSize="large" />
+          </Button>
+        </Link>
+        <Form onSubmit={e => e.preventDefault()}>
+          <Form.Control
+            type="text"
+            value={fileName}
+            onChange={handleNameChange}
+            onClick={handleRenameClick}
+            onBlur={moveAway}
+          />
+        </Form>
+        <HoverClickPopover
+          // this props is for HoverClickPopover
+          popover={(props) => (
+            <Popover {...props}>
+              <Popover.Title>Pair programming tips</Popover.Title>
+              <Popover.Content>
+                <div>Remember to switch roles often!</div>
+                <div>The goal is for both partners to understand all of the code!</div>
+                <div>Learning to code is hard! Help each other when you are stuck</div>
+                <div>Be supportive and respectful</div>
+              </Popover.Content>
+            </Popover >
+
+          )}
+          variant={isPilot ? "outline-light" : "outline-dark"}
+          buttonClass="tips-button"
+          hoverContent={<div>Pair programming tips</div>}
+          buttonContent={<EmojiObjectsRounded fontSize="large" id="pair-programming-tips" />}
+          placement="bottom"
+        />
+
+        <OverlayTrigger
+          trigger={["hover", "focus"]}
+          overlay={<Tooltip>Download .py file</Tooltip>}
+          placement="bottom"
+        >
+          <Button
+            onClick={handleDownload}
+            variant={isPilot ? "outline-light" : "outline-dark"}
+            className="save-button"
+          >
+            <GetApp fontSize="large" />
+          </Button>
+        </OverlayTrigger>
+      </div>
+      <div>
+        {isPilot ? (
           <HoverClickPopover
-            popover={({ ...props }) => (
+            popover={(props) => (
               <Popover {...props}>
-                <Popover.Title>Pair programming tips</Popover.Title>
+                <Popover.Title>What does a Pilot do?</Popover.Title>
                 <Popover.Content>
-                  <div>Remember to switch roles often!</div>
-                  <div>The goal is for both partners to understand all of the code!</div>
-                  <div>Learning to code is hard! Help each other when you are stuck</div>
-                  <div>Be supportive and respectful</div>
+                  <div>Write the code!</div>
+                  <div>Think out loud</div>
+                  <div>Help the Co-Pilot understand your code</div>
                 </Popover.Content>
               </Popover>
             )}
-            variant={this.props.isPilot ? "outline-light" : "outline-dark"}
-            buttonClass="tips-button"
-            hoverContent={<div>Pair programming tips</div>}
-            buttonContent={<EmojiObjectsRounded fontSize="large" />}
-            placement="bottom"
+            variant="primary"
+            buttonClass=""
+            hoverContent={<div>Click for tips</div>}
+            buttonContent={<div className="role-display">Role: Pilot </div>}
           />
+        ) : (
 
-          <OverlayTrigger
-            trigger={["hover", "focus"]}
-            overlay={<Tooltip>Download .py file</Tooltip>}
-            placement="bottom"
-          >
-            <Button
-              onClick={this.props.handleDownload}
-              variant={this.props.isPilot ? "outline-light" : "outline-dark"}
-              className="save-button"
-            >
-              <GetApp fontSize="large" />
-            </Button>
-          </OverlayTrigger>
-          {/* <Button onClick={this.props.handleInterrupt} className="copy-btn" type="button" variant="light" id="interrupt-button">Stop Code</Button> */}
-        </div>
-        <div>
-          {this.props.isPilot ? (
             <HoverClickPopover
-              popover={({ ...props }) => (
-                <Popover {...props}>
-                  <Popover.Title>What does a Pilot do?</Popover.Title>
-                  <Popover.Content>
-                    <div>Write the code!</div>
-                    <div>Think out loud</div>
-                    <div>Help the Co-Pilot understand your code</div>
-                  </Popover.Content>
-                </Popover>
-              )}
-              variant="primary"
-              buttonClass=""
-              hoverContent={<div>Click for tips</div>}
-              buttonContent={<div className="role-display">Role: Pilot </div>}
-            />
-          ) : (
-            // <label>
-
-            //   <OverlayTrigger
-            //     trigger={["hover", "focus"]}
-            //     overlay={<Tooltip>Click to change roles</Tooltip>}
-            //     placement="bottom"
-            //   >
-            //   <Button
-            //     className="swap-button"
-            //     variant="warning"
-            //     type="button"
-            //     onClick={this.handleToggleClick}
-            //     disabled={this.props.userArray.length <= 1}
-            //   >
-            //     <SwapHoriz />
-            //   </Button></OverlayTrigger>
-            // </label>
-            <HoverClickPopover
-              popover={({ ...props }) => (
+              popover={(props) => (
                 <Popover {...props}>
                   <Popover.Title>What does a Co-Pilot do?</Popover.Title>
                   <Popover.Content>
@@ -267,94 +241,79 @@ class ToolBar extends React.Component {
                   </Popover.Content>
                 </Popover>
               )}
-              variant="warning"
-              buttonClass=""
+              variant=""
+              buttonClass="co-pilot-role-btn"
               hoverContent={<div>Click for tips</div>}
               buttonContent={
                 <div className="role-display">Role: Co-Pilot </div>
               }
             />
-            // <OverlayTrigger
-            //   trigger={["hover", "focus"]}
-            //   overlay={<Tooltip>Click to change roles</Tooltip>}
-            //   placement="bottom"
-            // >
-            //   <Button
-            //     className="swap-button"
-            //     variant="primary"
-            //     type="button"
-            //     onClick={this.requestToggle}
-            //   >
-            //     <SwapHoriz />
-            //   </Button>
-            // </OverlayTrigger>
+
           )}
-          <label>
-            <OverlayTrigger
-              trigger={["hover", "focus"]}
-              overlay={<Tooltip>Click to change roles</Tooltip>}
-              placement="bottom"
+        <label>
+          <OverlayTrigger
+            trigger={["hover", "focus"]}
+            overlay={<Tooltip>Click to change roles</Tooltip>}
+            placement="bottom"
+          >
+            <Button
+              className={isPilot ? "co-pilot-role-btn swap-button" : "swap-button"}
+              variant={isPilot ? "" : "primary"}
+              type="button"
+              onClick={
+                isPilot
+                  ? handleToggleClick
+                  : requestToggle
+              }
+              disabled={userArray.length <= 1}
             >
-              <Button
-                className="swap-button"
-                variant={this.props.isPilot ? "warning" : "primary"}
-                type="button"
-                onClick={
-                  this.props.isPilot
-                    ? this.handleToggleClick
-                    : this.requestToggle
-                }
-                disabled={this.props.userArray.length <= 1}
-              >
-                <SwapHoriz />
-              </Button>
-            </OverlayTrigger>
-          </label>
-        </div>
-        <div className="right-side-toolbar">
-          <TeammateCount userArray={this.props.userArray} />
-          {/* CREATING NEW SESSION */}
-          {/* <OverlayTrigger
+              <SwapHoriz />
+            </Button>
+          </OverlayTrigger>
+        </label>
+      </div>
+      <div className="right-side-toolbar">
+        <TeammateCount userArray={userArray} />
+        {/* CREATING NEW SESSION */}
+        {/* <OverlayTrigger
             trigger={["hover", "focus"]}
             overlay={<Tooltip>Create a new session</Tooltip>}
             placement="bottom"
           >
             <Button
-              onClick={this.makeNewSession}
+              onClick={makeNewSession}
               className="bg-light text-dark"
             >
               <Add />
             </Button>
           </OverlayTrigger> */}
-          <CopyButton
-            //component to save session to backend
-            text={this.props.text}
-            // history={this.props.history}
-            sessionID={this.props.sessionID}
-            onSessionIDChange={this.props.handleIDChange}
-          />
-          {/* LOGGING OUT */}
-          {/* <Button
+        <CopyButton
+          //component to save session to backend
+          editorRef={editorRef}
+          sessionID={sessionID}
+          onSessionIDChange={handleIDChange}
+        />
+        {/* LOGGING OUT */}
+        {/* <Button
             className="m-2 bg-dark"
             onClick={() => {
-              this.state.user.signOut();
+              user.signOut();
               window.location.reload(true);
             }}
           >
             Log out
           </Button> */}
-          <Button 
-            variant={this.props.isPilot ? "primary" : "warning"}
-            onClick={() => this.props.changeShowFirstTimerModal(true)}
-            >
-            <HelpOutlineRounded className="toolbar-icon">
-
-            </HelpOutlineRounded>
-          </Button>
-        </div>
-      </Navbar>
-    );
-  }
+        {/* <Button
+          variant={isPilot ? "primary" : ""}
+          className={isPilot ? "" : "help-button-copilot"}
+          onClick={() => changeShowFirstTimerModal(true)}
+        >
+          <HelpOutlineRounded className="toolbar-icon">
+          </HelpOutlineRounded>
+        </Button> */}
+      </div>
+    </Navbar>
+  );
 }
 
 export default ToolBar;

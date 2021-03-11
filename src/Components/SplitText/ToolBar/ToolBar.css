@@ -33,3 +33,13 @@ svg.MuiSvgIcon-root.toolbar-icon  {
     font-size: 50px;
     color: white;
 }
+
+.co-pilot-role-btn.btn, .help-button-copilot  {
+    background-color: #ffc107;
+}
+
+.co-pilot-role-btn:hover, .co-pilot-role-btn:active, .help-button-copilot:hover, .help-button-copilot:active {
+    color: #212529;
+    background-color: #e0a800;
+    border-color: #e0a800;
+}

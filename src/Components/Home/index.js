@@ -127,6 +127,7 @@ class Home extends React.Component {
                 // handle error
                 console.log(error);
                 callback(error, sessionObj);
+                // self.setState({doneLoading: true});
               });
           },
           function(err, sessionObjs) {
@@ -198,7 +199,7 @@ class Home extends React.Component {
                 </Card.Title>
                 <Card.Body className="text-dark">
                   <Accordion>
-                    {this.state.prevSessions
+                    {this.state.prevSessions && this.state.prevSessions
                       .filter(
                         ({ sessionID }) =>
                           this.state.allForks.indexOf(sessionID) === -1
@@ -214,7 +215,7 @@ class Home extends React.Component {
                               <div>
                                 
 
-                                {forks.length > 0 && (
+                                {forks && forks.length > 0 && (
                                   <Accordion.Toggle
                                     as={Button}
                                     variant="link"
@@ -232,7 +233,7 @@ class Home extends React.Component {
                                 </Link>
                               </div>
                             </Card.Header>
-                            {forks.map((fork, i) => (
+                            {forks && forks.map((fork, i) => (
                               <Accordion.Collapse
                                 eventKey={`${parent_i}`}
                                 key={i}

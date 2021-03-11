@@ -1,333 +1,258 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AceEditor from "react-ace";
 import {
   AceMultiCursorManager,
   AceMultiSelectionManager
 } from "@convergencelabs/ace-collab-ext";
-import { Range } from "ace-builds/";
-import axios from "axios";
-
+import { Range } from "ace-builds/"; //took out Range
 import "ace-builds/src-noconflict/mode-python";
-import "ace-builds/src-noconflict/theme-cobalt";
+import "ace-builds/src-noconflict/theme-gruvbox";
 import "@convergencelabs/ace-collab-ext/css/ace-collab-ext.css";
 import {
   Container,
-  Button,
-  Popover,
-  OverlayTrigger,
-  Alert,
-  Form,
-  Tooltip
 } from "react-bootstrap";
 import "./TextInput.css";
 import SplitPane from "react-split-pane";
-import {
-  PlayArrowRounded,
-  SendRounded,
-  HelpOutlineRounded,
-  DoneRounded,
-  CommentRounded,
-  StopRounded
-} from "@material-ui/icons";
-import { ENDPOINT } from "../../endpoints";
-import HoverClickPopover from "../../HoverClickPopover";
+import { apiGetCall, apiPutCall } from "../../endpoints";
+import { RunOrStopButton, CommentButton, ConfusedButton, ResolveButton } from "./ProgramButtons";
+
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+}
+
+function areDifferentPositions(one, two) {
+  if (!one || !two) return false;
+  if (one.row !== two.row) return true;
+  if (one.column !== two.column) return true;
+  return false;
+}
+
 
 /*
 Props:
 cursors: in the form {10392: cursorPositionObject, }
-
+<TextInput
+  side="left"
+  isPilot={isPilot}
+  sessionID={sessionID}
+  userID={userID}
+  handleRun={this.runCode}
+  addToast={this.addToast}
+  user_name={this.state.user_name}
+  packageMessage={this.packageMessage}
+  isRunningCode={this.state.isRunningCode}
+  pubnub={this.PubNub}
+  handleInterrupt={this.handleInterrupt} // to stop code
+/>
 
 */
-class TextInput extends React.Component {
+function TextInput({ isPilot, sessionID, userID, pubnub, setEditorRef,
+  handleRun, addToast, user_name, packageMessage, isRunningCode, handleInterrupt }) {
+  const editorRef = useRef(); //set reference to ace editor
+
+  let [text, setText] = useState("");
   //individual text boxes that send state to split view
-  constructor(props) {
-    super(props);
 
-    this.state = {
-      selected: null,
-      //must keep track of annotations in state in case there's multiple annotaitons
-      annotations: [],
+  //selection, used for processing comments and confusions
+  let mySelected = useRef({ start: { row: 0, column: 0 }, end: { row: 0, column: 0 } });
+  let session = useRef(null);
+  let curMgr = useRef(null); //cursor manager for the other cursors
+  let selMgr = useRef(null); //selection manager for the other people's selections.
 
-      cursor: null,
-      confusedMsg: "", //
-      markers: [],
-      commentMsg: "",
-      //showign the confusion popup for entering the confusion
-      showConfused: false,
-      confusedHover: false,
-      showComment: false,
-      commentError: false,
-      confusedError: false,
-      confusionStatus: {}, //object with fields 'selected' and 'confusedMsg', confusionPresent (liek in state)
-      resolve: {}, //object with fields 'markers' and 'showConfused' (like in state)
-      clickedRecently: false //so that we filter out all the cursorChange noise
-    };
 
-    this.handleChange = this.handleChange.bind(this);
-    this.handleTextChange = this.handleTextChange.bind(this);
-    this.basicSetState = this.basicSetState.bind(this);
-    this.getConfusedPopover = this.getConfusedPopover.bind(this);
-
-    this.editor = React.createRef(); //will reference Ace Editor
-    this.session = Object;
-    this.doc = Object;
-    this.curMgr = Object; //empty cursor manager
-    this.selMgr = Object; //empty selection manager
-    this.input = Object;
+  /**
+   * fires whenever cursor changes (includes when you're typing in the editor)
+   */
+  function handleMyCursorChange() {
+    const { cursor, anchor } = editorRef.current.editor.getSelection();
+    const { row: currRow, column: currColumn } = cursor;
+    const { row: anchorRow, column: anchorColumn } = anchor;
+    /**
+     * returns null if there is nothing selected
+     */
+    function getSelection() {
+      function isForwards() {
+        if (anchorRow < currRow) return true;
+        if (anchorRow > currRow) return false;
+        return (anchorColumn < currColumn);
+      }
+      //if there is nothing selected:
+      if (anchorRow === currRow && anchorColumn === currColumn) return null;
+      const isInOrder = isForwards();
+      const start = isInOrder ? anchor : cursor;
+      const end = isInOrder ? cursor : anchor;
+      return { start, end };
+    }
+    mySelected.current = getSelection() || {start: {row: currRow, column: currColumn}, end: {row: currRow, column: currColumn}};
+    pubnub.setState({
+      state: { cursor: { row: currRow, column: currColumn }, selection: mySelected.current, UserName: user_name },
+      channels: [sessionID],
+    }, function (status, response) {
+      if (status.isError) {
+        console.log(status);
+      }
+    });
   }
 
-  componentDidMount() {
-    this.editor = this.refs.editor.editor; //set reference to ace editor
-    // console.log(this.editor);
-    let ace_div = document.getElementById("UNIQUE_ID_OF_DIV");
-    ace_div.onmousedown = e => {
-      this.setState({ clickedRecently: true });
-    };
-    ace_div.onmouseup = () => {
-      //after 500ms, clickedRecently is false.
-      const timer = setTimeout(() => {
-        this.setState({ clickedRecently: false });
-        clearTimeout(timer);
-      }, 500);
-    };
+  //only happens on mount. 
+  useEffect(() => {
+    if (editorRef.current.editor === null) {
+      return;
+    }
+    setEditorRef(editorRef);
+    session.current = editorRef.current.editor.getSession();
+    curMgr.current = new AceMultiCursorManager(session.current); //setup cursor manager in reference to editor
+    selMgr.current = new AceMultiSelectionManager(session.current); //setup selection manager in reference to editor
+    session.current.$useWorker = false;
 
-    this.session = this.editor.getSession();
-    this.session.$useWorker = false;
-    this.doc = this.session.getDocument();
-    let currentComponent = this;
+    //get the previously saved session's code.
+    apiGetCall("getData/" + sessionID, response => {
+      setText(response.data);
+    }, () => {});
 
-    //add keyboard listener to ace editor to record which key was pressed
-    //for filtering out the cursorChange noise
-    this.editor.keyBinding.addKeyboardHandler(function(
-      data,
-      hashId,
-      keyString,
-      keyCode,
-      e
-    ) {
-      if (
-        keyCode === 37 ||
-        keyCode === 38 ||
-        keyCode === 39 ||
-        keyCode === 40
-      ) {
-        currentComponent.setState({ clickedRecently: true });
-        const timer = setTimeout(() => {
-          currentComponent.setState({ clickedRecently: false });
-          clearTimeout(timer);
-        }, 500);
+
+    pubnub.addListener({
+      message: ({ channel, message: { Who, Type, What, UserName } }) => {
+
+        if (session && Who !== userID) {
+          if (Type === "resolve") {
+            // setResolve (What); //is this even needed????? 
+            //remove confusion markers if props update with resolved confusion
+            session.current.setAnnotations([]); //not necessary 
+            setAnnotations([]);
+            setMarkers([]);
+          } else if (Type === "comment") {
+            addToast(What);
+          } else if (Type === "confused") {
+            //message.What contains {selected, confusedMsg}
+            receiveConfused();
+          } else if (Type === "text") {
+            setText(What);
+
+          }
+        }
+      },
+
+      presence: ({ action, state, uuid }) => {
+
+        // clean up cursors if they leave.
+        if (action === 'leave') {
+          curMgr.current.removeCursor(uuid);
+          selMgr.current.removeSelection(uuid);
+        } else if (action === 'state-change' && uuid !== userID) {
+          const { UserName, cursor, selection } = state;
+          if (!UserName) return;
+
+          function updateCursor() {
+            if (!curMgr.current._cursors[uuid]) {
+              curMgr.current.addCursor(uuid, UserName, "orange", cursor);
+
+            }
+            //if another user updates their cursor in another window,
+            else {
+              // //and there's a new position that is different from what we have on our window,
+              //move their cursor on this window
+              curMgr.current.setCursor(uuid, cursor);
+            }
+          }
+
+          function updateSelection() {
+            const range = new Range(
+              selection.start.row,
+              selection.start.column,
+              selection.end.row,
+              selection.end.column
+            );
+            //if another user's selection not in this selection manager, add it
+            if (!selMgr.current._selections[uuid]) {
+              selMgr.current.addSelection(uuid, UserName, "orange", [range]);
+            }
+            //if another user updates their selection another window, move their selection on this window
+            else {
+              selMgr.current.setSelection(
+                uuid,
+                [range] //must be array 
+              );
+            }
+          }
+
+          updateCursor();
+
+          if (selection) {
+            updateSelection();
+          }
+
+        }
       }
     });
 
-    this.curMgr = new AceMultiCursorManager(this.session); //setup cursor manager in reference to editor
-    // this.curMgr.addCursor(this.props.userID, this.props.userID, "orange"); //add this window's curser to the cursor manager
 
-    this.selMgr = new AceMultiSelectionManager(this.editor.getSession()); //setup selection manager in reference to editor
+    // ADD LISTENERS
+    //add keyboard listener to ace editor to record which key was pressed
+    //for filtering out the cursorChange noise
+    //might not need this.
 
-    // this.selMgr.addSelection(this.props.userID, this.props.userID, "yellow"); //add this window's selection to cursor manager
-  }
-
-  static getDerivedStateFromProps(nextProps, prevState) {
-    //check if confusionStatus has changed since last update
-    if (nextProps.confusionStatus !== prevState.confusionStatus) {
-      return { confusionStatus: nextProps.confusionStatus };
-    } else if (nextProps.resolve !== prevState.resolve) {
-      return { resolve: nextProps.resolve };
-    } else return null;
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.confusionStatus !== this.props.confusionStatus) {
-      //add confusion markers if props update with confusion
-      this.receiveConfused();
-    }
-
-    if (prevState.resolve !== this.props.resolve) {
-      //remove confusion markers if props update with resolved confusion
-      this.session.setAnnotations([]);
-      this.setState({ annotations: [], markers: [] });
-    }
-
-    //should stay the same even after changing from listener to packageMessage
-    for (const userID of Object.keys(this.curMgr._cursors)) {
-      //remove other user's cursors from previous session from the cursor manager on sessionID change
-      if (Object.keys(this.props.cursors).includes(userID) === false) {
-        // console.log("removed cursor");
-        this.curMgr.removeCursor(userID);
+    const ace_div = document.getElementById("UNIQUE_ID_OF_DIV");
+    ace_div.onmouseup = () => {
+      handleMyCursorChange();
+    };
+    ace_div.onkeyup = (e) => {
+      handleMyCursorChange();
+      const currText = editorRef.current.editor.getValue();
+      if (currText.length !== text.length) {
+        setText(currText);
+        handleTextChange(currText);
       }
     }
+  }, [])
 
-    for (const userID of Object.keys(this.selMgr._selections)) {
-      //remove other user's selection from previous session from the selection manager on sessionID change
-      if (Object.keys(this.props.selections).includes(userID) === false) {
-        this.selMgr.removeSelection(userID);
-      }
-    }
 
-    // run this loop when other window changes, not when it itself changes
-    // i.e cursors gets updated when message is sent
-    for (const [key, { msg: value, name }] of Object.entries(
-      this.props.cursors
-    )) {
-      //if another user's cursor not in this of cursor manager, add it
-      if (Object.keys(this.curMgr._cursors).includes(key) === false) {
-        this.curMgr.addCursor(key, name, "orange");
-      }
+  //must keep track of annotations in state in case there's multiple annotaitons
 
-      //if another user updates their cursor another window,
-      if (
-        key !== this.props.userID &&
-        //and there's a new position that is different from what we have on our window,
-        JSON.stringify(value) !==
-          JSON.stringify(this.curMgr._cursors[key]._position)
-      ) {
-        //move their cursor on this window
-        // console.log("setting cursor", key, value, this.curMgr._cursors[key]);
-        this.curMgr.setCursor(key, { row: value.row, column: value.column });
-      }
-    }
+  let [annotations, setAnnotations] = useState([]);
+  let [markers, setMarkers] = useState([]);
 
-    for (const [key, { msg: value, name }] of Object.entries(
-      this.props.selections
-    )) {
-      //if another user's selection not in this selection manager, add it
-      if (Object.keys(this.selMgr._selections).includes(key) === false) {
-        this.selMgr.addSelection(key, name, "yellow");
-      }
-      //if another user updates their selection another window, move their selection on this window
-      if (key !== this.props.userID) {
-        this.selMgr.setSelection(
-          key,
-          new Range(
-            value.start.row,
-            value.start.column,
-            value.end.row,
-            value.end.column
-          )
-        );
-      }
-    }
-  }
-
-  handleChange(e, event) {
-    function selectionToCode(sel) {
-      const { start, end } = sel.getRange();
-      return sel.doc.$lines.slice(start.row, end.row + 1);
-    }
-
-    //to give the document time to register the mouse click!
-    const timer = setTimeout(
-      () => {
-        // console.log(event.type, this.state.clickedRecently);
-        //If the cursor changes due to arrow key movement
-        // 37-40 are the key codes corresponding to arrow keys
-        // 0 corresponds to mouse click //actually i dont' think it does
-        if (event.type === "changeCursor" && this.state.clickedRecently) {
-          //it genuinely thinks it's changing the cursor. event type stays as changeCursor.
-          event.preventDefault();
-          var cursorPosition = e.getCursor();
-          // console.log(cursorPosition);
-          //current issue: somehow it thinks there are mouse clicks when there really arent'
-          this.props.packageMessage(cursorPosition, "cursor");
-        }
-
-        //only send selection messages after mouseclick or typing, not with every change in text
-        else if (
-          event.type === "changeSelection" &&
-          this.state.clickedRecently
-        ) {
-          const selectionRange = e.getRange();
-          selectionRange.code = selectionToCode(e);
-          setTimeout(() => this.setState({ selected: selectionRange }), 300);
-          this.props.packageMessage(selectionRange, "selection");
-        }
-
-        //ignore the cursor change events that emerge with typing...
-        //and instead use the cursor positions from the two event actions
-        else if (event.action === "insert" || event.action === "remove") {
-          if (event.action === "insert") {
-            cursorPosition = event.end;
-          } else if (event.action === "remove") {
-            cursorPosition = event.end;
-            cursorPosition.column--;
-          }
-
-          this.props.onTextChange(e); //update text for this through state
-          this.props.packageMessage(e, "text"); //synch text through pubnub
-          this.handleTextChange(e); //save updated text to dynamoDB
-        }
-        clearTimeout(timer);
-        //the cursor thing is only a problem for the copilots. the pilot when typing is totally ok.
-        //300ms is about enough time to make sure the clickedRecently state is already set.
-      },
-      this.props.isPilot ? 0 : 300
-    );
-  }
-
-  handleTextChange(e) {
+  function handleTextChange(text) {
+    packageMessage(text, "text");
     //uses session ID from props to either update backend
-    let data = { text: this.props.text };
-    let sessionID = this.props.sessionID;
-    if (this.props.path !== "/") {
-      //if this session exists already, update the entry in dynamoDB
-      const updateTextURL = ENDPOINT + "updateData/" + sessionID;
+    let data = { text };
+    //if this session exists already, update the entry in dynamoDB
+    apiPutCall("updateData/" + sessionID, data, _ => {}, error => console.log(error));
 
-      axios.put(updateTextURL, data).then(
-        _ => {},
-        error => {
-          console.log(error);
-        }
-      );
-
-      const updateLastEditURL = ENDPOINT + "updateLastEdit/" + sessionID;
-      let editTimestamp = { timestamp: String(new Date()) };
-      axios.put(updateLastEditURL, editTimestamp).then(
-        _ => {},
-        error => {
-          console.log(error);
-        }
-      );
-    }
+    let editTimestamp = { timestamp: String(new Date()) };
+    apiPutCall("updateLastEdit/" + sessionID, editTimestamp);
   }
 
-  handleConfused = event => {
-    event.preventDefault();
-    if (!/\S/.test(this.state.confusedMsg)) {
-      //only white space
-      this.setState({ confusedError: true });
-      return;
-    }
-    this.setState({ confusedError: false });
-    //this.state.selected is in this form: {start: {row:, column:}, end{row:, column:}}
-    this.processConfused(this.state);
-    const { selected, confusedMsg } = this.state;
-    let { end } = selected;
-    selected.start.column = 0;
-    selected.end = { row: end.row + 1, column: 0 };
-    this.props.packageMessage({ selected, confusedMsg }, "confused");
+  const announceConfused = (confusedMsg) => {
+    //selected is in this form: {start: {row:, column:}, end{row:, column:}}
 
-    let sessionID = this.props.sessionID;
-    if (this.props.path !== "/") {
-      //if this session exists already, update the entry in dynamoDB
-      const url = ENDPOINT + "updateConfusionCount/" + sessionID;
+    processConfused(mySelected.current, confusedMsg);
+    let { end } = mySelected.current;
+    mySelected.current.start.column = 0;
+    mySelected.current.end = { row: end.row + 1, column: 0 };
+    packageMessage({ selected: mySelected.current, confusedMsg }, "confused");
 
-      axios.put(url).then(
-        _ => {},
-        error => {
-          console.log(error);
-        }
-      );
-    }
-  };
+    //if this session exists already, update the entry in dynamoDB
+    apiPutCall("updateConfusionCount/" + sessionID);
 
-  processConfused = ({ selected, confusedMsg }) => {
+  }
+
+  function selectionToCode({ start, end }) {
+    return editorRef.current.editor.selection.doc.$lines.slice(start.row, end.row + 1);
+  }
+
+  const processConfused = (selected, confusedMsg) => {
+
     let { start, end } = selected;
     selected.start.column = 0;
     selected.end = { row: end.row, column: 0 };
     //update other users window when question is asked
-    let currAnnotations = this.state.annotations || [];
-    let markers = this.state.markers || [];
-    this.session.setAnnotations([
+    let currAnnotations = annotations || [];
+    session.current.setAnnotations([
       ...currAnnotations,
       {
         row: start.row,
@@ -336,274 +261,117 @@ class TextInput extends React.Component {
       }
     ]);
     let newToast = {
+      code: selectionToCode(selected),
       type: "confused",
       msg: confusedMsg,
       show: true,
       ...selected
     };
-    this.props.addToast(newToast);
-    this.setState({
-      annotations: [
-        ...currAnnotations,
-        {
-          row: start.row,
-          html: `<div>${confusedMsg}</div>`,
-          type: "error"
-        }
-      ],
-      showConfused: false,
-      markers: [
-        ...markers,
-        {
-          startRow: start.row,
-          endRow: end.row,
-          startCol: start.column,
-          endCol: end.column,
-          className: `confused-marker`,
-          type: "text"
-        }
-      ]
-    });
+    addToast(newToast);
+    setAnnotations([...annotations, {
+      row: start.row,
+      html: `<div>${confusedMsg}</div>`,
+      type: "error"
+    }]);
+    setMarkers([...markers, {
+      startRow: start.row,
+      endRow: end.row,
+      startCol: start.column,
+      endCol: end.column,
+      className: `confused-marker`,
+      type: "text"
+    }]);
+
   };
 
-  receiveConfused = () => {
-    this.processConfused(this.props.confusionStatus);
+  // when it trickles down from splittext. 
+  const receiveConfused = ({ selected, confusedMsg }) => {
+    //confusionStatus contains selected, confusedMsg
+    processConfused(selected, confusedMsg);
   };
 
-  getConfusedPopover = ({ ...props }) => {
-    return (
-      <Popover {...props} className="confused-popover">
-        {this.state && this.state.selected ? (
-          <Form onSubmit={this.handleConfused}>
-            <Form.Label>Briefly describe your confusion.</Form.Label>
-            {this.state.confusedError && (
-              <Alert variant="danger">Please enter a note.</Alert>
-            )}
-            <div className="confused-input">
-              <Form.Control
-                onChange={event => {
-                  this.setState({ confusedMsg: event.target.value });
-                }}
-                size="md"
-                type="text"
-              ></Form.Control>
-              <Button variant="primary" type="submit">
-                <SendRounded />
-              </Button>
-            </div>
-          </Form>
-        ) : (
-          <Alert variant="danger">
-            Please first select the code you're confused about.
-          </Alert>
-        )}
-      </Popover>
-    );
-  };
-
-  handleComment = event => {
-    event.preventDefault();
-    if (!/\S/.test(this.state.commentMsg)) {
-      //only white space
-      this.setState({ commentError: true });
-      return;
-    }
-    this.setState({ commentError: false });
+  const announceComment = (commentMsg) => {
     let newToast = {
+      code: selectionToCode(mySelected.current),
       type: "comment",
-      msg: this.state.commentMsg,
+      msg: commentMsg,
       show: true,
-      ...this.state.selected
+      ...mySelected.current
     };
+    packageMessage(newToast, "comment");
+    addToast(newToast);
 
-    this.props.packageMessage(newToast, "comment");
+    //if this session exists already, update the entry in dynamoDB
+    apiPutCall("updateCommentCount/" + sessionID);
+  }
 
-    this.props.addToast(newToast);
-    this.setState({ showComment: false, commentMsg: "" });
+  const handleResolve = () => {
+    setMarkers([]);
+    setAnnotations([]);
+    var resolve = {
+      markers,
+      annotations,
+      showConfused: false
+    };
+    packageMessage(resolve, "resolve");
+    session.current.setAnnotations([]);
+  }
 
-    let sessionID = this.props.sessionID;
-    if (this.props.path !== "/") {
-      //if this session exists already, update the entry in dynamoDB
-      const url = ENDPOINT + "updateCommentCount/" + sessionID;
-
-      axios.put(url).then(
-        _ => {},
-        error => {
-          console.log(error);
+  return (
+    <Container fluid className="left-side">
+      <SplitPane
+        //One side input, other side output, once we get app to run code?
+        split="horizontal"
+        minSize={0} //change to 50 to show the text desc
+        maxSize={window.innerHeight * 0.8} //change to show text desc.
+        defaultSize={0} //{200} //change to 200 to show text desc
+        style={{ width: "100%" }}
+        resizerStyle={{ border: 0 }} //{{ border: 10 }}
+        pane1Style={{ color: "#ffffff", backgroundColor: "#43454d" }}
+        pane2Style={
+          annotations && annotations.length > 0
+            ? { border: "5px solid red" }
+            : {}
         }
-      );
-    }
-  };
-
-  recieveComment = comment => {
-    //recieve comment from other user and create toast
-    this.props.addToast(comment);
-    this.setState({ showComment: false, commentMsg: "" });
-  };
-
-  getCommentPopover = ({ ...props }) => (
-    <Popover {...props} className="confused-popover">
-      {this.state && this.state.selected ? (
-        <Form onSubmit={this.handleComment}>
-          <Form.Label>Enter your comment:</Form.Label>
-          {this.state.commentError && (
-            <Alert variant="danger">Please enter a comment.</Alert>
-          )}
-          <div className="comment-input">
-            <Form.Control
-              onChange={event => {
-                this.setState({ commentMsg: event.target.value });
-              }}
-              size="md"
-              type="text"
-              // placeholder="briefly describe your confusion."
-            ></Form.Control>
-            <Button variant="primary" type="submit">
-              <SendRounded />
-            </Button>
-          </div>
-        </Form>
-      ) : (
-        <Alert variant="danger">
-          Please first select the code you'd like to comment on.
-        </Alert>
-      )}
-    </Popover>
-  );
-
-  basicSetState = stateChange => this.setState(stateChange);
-
-  render() {
-    const text = this.props.text;
-    const isPilot = this.props.isPilot;
-    return (
-      <Container fluid className="left-side">
-        <SplitPane
-          //One side input, other side output, once we get app to run code?
-          split="horizontal"
-          minSize={0} //change to 50 to show the text desc
-          maxSize={window.innerHeight * 0.8} //change to show text desc.
-          defaultSize={0} //{200} //change to 200 to show text desc
-          style={{ width: "100%" }}
-          resizerStyle={{ border: 0 }} //{{ border: 10 }}
-          pane1Style={{ color: "#ffffff", backgroundColor: "#43454d" }}
-          pane2Style={
-            this.state.annotations && this.state.annotations.length > 0
-              ? { border: "5px solid red" }
-              : {}
-          }
-        >
-          <div className="problem-desc">
-            {`
+      >
+        <div className="problem-desc">
+          {`
         put problem description here
         `}{" "}
-          </div>
-          <AceEditor
-            id="editor"
-            style={{ height: "100%", width: "100%" }}
-            ref="editor"
-            mode="python"
-            theme="cobalt"
-            fontSize={16}
-            highlightActiveLine={false}
-            onChange={this.handleChange}
-            readOnly={!isPilot} //if user is not the pilot, editor is readOnly
-            onCursorChange={this.handleChange}
-            onSelectionChange={this.handleChange}
-            name="UNIQUE_ID_OF_DIV"
-            value={text}
-            editorProps={{ $blockScrolling: true, $useWorker: false }}
-            setOptions={{ useWorker: false }}
-            markers={this.state.markers}
-          />
-        </SplitPane>
-        <HoverClickPopover
-          onHidePopover={() =>
-            this.basicSetState({ confusedMsg: "", showConfused: false })
-          }
-          popover={this.getConfusedPopover}
-          variant="danger"
-          buttonClass="confused-btn"
-          showPopover={this.state.showConfused} //to close the confused popover once submitted.
-          hoverContent={
-            <div>Click to ask your partner a question about the code</div>
-          }
-          onClick={() => this.setState({ showConfused: true })}
-          buttonContent={<HelpOutlineRounded />}
-          usePopoverStateOutside={true}
+        </div>
+        <AceEditor
+          id="editor"
+          style={{ height: "100%", width: "100%" }}
+          ref={editorRef}
+          mode="python"
+          theme="gruvbox"
+          fontSize={16}
+          highlightActiveLine={true}
+          readOnly={!isPilot} //if user is not the pilot, editor is readOnly
+          name="UNIQUE_ID_OF_DIV"
+          value={text}
+          editorProps={{ $blockScrolling: true, $useWorker: false }}
+          setOptions={{ useWorker: false }}
+          markers={markers}
+          debounceChangePeriod={200} //in milliseconds.
         />
-        <HoverClickPopover
-          onHidePopover={() =>
-            this.basicSetState({ commentMsg: "", showComment: false })
-          }
-          popover={this.getCommentPopover}
-          variant="warning"
-          buttonClass="comment-btn"
-          showPopover={this.state.showComment} //to close the confused popover once submitted.
-          hoverContent={<div>Click to make a public comment on the code</div>}
-          onClick={() => this.setState({ showComment: true })}
-          buttonContent={<CommentRounded />}
-          usePopoverStateOutside={true}
-        />
-        {this.props.isRunningCode ? (
-          <OverlayTrigger
-            trigger={["hover", "focus"]}
-            overlay={<Tooltip>Stop execution</Tooltip>}
-            placement="right"
-          >
-            <Button
-              id="interrupt-button"
-              variant="danger"
-              className="run"
-              onClick={this.props.handleInterrupt}
-            >
-              <StopRounded />
-            </Button>
-          </OverlayTrigger>
-        ) : (
-          <OverlayTrigger
-            trigger={["hover", "focus"]}
-            overlay={<Tooltip>Run code</Tooltip>}
-            placement="right"
-          >
-            <Button
-              variant="success"
-              className="run"
-              onClick={this.props.handleRun}
-            >
-              <PlayArrowRounded />
-            </Button>
-          </OverlayTrigger>
-        )}
+      </SplitPane>
+      {annotations && annotations.length > 0 &&
+        <ResolveButton handleResolve={handleResolve} />}
+      <CommentButton
+        selected={mySelected.current}
+        announceComment={announceComment} />
 
-        {this.state.annotations && this.state.annotations.length > 0 && (
-          <OverlayTrigger
-            trigger={["hover", "focus"]}
-            overlay={<Tooltip>Resolve the question</Tooltip>}
-            placement="right"
-          >
-            <Button
-              variant="success"
-              className="resolve-btn"
-              onClick={() => {
-                this.setState({ markers: [], annotations: [] }, () => {
-                  var resolve = {
-                    markers: this.state.markers,
-                    annotations: this.state.annotations,
-                    showConfused: false
-                  };
-                  this.props.packageMessage(resolve, "resolve");
-                });
-                this.session.setAnnotations([]);
-              }}
-            >
-              <DoneRounded />
-            </Button>
-          </OverlayTrigger>
-        )}
-      </Container>
-    );
-  }
+      <ConfusedButton
+        selected={mySelected.current}
+        announceConfused={announceConfused}
+      />
+
+      <RunOrStopButton handleInterrupt={handleInterrupt}
+        isRunningCode={isRunningCode}
+        handleRun={handleRun} />
+    </Container>
+  );
 }
 
 export default TextInput;

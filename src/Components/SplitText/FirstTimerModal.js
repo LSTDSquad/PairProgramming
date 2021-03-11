@@ -6,6 +6,12 @@ import "./MyModals.css";
 import confusionButtonPNG from "../../resources/confusion_button.png";
 import chatButtonPNG from "../../resources/chat_button.png";
 
+/**
+ * This file was made for CS bridge - 
+ * It's the intro pop up that welcomes the user to a new session. 
+ * It is used by splittext. 
+ */
+
 const pairProgrammingVideoBody = () => {
   return (
     <iframe

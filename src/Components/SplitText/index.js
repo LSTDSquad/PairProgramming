@@ -131,7 +131,11 @@ class SplitText extends React.Component {
         customFields: true,
       },
     }, (status, response) => {
-      if (callback) callback(JSON.parse(response.data.custom.userArray));
+      if (status.error && errorCallback) {
+        errorCallback();
+        return;
+      }
+      if (callback && response) callback(JSON.parse(response.data.custom.userArray));
     });
   }
 
@@ -280,7 +284,7 @@ class SplitText extends React.Component {
             // console.log("occupants", occupants);
             const myself = { id: this.state.userID, name: attributes.name };
             //there is no one else here yet. 
-            if (!occupants.length) {
+            if (occupants.length <= 1) {
               const userArr = [myself];
               this.fullUpdateUserArray(userArr);
             } else {
@@ -294,6 +298,9 @@ class SplitText extends React.Component {
 
                 userArray.push(myself);
                 this.fullUpdateUserArray(userArray);
+              }, () => {
+                const userArr = [myself];
+                this.fullUpdateUserArray(userArr);
               });
             }
           });

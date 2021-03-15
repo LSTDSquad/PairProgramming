@@ -13,7 +13,6 @@ import "./SplitText.css";
 import MyToast from "./MyToast";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
-import { Auth } from "aws-amplify";
 import { RemindingTipMessages } from "../../utilities/SessionUtilities";
 import {
   Widget,
@@ -923,6 +922,7 @@ class SplitText extends React.Component {
               pilotHandoff={this.pilotHandoff}
               handleDownload={this.handleFinishDownload}
               title={this.state.fileName}
+              numUsers={this.state.numUsers}
               changeShowFirstTimerModal={this.changeShowFirstTimerModal}
             // handleToggle={this.toggleRole}
             />

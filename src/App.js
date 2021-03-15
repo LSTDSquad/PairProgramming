@@ -13,6 +13,8 @@ import { withAuthenticator } from "aws-amplify-react"; // or 'aws-amplify-react-
 import "@aws-amplify/ui/dist/style.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Loading from "./Components/Loading";
+import About from "./About";
+
 Amplify.configure(awsconfig);
 
 function App() {
@@ -33,6 +35,11 @@ function App() {
               exact
               path="/"
               render={routeProps => <Home {...routeProps} />}
+            />
+            <Route
+              exact
+              path="/about"
+              render={routeProps => <About {...routeProps} />}
             />
             <Route
               exact

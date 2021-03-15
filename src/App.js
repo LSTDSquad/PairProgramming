@@ -9,7 +9,7 @@ import { HashRouter as Router, Route, Switch } from "react-router-dom";
 import Amplify from "aws-amplify";
 import { I18n, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
-import { withAuthenticator } from "aws-amplify-react"; // or 'aws-amplify-react-native';
+import { withAuthenticator, Authenticator } from "aws-amplify-react"; // or 'aws-amplify-react-native';
 import "@aws-amplify/ui/dist/style.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Loading from "./Components/Loading";
@@ -17,16 +17,21 @@ import About from "./About";
 
 Amplify.configure(awsconfig);
 
+
 function App() {
+
   const [attributes, setAttributes] = useState(null);
-  useEffect(() => {
+  const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
       setAttributes(user.attributes);
     });
-  }, []);
+  };
+
+  // get user info upon initial load 
+  useEffect(() => getAttributes(), []);
 
   return (
-    attributes ? <>
+    <>
       <BoostrapOverrides />
       <Router>
         <div>
@@ -34,23 +39,27 @@ function App() {
             <Route
               exact
               path="/"
-              render={routeProps => <Home {...routeProps} />}
-            />
+              render={routeProps => attributes ? <Home {...routeProps} /> : 
+              <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={ signUpConfig } theme={myTheme} usernameAttributes='email' />} />
             <Route
               exact
               path="/about"
-              render={routeProps => <About {...routeProps} />}
+              render={routeProps => {
+                console.log("about");
+              return (<About {...routeProps} />)
+            }}
             />
             <Route
               exact
               path="/:sessionID"
-              render={routeProps => <SplitText {...routeProps} attributes={attributes} />}
-            />
+              render={routeProps => attributes ? <SplitText {...routeProps} attributes={attributes} /> : 
+              <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
+
           </Switch>
         </div>
       </Router>
-    </> : <Loading />
-  );
+    </>
+  )
 }
 
 const signUpConfig = {
@@ -99,13 +108,7 @@ const authLabels = {
 I18n.setLanguage('en');
 I18n.putVocabularies(authLabels);
 
-export default withAuthenticator(App, {
-  signUpConfig,
-  includeGreetings: false,
-  usernameAttributes: "email",
-  theme: myTheme,
-});
-
+export default App;
 
 const BoostrapOverrides = () => (
   <style type="text/css">

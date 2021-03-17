@@ -223,7 +223,6 @@ class SplitText extends React.Component {
         changed = true;
         s[this.state.userID] = this.props.attributes.name;
         this.fetchPilot((pilotID) => {
-
           //if you're the only one, or if 
           if (occupants.length === 0 || (occupants.length === 1 && occupants[0].uuid === myID) || !(pilotID in s)) {
             //i am the new pilot! 
@@ -237,7 +236,6 @@ class SplitText extends React.Component {
         this.fetchPilot((pilotID) => {
           if (!(pilotID in s)) {
             const sorted = Object.keys(s).sort();
-            console.log("sorted", sorted);
             if (sorted[0] === myID) {
               //you came first! 
               this.setPilot(myID);

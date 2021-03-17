@@ -12,7 +12,9 @@ import "./TeammateCount.css";
 const TeammateCount = ({ userArray }) => {
   const TeammateTooltip = (
     <Tooltip>
-      {userArray.map(({ id, name }) => {
+      {userArray.map((user) => {
+        const id = user[0];
+        const name = user[1]
         return <div key={id} >{name}</div>;
       })}
     </Tooltip>

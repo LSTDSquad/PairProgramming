@@ -129,7 +129,7 @@ function TextInput({ isPilot, sessionID, userID, pubnub, setEditorRef,
             addToast(What);
           } else if (Type === "confused") {
             //message.What contains {selected, confusedMsg}
-            receiveConfused();
+            receiveConfused(What);
           } else if (Type === "text") {
             setText(What);
 
@@ -284,9 +284,9 @@ function TextInput({ isPilot, sessionID, userID, pubnub, setEditorRef,
 
   };
 
-  // when it trickles down from splittext. 
   const receiveConfused = ({ selected, confusedMsg }) => {
     //confusionStatus contains selected, confusedMsg
+    console.log("receiving confused", selected, confusedMsg);
     processConfused(selected, confusedMsg);
   };
 

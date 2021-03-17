@@ -50,11 +50,11 @@ class SplitText extends React.Component {
     this.handleDownload = this.handleDownload.bind(this);
     this.addToast = this.addToast.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
-    this.pilotHandoff = this.pilotHandoff.bind(this);
     this.basicSetState = this.basicSetState.bind(this);
     this.handleDownloadChange = this.handleDownloadChange.bind(this);
     this.changeShowFirstTimerModal = this.changeShowFirstTimerModal.bind(this);
     this.changeShowRemindingTip = this.changeShowRemindingTip.bind(this);
+    this.updatePresences = this.updatePresences.bind(this);
     const userID = PubNub.generateUUID();
 
     this.state = {
@@ -68,7 +68,7 @@ class SplitText extends React.Component {
       cursors: {},
       selections: {},
       isPilot: true,
-      userArray: [], //in format: [{id, name}...]
+      onlineUsers: {}, //serves as a dict from uuid to name
       lines: [
         "Welcome to PearProgram! This is your console. Click the run button to see your output here."
       ],
@@ -90,7 +90,7 @@ class SplitText extends React.Component {
     };
     this.editorRef = null;
 
-    this.toggleTimer = null;
+    // this.toggleTimer = null;
     this.remindingTipsInterval = null;
 
     //this allows us to "open files"
@@ -103,7 +103,7 @@ class SplitText extends React.Component {
       publishKey: "pub-c-4da51e8f-f106-4eef-a124-5bc6548b0306",
       uuid: userID,
       state: [],
-      presenceTimeout: 20, // this is working! 
+      // presenceTimeout: 20, // this is working! 
     });
 
     this.MessageAuthor = ({ author }) => (
@@ -123,7 +123,7 @@ class SplitText extends React.Component {
    * @param {function} callback (required). input would be the array itself. 
    * @param {function} errorCallback (optional)
    */
-  fetchUserArray = (callback, errorCallback) => {
+  fetchPilot = (callback, errorCallback) => {
     this.PubNub.objects.getChannelMetadata({
       channel: this.state.sessionID,
       include: {
@@ -134,22 +134,36 @@ class SplitText extends React.Component {
         errorCallback();
         return;
       }
-      if (callback && response) callback(JSON.parse(response.data.custom.userArray));
+      if (callback && response) callback(response.data.custom.pilot);
+      //pilot is just uuid
     });
   }
 
+  updateInternalPilot = (pilotID) => {
+    const myID = this.state.userID;
+    if (!this.state.isPilot && pilotID === myID) {
+      if (this.state.showCopilotToggleMsg) {
+        this.setState({ showCopilotToggleMsg: false });
+      }
+      this.setState({ isPilot: true });
+    } else if (this.state.isPilot && pilotID !== myID) {
+      this.setState({ isPilot: false });
+    }
+  }
+
   /**
-   * @param {array of objects{id, name }} userArray (required)
-   * @param {function} callback (required)
-   * @param {function} errorCallback (optional)
-   */
-  setUserArray = (userArray, callback, errorCallback) => {
+ * @param {array of objects{id, name }} userArray (required)
+ * @param {function} callback (required)
+ * @param {function} errorCallback (optional)
+ */
+  setPilot = (pilotID, callback, errorCallback) => {
+    this.updateInternalPilot(pilotID);
     const params = {
       channel: this.state.sessionID,
       data: {
         "name": this.state.sessionID,
         "custom": {
-          "userArray": JSON.stringify(userArray)
+          "pilot": pilotID
         }
       }
     };
@@ -158,14 +172,103 @@ class SplitText extends React.Component {
     });
   }
 
-  fullUpdateUserArray = (userArray) => {
-    this.setState({ userArray });
-    //update it for others. 
-    this.setUserArray(userArray);
-    this.assignRole();
+  // getNameOfUser = (id, callback) =>  {
+  //   this.PubNub.getState(
+  //     {
+  //       uuid: id,
+  //       channels: [this.state.sessionID],
+  //     },
+  //     function (status, response) {
+  //       try {
+  //         const name = response.channels[this.state.sessionID].UserName
+  //         if (callback) callback(name)
+  //       } catch {
+  //         return;
+  //       }
+  //     }
+  //   );
+  // }
+
+  updatePresences = (isFirstTime) => {
+    const myID = this.state.userID;
+    this.PubNub.hereNow({
+      channels: [this.state.sessionID],
+      includeState: true,
+      includeUUIDs: true,
+    }, (status, response) => {
+      if (!response) console.log(status);
+      const occupants = response.channels[this.state.sessionID].occupants;
+      let s = this.state.onlineUsers;
+      let unAccountedFor = new Set(Object.keys(s)); // in case someone left
+      let changed = false;
+
+      occupants.map(({ uuid, state }) => {
+        if (!(uuid in s) || !s[uuid]) {
+          changed = true;
+        }
+        if (!state) {
+          return; // probably means it's a ghost
+        }
+        s[uuid] = (state && state.UserName) || "Guest";
+        unAccountedFor.delete(uuid);
+      });
+
+      if (unAccountedFor.size > 0) {
+        changed = true;
+        [...unAccountedFor].map((uuid) => delete s[uuid]);
+      }
+
+
+      if (isFirstTime) {
+        changed = true;
+        s[this.state.userID] = this.props.attributes.name;
+        this.fetchPilot((pilotID) => {
+
+          //if you're the only one, or if 
+          if (occupants.length === 0 || (occupants.length === 1 && occupants[0].uuid === myID) || !(pilotID in s)) {
+            //i am the new pilot! 
+            // set to me. 
+            this.setPilot(myID);
+          } else {
+            this.setState({ isPilot: false })
+          }
+        }, () => this.setPilot(myID)); // pilot hasn't been set yet if there's an error.
+      } else {
+        this.fetchPilot((pilotID) => {
+          if (!(pilotID in s)) {
+            const sorted = Object.keys(s).sort();
+            console.log("sorted", sorted);
+            if (sorted[0] === myID) {
+              //you came first! 
+              this.setPilot(myID);
+            }
+          } 
+          this.updateInternalPilot(pilotID);
+          if (!this.state.isPilot && Object.keys(s).length === 1) {
+            this.setPilot(myID)
+          }
+        });
+      }
+
+      if (changed) {
+        this.setState({ onlineUsers: s });
+      }
+    });
   }
 
+
   componentDidMount() {
+
+    const myID = this.state.userID;
+
+    // initial update
+    this.updatePresences(true);
+
+    // updates every 6 seconds.
+    this.hereNowInterval = setInterval(() => {
+      this.updatePresences();
+    }, 4000);
+
 
     window.addEventListener("beforeunload", event => {
       // Cancel the event as stated by the standard.
@@ -181,24 +284,7 @@ class SplitText extends React.Component {
     //add PubNub listener to handle messages
     this.PubNub.addListener({
       message: ({ channel, message }) => {
-
-        if (message.Type === "userArray") {
-          // console.log(message.What, "user Array");
-          //after the first person joins, they will get this package
-          //this could also be used whenever someone else updates the user array.
-          // this.setState({ userArray: message.What }, () => this.assignRole());
-        } else if (
-          message.Type === "leave" &&
-          message.Who !== this.state.userID
-        ) {
-          // let userArr = this.state.userArray;
-          // const i = userArr.map(user => user.id).indexOf(message.Who);
-          // if (i !== -1) {
-          //   userArr.splice(i, 1);
-          // }
-          // this.setState({ userArray: userArr }, () => this.assignRole());
-          // delete this.state.cursors[message.Who];
-        } else if (
+        if (
           (message.Type === "chat") &
           (message.Who !== this.state.userID)
         ) {
@@ -216,34 +302,12 @@ class SplitText extends React.Component {
         ) {
           this.setState({ lines: message.What });
         } else if (message.Type === "toggleRequest") {
-          if ((message.Who !== this.state.userID) & this.state.isPilot) {
+          if ((message.Who !== this.state.userID) & message.What === myID) {
             // you're the pilot and your partner requested to switch.
             this.toggleAlert(message.Who, message.UserName);
           } else if (message.Who === this.state.userID) {
             //you are the copilot and you requested the handoff. 
             this.setState({ showCopilotToggleMsg: true });
-
-            //MAYBE I CAN JUST RELY ON THE PILOT SENDING THE MESSAGE AND UPDATING THE USER ARRAY. 
-            //this timer is cleared in assignRole
-            // this.toggleTimer = setInterval(() => {
-            //   if (this.state.msRemaining > 0) {
-            //     //decrement the number of milliseconds that's displayed
-            //     this.setState({ msRemaining: this.state.msRemaining - 1000 });
-            //   } else {
-            //     //time is up!
-            //     this.setState({
-            //       showCopilotToggleMsg: false
-            //     });
-            //     this.assignRole();
-            //     let timer;
-            //     timer = setTimeout(() => {
-            //       //reset
-            //       this.setState({ msRemaining: MAX_TOGGLE_WAIT });
-            //       clearTimeout(timer);
-            //       //clear the countdown
-            //     }, 300);
-            //   }
-            // }, 1000);
           }
         } else if (message.Type === "toggleResponse") {
           //the pilot declined and you're the copilot
@@ -253,94 +317,22 @@ class SplitText extends React.Component {
             this.setState({
               showCopilotToggleMsg: false
             });
-            // let timer;
-            // timer = setTimeout(() => {
-            //   this.setState({ msRemaining: MAX_TOGGLE_WAIT });
-            //   clearTimeout(timer);
-            // }, 300);
           }
         }
       },
       presence: ({ action, occupancy, state, uuid }) => {
-        // console.log("me", this.state.userID);
-        // console.log("uuid", uuid);
-        // console.log("occupancy", occupancy);
-        let userArr = this.state.userArray;
-        function isInUserArr(u, userArray) {
-          const found = userArray.find(person => person.id === u);
-          return Boolean(found);
+        if (action === 'join' || action === 'leave' || action === 'timeout') {
         }
-
         if (action === 'join' && uuid === this.state.userID) {
-          //I joined! 
-          // get all the occupants before you. 
-          this.PubNub.hereNow({
-            channels: [this.state.sessionID],
-            includeState: true,
-            includeUUIDs: true,
-          }, (_, response) => {
-            const occupants = response.channels[this.state.sessionID].occupants;
-            // console.log("occupants", occupants);
-            const myself = { id: this.state.userID, name: attributes.name };
-            //there is no one else here yet. 
-            if (occupants.length <= 1) {
-              const userArr = [myself];
-              this.fullUpdateUserArray(userArr);
-            } else {
-              this.fetchUserArray((userArray) => {
-                //clean up 
-                const realOccupants = new Set(occupants.map(({ uuid }) => uuid));
-                userArray = userArray.filter(({ id }) => realOccupants.has(id));
-                // if (isInUserArr(uuid, userArray)) {
-                //   return;
-                // }
-
-                userArray.push(myself);
-                this.fullUpdateUserArray(userArray);
-              }, () => {
-                const userArr = [myself];
-                this.fullUpdateUserArray(userArr);
-              });
-            }
-          });
-
         } else if (action === 'leave') {
-          if (occupancy === 0) {
-            this.fullUpdateUserArray([]);
-            return;
-          }
-          const i = userArr.findIndex(({ id }) => id === uuid);
-          if (i !== -1) {
-            userArr.splice(i, 1);
-          } else {
-            return;
-          }
-          this.fullUpdateUserArray(userArr);
-
         } else if (action === 'timeout') {
-          console.log('timeout', uuid);
-          if (occupancy === 0) {
-            this.fullUpdateUserArray([]);
-          }
-          const i = userArr.findIndex(({ id }) => id === uuid);
-          if (i !== -1) {
-            userArr.splice(i, 1);
-          } else {
-            return;
-          }
-          this.fullUpdateUserArray(userArr);
         } else if (action === 'state-change' && state.name) {
         }
       },
       objects: ({ message }) => {
-        // console.log("object", message.data.custom);
-        if (!message.data.custom.userArray) return;
-        const userArray = JSON.parse(message.data.custom.userArray);
-        if (userArray === undefined) {
-          return;
-        }
-        this.setState({ userArray });
-        this.assignRole();
+        if (!message.data.custom.pilot) return;
+        const pilotID = message.data.custom.pilot;
+        this.updateInternalPilot(pilotID);
       },
     });
     const session = this.props.match.params.sessionID;
@@ -396,26 +388,8 @@ class SplitText extends React.Component {
       }
     }, MS_BETWEEN_TIME_CHECKS);
   }
-  /**
-   * togglePilot
-   * this happens to those who are switching from pilot to copilot. they
-   * send a userArray packageMessage to let others know that they are now a ilot.
-   * params id and name: those of the requester.
-   */
-  togglePilot = (uuid, name) => {
-    let userArr = this.state.userArray;
-    //requester: the index of the requester
-    const requester = userArr.findIndex(({ id }) => id === uuid);
-    userArr[0] = { id: uuid, name };
-    userArr[requester] = { id: this.state.userID, name: this.state.user_name };
-    this.setState({ isPilot: false, userArray: userArr });
-    this.setUserArray(userArr);
-    const sessionID = this.state.sessionID;
-    if (this.props.path !== "/") {
-      //if this session exists already, update the entry in dynamoDB
-      apiPutCall("updateToggleCount/" + sessionID, { timeStamp: String(new Date()) });
-    }
-  };
+
+
   /**
    * toggleAlert
    * happens to the pilot if the copilot wants to switch roles
@@ -423,11 +397,10 @@ class SplitText extends React.Component {
   toggleAlert = (id, name) => {
     //function to bypass Chrome blocking alerts on background windows
 
-    let currentComponent = this;
-
-    var toggleTimeout = setTimeout(function () {
+    var toggleTimeout = setTimeout(() => {
       //switch because time is up!
-      currentComponent.togglePilot(id, name);
+      this.setPilot(id);
+      apiPutCall("updateToggleCount/" + this.state.sessionID, { timeStamp: String(new Date()) });
 
       confirmAlert({
         title: "Pilot Time Out",
@@ -447,7 +420,7 @@ class SplitText extends React.Component {
             //swap id and current
 
             clearTimeout(toggleTimeout);
-            this.togglePilot(id, name);
+            this.setPilot(id);
           }
         },
         {
@@ -712,88 +685,17 @@ class SplitText extends React.Component {
     //on sessionID change (session was loaded), unsubscribe
     this.PubNub.unsubscribe({ channels: [this.state.sessionID] });
 
-    //clear cursors/highlights from state
-    this.setState({ cursors: {}, selections: {} });
-
     //set the sessionID in state and subscribe to new channel based on sessionID
     this.setState({ sessionID: id }, () => {
       //use callback due to asynchronous nature of .setState
       this.PubNub.subscribe({
-        channels: [this.state.sessionID],
+        channels: [id],
         withPresence: true
       });
-      this.assignRole();
+      this.updatePresences();
     });
   }
 
-
-  /**
-   * //from pilot to copilot
-   * the callback that is passed into the swap button. 
-   */
-  pilotHandoff = () => {
-    //swap with the second one
-    let userArr = this.state.userArray;
-    userArr[0] = userArr[1];
-    userArr[1] = { id: this.state.userID, name: this.state.user_name };
-
-    this.setState({ userArray: userArr })
-    this.setUserArray(userArr);
-
-    const url = ENDPOINT + "updateTimeStamps/" + this.state.sessionID;
-
-    let type = "pilotHandoff";
-    let who = this.state.user_name;
-    let data = { event: String(new Date()), who, type };
-
-    axios.put(url, data).then(
-      _ => { },
-      error => {
-        console.log(error);
-      }
-    );
-
-    let sessionID = this.state.sessionID;
-    if (this.props.path !== "/") {
-      //if this session exists already, update the entry in dynamoDB
-      const url1 = ENDPOINT + "updateToggleCount/" + sessionID;
-
-      let data = { timeStamp: String(new Date()) };
-
-      axios.put(url1, data).then(
-        _ => { },
-        error => {
-          console.log(error);
-        }
-      );
-    }
-  };
-  /**
-   * assigns role based on the user Array.
-   * if you're the copilot and you get notified of the userArray change from the pilot
-   * because of your toggle request, then THIS is how you make the toggleTimer
-   * null again and hide the copilot toggle msg
-   */
-  assignRole = () => {
-    //assign role based on userArray
-    if (this.state.userArray.findIndex(({ id }) => id === this.state.userID) === 0) {
-      //now is the pilot
-      this.setState({ isPilot: true });
-      //wait until here! to turn off the copilot toggle msg
-      if (this.state.showCopilotToggleMsg) {
-        //you were the copilot waiting for the handoff!
-        this.setState({
-          showCopilotToggleMsg: false,
-          msRemaining: MAX_TOGGLE_WAIT
-        });
-      }
-    } else {
-      //you're not the pilot
-      this.setState({ isPilot: false });
-    }
-    clearInterval(this.toggleTimer);
-    this.toggleTimer = null;
-  };
 
   addToast(newToast) {
     this.setState(prevState => ({
@@ -811,7 +713,15 @@ class SplitText extends React.Component {
     //mostly removes users from PubNub channels on browserclose/refresh (not 100% successful)
     // this.setTimeout(3000);
 
-
+    //this doesn't work all the time. 
+    if (this.state.isPilot) {
+      //need to handoff
+      //the next random one
+      const newPilot = Object.entries(this.state.onlineUsers).find((user) => user[0] !== this.state.userID);
+      //newPilot is like [uuid, userName]
+      this.setPilot(newPilot[0]);
+    }
+    clearInterval(this.hereNowInterval);
     this.unsubscribeChannel();
     window.removeEventListener("beforeunload", this.unsubscribeChannel);
     clearInterval(this.remindingTipsInterval);
@@ -915,11 +825,13 @@ class SplitText extends React.Component {
               userID={userID}
               sessionID={sessionID}
               editorRef={this.editorRef}
-              userArray={this.state.userArray}
+              userName={this.props.attributes.name}
+              onlineUsers={this.state.onlineUsers}
+              fetchPilot={this.fetchPilot}
               history={history}
+              setPilot={this.setPilot}
               packageMessage={this.packageMessage}
               handleIDChange={this.handleSessionIDChange}
-              pilotHandoff={this.pilotHandoff}
               handleDownload={this.handleFinishDownload}
               title={this.state.fileName}
               numUsers={this.state.numUsers}
@@ -1005,8 +917,8 @@ class SplitText extends React.Component {
         <div id="hello.txt" style={{ display: "none" }}>{`hello\nworld\n`}</div>
       </div>
     ) : (
-          <Loading />
-        );
+      <Loading />
+    );
   }
 }
 

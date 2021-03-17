@@ -16,7 +16,7 @@ import {
   HelpOutlineRounded
 } from "@material-ui/icons";
 import axios from "axios";
-import { ENDPOINT } from "../../endpoints";
+import { apiPutCall, ENDPOINT } from "../../endpoints";
 import { Link } from "react-router-dom";
 import CopyButton from "./CopyButton";
 import TeammateCount from "./TeammateCount";
@@ -32,16 +32,17 @@ import HoverClickPopover from "../../HoverClickPopover";
       text={text}
       userArray={this.state.userArray}
       history={history}
+      userName={this.props.attributes.name}
       packageMessage={this.packageMessage}
-      handleIDChange={this.handleSessionIDChange}
-      pilotHandoff={this.pilotHandoff}
+      handleIDChange={this.handleSessionIDChange}\
+      setPilot={this.setPilot}
       handleDownload={this.handleDownload}
       title={this.state.fileName}
       changeShowFirstTimerModal={this.changeShowFirstTimerModal}
     />
  */
-function ToolBar({ isPilot, userID, sessionID, editorRef, userArray, history,
-  packageMessage, handleIDChange, pilotHandoff, handleDownload,
+function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
+  userName, packageMessage, handleIDChange, fetchPilot, setPilot, handleDownload,
   title, changeShowFirstTimerModal }) {
   //used for the hamburger menu
   let [drawerOpen, setDrawerOpen] = useState(false);
@@ -65,16 +66,30 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, userArray, history,
   const handleToggleClick = e => {
     e.preventDefault();
     if (isPilot) {
-      pilotHandoff();
-    }
+      //the next random one
+      const newPilot = Object.entries(onlineUsers).find((user) => user[0] !== userID);
+      //newPilot is like [uuid, userName]
+      setPilot(newPilot[0]);
+
+      let type = "pilotHandoff";
+      let who = userName;
+      let data = { event: String(new Date()), who, type };
+      apiPutCall("updateTimeStamps/" + sessionID, data);
+
+      //if this session exists already, update the entry in dynamoDB
+      apiPutCall("updateToggleCount/" + sessionID, { timeStamp: String(new Date()) });
+    };
+
   };
 
   /////     handles the toggling for copilot -> pilot
   const requestToggle = e => {
     e.preventDefault();
     if (!isPilot) {
-      //currently, fileName and user aren't even being used. 
-      packageMessage({ fileName, user }, "toggleRequest");
+      fetchPilot((pilotID) => {
+        //directed to pilotID
+        packageMessage(pilotID, "toggleRequest");
+      })
     }
   };
 
@@ -230,26 +245,26 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, userArray, history,
           />
         ) : (
 
-            <HoverClickPopover
-              popover={(props) => (
-                <Popover {...props}>
-                  <Popover.Title>What does a Co-Pilot do?</Popover.Title>
-                  <Popover.Content>
-                    <div>Check the Pilot's code for errors</div>
-                    <div>Ask clarifying questions</div>
-                    <div>Help the Pilot think through the code</div>
-                  </Popover.Content>
-                </Popover>
-              )}
-              variant=""
-              buttonClass="co-pilot-role-btn"
-              hoverContent={<div>Click for tips</div>}
-              buttonContent={
-                <div className="role-display">Role: Co-Pilot </div>
-              }
-            />
+          <HoverClickPopover
+            popover={(props) => (
+              <Popover {...props}>
+                <Popover.Title>What does a Co-Pilot do?</Popover.Title>
+                <Popover.Content>
+                  <div>Check the Pilot's code for errors</div>
+                  <div>Ask clarifying questions</div>
+                  <div>Help the Pilot think through the code</div>
+                </Popover.Content>
+              </Popover>
+            )}
+            variant=""
+            buttonClass="co-pilot-role-btn"
+            hoverContent={<div>Click for tips</div>}
+            buttonContent={
+              <div className="role-display">Role: Co-Pilot </div>
+            }
+          />
 
-          )}
+        )}
         <label>
           <OverlayTrigger
             trigger={["hover", "focus"]}
@@ -265,7 +280,7 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, userArray, history,
                   ? handleToggleClick
                   : requestToggle
               }
-              disabled={userArray.length <= 1}
+              disabled={Object.keys(onlineUsers).length <= 1}
             >
               <SwapHoriz />
             </Button>
@@ -273,7 +288,7 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, userArray, history,
         </label>
       </div>
       <div className="right-side-toolbar">
-        <TeammateCount userArray={userArray} />
+        <TeammateCount userArray={Object.entries(onlineUsers)} />
         {/* CREATING NEW SESSION */}
         {/* <OverlayTrigger
             trigger={["hover", "focus"]}

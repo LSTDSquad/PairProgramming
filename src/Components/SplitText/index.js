@@ -711,14 +711,13 @@ class SplitText extends React.Component {
     //mostly removes users from PubNub channels on browserclose/refresh (not 100% successful)
     // this.setTimeout(3000);
 
-    //this doesn't work all the time. 
-    if (this.state.isPilot) {
-      //need to handoff
-      //the next random one
-      const newPilot = Object.entries(this.state.onlineUsers).find((user) => user[0] !== this.state.userID);
-      //newPilot is like [uuid, userName]
-      this.setPilot(newPilot[0]);
-    }
+    // if (this.state.isPilot) {
+    //   //need to handoff
+    //   //the next random one
+    //   const newPilot = Object.entries(this.state.onlineUsers).find((user) => user[0] !== this.state.userID);
+    //   //newPilot is like [uuid, userName]
+    //   this.setPilot(newPilot[0]);
+    // }
     clearInterval(this.hereNowInterval);
     this.unsubscribeChannel();
     window.removeEventListener("beforeunload", this.unsubscribeChannel);

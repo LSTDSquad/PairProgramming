@@ -17,10 +17,18 @@ import About from "./About";
 
 Amplify.configure(awsconfig);
 
+function getUrlVars() {
+  var vars = {};
+  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+      vars[key.toLowerCase()] = value;
+  });
+  return vars;
+}
+
 
 function App() {
-
-  const [attributes, setAttributes] = useState({name: "Guest", email: null});
+  const params = getUrlVars();
+  const [attributes, setAttributes] = useState({name: params['user'] || "Guest", email: null});
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
       setAttributes(user.attributes);

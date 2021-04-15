@@ -127,7 +127,6 @@ class Home extends React.Component {
                 // handle error
                 console.log(error);
                 callback(error, sessionObj);
-                // self.setState({doneLoading: true});
               });
           },
           function(err, sessionObjs) {

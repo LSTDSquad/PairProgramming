@@ -196,7 +196,10 @@ class SplitText extends React.Component {
       includeState: true,
       includeUUIDs: true,
     }, (status, response) => {
-      if (!response) console.log(status);
+      if (!response) {
+        console.log(status); //may be because its offline. 
+        return;
+      }
       const occupants = response.channels[this.state.sessionID].occupants;
       let s = this.state.onlineUsers;
       let unAccountedFor = new Set(Object.keys(s)); // in case someone left
@@ -370,7 +373,10 @@ class SplitText extends React.Component {
     this.changeShowFirstTimerModal(true);
 
     //now, update the sessions of the user
-    apiPutCall("updateSessions/" + attributes.email, { session });
+    if (attributes.email) {
+      apiPutCall("updateSessions/" + attributes.email, { session });
+    }
+    
 
     //set once!
     //for the reminder tips that pop up
@@ -731,16 +737,13 @@ class SplitText extends React.Component {
   ////                              ////
 
   handleNewUserMessage = newMessage => {
-    // console.log(`New message incoming! ${newMessage}`);
 
     const url = ENDPOINT + "updateChat/" + this.state.sessionID;
     let who = this.state.user_name;
     let data = { message: String(new Date()), who, newMessage };
 
     axios.put(url, data).then(
-      response => {
-        const message = response.data;
-      },
+      _ => {},
       error => {
         console.log(error);
       }
@@ -764,15 +767,10 @@ class SplitText extends React.Component {
 
   render() {
     const {
-      text,
       sessionID,
       userID,
-      cursors,
-      selections,
       isPilot,
       lines: codeOutput,
-      confusionStatus,
-      resolve
     } = this.state;
     const history = this.props.history;
 
@@ -833,7 +831,6 @@ class SplitText extends React.Component {
               title={this.state.fileName}
               numUsers={this.state.numUsers}
               changeShowFirstTimerModal={this.changeShowFirstTimerModal}
-            // handleToggle={this.toggleRole}
             />
           </Row>
           <Row noGutters={true} className="split-text-container">

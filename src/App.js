@@ -20,7 +20,7 @@ Amplify.configure(awsconfig);
 
 function App() {
 
-  const [attributes, setAttributes] = useState(null);
+  const [attributes, setAttributes] = useState({name: "Guest", email: null});
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
       setAttributes(user.attributes);
@@ -39,22 +39,23 @@ function App() {
             <Route
               exact
               path="/"
-              render={routeProps => attributes ? <Home {...routeProps} /> : 
+              render={routeProps => attributes.email ? <Home {...routeProps} /> : 
               <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={ signUpConfig } theme={myTheme} usernameAttributes='email' />} />
             <Route
               exact
               path="/about"
               render={routeProps => {
-                console.log("about");
               return (<About {...routeProps} />)
             }}
             />
             <Route
               exact
               path="/:sessionID"
-              render={routeProps => attributes ? <SplitText {...routeProps} attributes={attributes} /> : 
-              <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
-
+              render={routeProps => attributes ? 
+                <SplitText {...routeProps} attributes={attributes} /> : 
+                <SplitText {...routeProps} attributes={attributes} />
+                // <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
+              }/>
           </Switch>
         </div>
       </Router>

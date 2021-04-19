@@ -19,8 +19,8 @@ Amplify.configure(awsconfig);
 
 function getUrlVars() {
   var vars = {};
-  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-      vars[key.toLowerCase()] = value;
+  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+    vars[key.toLowerCase()] = value;
   });
   return vars;
 }
@@ -28,7 +28,7 @@ function getUrlVars() {
 
 function App() {
   const params = getUrlVars();
-  const [attributes, setAttributes] = useState({name: params['user'] || "Guest", email: null});
+  const [attributes, setAttributes] = useState({ name: params['user'] || "Guest", email: null });
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
       setAttributes(user.attributes);
@@ -36,7 +36,27 @@ function App() {
   };
 
   // get user info upon initial load 
-  useEffect(() => getAttributes(), []);
+  useEffect(() => {
+    getAttributes();
+
+    if (params['ohyay'] === 'true') {
+      window.ohyay.registerMessageHandler(async s => {
+        const roomId = await window.ohyay.getCurrentRoomId();
+
+        // pear_iframe is the tag you used for your iframe
+        const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
+        await window.ohyay.updateElement(iframe.id, { url: 'https://pearprogram.com/#/' + roomId})
+        console.log('Current Room', roomId);
+
+        const userId = await window.ohyay.getCurrentUserId();
+        const user = await window.ohyay.getUser(userId);
+        console.log('userId', userId);
+        console.log('user', user);
+        setAttributes({name: user.name, email: userId});
+      });
+    }
+
+  }, []);
 
   return (
     <>
@@ -47,23 +67,23 @@ function App() {
             <Route
               exact
               path="/"
-              render={routeProps => attributes.email ? <Home {...routeProps} /> : 
-              <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={ signUpConfig } theme={myTheme} usernameAttributes='email' />} />
+              render={routeProps => attributes.email ? <Home {...routeProps} /> :
+                <Authenticator onStateChange={(authState) => getAttributes()} signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
             <Route
               exact
               path="/about"
               render={routeProps => {
-              return (<About {...routeProps} />)
-            }}
+                return (<About {...routeProps} />)
+              }}
             />
             <Route
               exact
               path="/:sessionID"
-              render={routeProps => attributes ? 
-                <SplitText {...routeProps} attributes={attributes} /> : 
+              render={routeProps => attributes ?
+                <SplitText {...routeProps} attributes={attributes} /> :
                 <SplitText {...routeProps} attributes={attributes} />
                 // <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
-              }/>
+              } />
           </Switch>
         </div>
       </Router>

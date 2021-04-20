@@ -28,10 +28,13 @@ function getUrlVars() {
 
 function App() {
   const params = getUrlVars();
-  const [attributes, setAttributes] = useState({ name: params['user'] || "Guest", email: null });
+  const [displayName, setDisplayName] = useState(params['user'] || "Guest");
+  const [email, setEmail] = useState(null);
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
-      setAttributes(user.attributes);
+      const {name, email} = user;
+      setDisplayName(name);
+      setEmail(email);
     }).catch(() => { });
   };
 
@@ -50,7 +53,8 @@ function App() {
     const user = await window.ohyay.getUser(userId);
     console.log('userId', userId);
     console.log('user', user);
-    setAttributes({ name: user.name, email: userId });
+    setDisplayName(user.name);
+    setEmail(userId);
   }
 
   const ensureOhyayAction = async action => {
@@ -86,7 +90,7 @@ function App() {
             <Route
               exact
               path="/"
-              render={routeProps => attributes.email ? <Home {...routeProps} /> :
+              render={routeProps => email ? <Home {...routeProps} /> :
                 <Authenticator onStateChange={(authState) => getAttributes()} signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
             <Route
               exact
@@ -98,9 +102,9 @@ function App() {
             <Route
               exact
               path="/:sessionID"
-              render={routeProps => attributes ?
-                <SplitText {...routeProps} attributes={attributes} /> :
-                <SplitText {...routeProps} attributes={attributes} />
+              render={routeProps => email ?
+                <SplitText {...routeProps} attributes={{name: displayName, email}} /> :
+                <SplitText {...routeProps} attributes={{name: displayName, email}} />
                 // <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
               } />
           </Switch>

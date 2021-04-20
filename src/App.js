@@ -35,8 +35,7 @@ function App() {
     }).catch(() => {});
   };
 
-  const calibrateOhYay = () => {
-    console.log("pre room id, s is", s);
+  const calibrateOhYay = async () => {
     const roomId = await window.ohyay.getCurrentRoomId();
 
     // pear_iframe is the tag you used for your iframe
@@ -57,7 +56,7 @@ function App() {
     console.log("ohyay", (params['ohyay'] === 'true'));
     if (params['ohyay'] === 'true') {
 
-      if (window.ohyay.getCurrentRoomId()) {
+      if (window.ohyay.getCurrentRoomId) {
         calibrateOhYay();
       }
       else {

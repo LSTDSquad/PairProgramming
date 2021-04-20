@@ -71,7 +71,7 @@ function App() {
       if (window.ohyay.getCurrentRoomId) {
         calibrateOhYay();
       } else {
-        window.ohyay.setApiLoadedListener(async () => calibrateOhYay());
+        window.ohyay.setApiLoadedListener(async () => await calibrateOhYay());
       }
     }
 

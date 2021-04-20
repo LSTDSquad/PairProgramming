@@ -36,7 +36,7 @@ function App() {
   };
 
   const calibrateOhYay = async () => {
-    
+    console.log("calibrating");
     const roomId = await window.ohyay.getCurrentRoomId();
 
     // pear_iframe is the tag you used for your iframe
@@ -53,21 +53,28 @@ function App() {
       setAttributes({ name: user.name, email: userId });
   }
 
-  const ensureOhyayAction = action => {
+  const ensureOhyayAction = async action => {
+    console.log(window.ohyay);
     if (window.ohyay.getCurrentRoomId) {
-      action();
+      await action();
     } else {
-      window.ohyay.setApiLoadedListener(async s => action());
+      await window.ohyay.setApiLoadedListener(async s => action());
     }
   }
 
   // get user info upon initial load 
   useEffect(() => {
     getAttributes();
-    console.log('newohyay', params['newohyay'])
+
     if (params['newohyay'] === 'true') {
-      ensureOhyayAction(calibrateOhYay);
+      console.log(window.ohyay);
+      if (window.ohyay.getCurrentRoomId) {
+        calibrateOhYay();
+      } else {
+        window.ohyay.setApiLoadedListener(async () => calibrateOhYay());
+      }
     }
+
     if (params['inohyay'] === 'true') {
       ensureOhyayAction(setOhyayUser);
     }

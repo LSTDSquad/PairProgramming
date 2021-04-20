@@ -40,7 +40,9 @@ function App() {
     getAttributes();
     console.log("ohyay", (params['ohyay'] === 'true'));
     if (params['ohyay'] === 'true') {
+
       window.ohyay.registerMessageHandler(async s => {
+        console.log("pre room id, s is", s);
         const roomId = await window.ohyay.getCurrentRoomId();
 
         // pear_iframe is the tag you used for your iframe

@@ -355,7 +355,7 @@ class SplitText extends React.Component {
     }
 
     //set the username. this is used in things like toggle
-    setUserName();
+    this.setUserName();
 
     this.changeShowFirstTimerModal(true);
 
@@ -378,7 +378,8 @@ class SplitText extends React.Component {
   componentDidUpdate(prevProps, props) {
     if (prevProps.email !== props.email && props.email) {
       //now, update the sessions of the user
-      apiPutCall("updateSessions/" + email, { session });
+      const session = this.props.match.params.sessionID;
+      apiPutCall("updateSessions/" + props.email, { session });
     }
   }
 

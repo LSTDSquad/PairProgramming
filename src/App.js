@@ -38,6 +38,7 @@ function App() {
   // get user info upon initial load 
   useEffect(() => {
     getAttributes();
+    console.log("ohyay", (params['ohyay'] === 'true'));
     if (params['ohyay'] === 'true') {
       window.ohyay.registerMessageHandler(async s => {
         const roomId = await window.ohyay.getCurrentRoomId();

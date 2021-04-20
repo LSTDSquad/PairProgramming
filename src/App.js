@@ -55,6 +55,8 @@ function App() {
     console.log('user', user);
     setDisplayName(user.name);
     setEmail(userId);
+    console.log("name", displayName);
+    console.log("email", email);
   }
 
   const ensureOhyayAction = async action => {

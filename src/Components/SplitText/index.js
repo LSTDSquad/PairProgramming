@@ -172,23 +172,6 @@ class SplitText extends React.Component {
     });
   }
 
-  // getNameOfUser = (id, callback) =>  {
-  //   this.PubNub.getState(
-  //     {
-  //       uuid: id,
-  //       channels: [this.state.sessionID],
-  //     },
-  //     function (status, response) {
-  //       try {
-  //         const name = response.channels[this.state.sessionID].UserName
-  //         if (callback) callback(name)
-  //       } catch {
-  //         return;
-  //       }
-  //     }
-  //   );
-  // }
-
   updatePresences = (isFirstTime) => {
     const myID = this.state.userID;
     this.PubNub.hereNow({
@@ -236,6 +219,12 @@ class SplitText extends React.Component {
           }
         }, () => this.setPilot(myID)); // pilot hasn't been set yet if there's an error.
       } else {
+
+        //in case name was updated from props. 
+        if (this.props.name !== s[this.state.userID]) {
+          s[this.state.userID] = this.props.name;
+          changed = true;
+        }
         this.fetchPilot((pilotID) => {
           if (!(pilotID in s)) {
             const sorted = Object.keys(s).sort();
@@ -250,6 +239,8 @@ class SplitText extends React.Component {
           }
         });
       }
+
+      console.log("props name", this.props.name);
 
       if (changed) {
         this.setState({ onlineUsers: s });
@@ -322,13 +313,6 @@ class SplitText extends React.Component {
         }
       },
       presence: ({ action, occupancy, state, uuid }) => {
-        if (action === 'join' || action === 'leave' || action === 'timeout') {
-        }
-        if (action === 'join' && uuid === this.state.userID) {
-        } else if (action === 'leave') {
-        } else if (action === 'timeout') {
-        } else if (action === 'state-change' && state.name) {
-        }
       },
       objects: ({ message }) => {
         if (!message.data.custom.pilot) return;

@@ -35,27 +35,36 @@ function App() {
     }).catch(() => {});
   };
 
+  const calibrateOhYay = () => {
+    console.log("pre room id, s is", s);
+    const roomId = await window.ohyay.getCurrentRoomId();
+
+    // pear_iframe is the tag you used for your iframe
+    const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
+    await window.ohyay.updateElement(iframe.id, { url: 'https://pearprogram.com/#/' + roomId})
+    console.log('Current Room', roomId);
+
+    const userId = await window.ohyay.getCurrentUserId();
+    const user = await window.ohyay.getUser(userId);
+    console.log('userId', userId);
+    console.log('user', user);
+    setAttributes({name: user.name, email: userId});
+  }
+
   // get user info upon initial load 
   useEffect(() => {
     getAttributes();
     console.log("ohyay", (params['ohyay'] === 'true'));
     if (params['ohyay'] === 'true') {
 
-      window.ohyay.registerMessageHandler(async s => {
-        console.log("pre room id, s is", s);
-        const roomId = await window.ohyay.getCurrentRoomId();
-
-        // pear_iframe is the tag you used for your iframe
-        const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
-        await window.ohyay.updateElement(iframe.id, { url: 'https://pearprogram.com/#/' + roomId})
-        console.log('Current Room', roomId);
-
-        const userId = await window.ohyay.getCurrentUserId();
-        const user = await window.ohyay.getUser(userId);
-        console.log('userId', userId);
-        console.log('user', user);
-        setAttributes({name: user.name, email: userId});
-      });
+      if (window.ohyay.getCurrentRoomId()) {
+        calibrateOhYay();
+      }
+      else {
+        window.ohyay.setApiLoadedListener(async s => {
+          calibrateOhYay();
+        });
+      }
     }
 
   }, []);

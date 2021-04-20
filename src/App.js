@@ -41,7 +41,9 @@ function App() {
   const calibrateOhYay = async () => {
     console.log("calibrating");
     const roomId = await window.ohyay.getCurrentRoomId();
-
+    if (roomId === 'scene_-E27Igal') { //whatever the template id is 
+      return;
+    }
     // pear_iframe is the tag you used for your iframe
     const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
     await window.ohyay.updateElement(iframe.id, { url: 'https://www.pearprogram.com/#/' + roomId + '?inohyay=true' })

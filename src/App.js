@@ -32,13 +32,12 @@ function App() {
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
       setAttributes(user.attributes);
-    });
+    }).catch(() => {});
   };
 
   // get user info upon initial load 
   useEffect(() => {
     getAttributes();
-
     if (params['ohyay'] === 'true') {
       window.ohyay.registerMessageHandler(async s => {
         const roomId = await window.ohyay.getCurrentRoomId();

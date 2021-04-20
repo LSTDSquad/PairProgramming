@@ -103,8 +103,8 @@ function App() {
               exact
               path="/:sessionID"
               render={routeProps => email ?
-                <SplitText {...routeProps} attributes={{name: displayName, email}} /> :
-                <SplitText {...routeProps} attributes={{name: displayName, email}} />
+                <SplitText {...routeProps} name={displayName} email={email} /> :
+                <SplitText {...routeProps} name={displayName} email={email} />
                 // <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
               } />
           </Switch>

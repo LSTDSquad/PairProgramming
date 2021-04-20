@@ -89,6 +89,7 @@ class SplitText extends React.Component {
       isRunningCode: false,
     };
     this.editorRef = null;
+    this.updatedUserTable = false;
 
     // this.toggleTimer = null;
     this.remindingTipsInterval = null;
@@ -376,15 +377,14 @@ class SplitText extends React.Component {
   }
 
   componentDidUpdate(prevProps, props) {
-    if (prevProps.email || props.email) {
+    if ((this.props.email || prevProps.email) && !this.updatedUserTable) {
       console.log("prevprops", prevProps.email);
-      console.log("props email", props.email);
-    }
-    if (prevProps.email !== props.email && props.email) {
+      console.log("props email", this.props.email);
       //now, update the sessions of the user
       const session = this.props.match.params.sessionID;
-      console.log("updating user table", props.email, session);
-      apiPutCall("updateSessions/" + props.email, { session });
+      console.log("updating user table", this.props.email, session);
+      apiPutCall("updateSessions/" + this.props.email, { session });
+      this.updatedUserTable = true;
     }
   }
 

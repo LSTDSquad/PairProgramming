@@ -25,10 +25,6 @@ function getUrlVars() {
   return vars;
 }
 
-window.ohyay.setApiLoadedListener(async () => {
-  console.log("after api loaded");
-});
-
 
 function App() {
   const params = getUrlVars();
@@ -75,7 +71,7 @@ function App() {
       if (window.ohyay.getCurrentRoomId) {
         calibrateOhYay();
       } else {
-        window.ohyay.setApiLoadedListener(async () => {
+        window.ohyay.registerMessageHandler(async () => {
           console.log("calibrating");
           const roomId = await window.ohyay.getCurrentRoomId();
 

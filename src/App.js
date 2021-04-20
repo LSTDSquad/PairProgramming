@@ -25,6 +25,10 @@ function getUrlVars() {
   return vars;
 }
 
+window.ohyay.setApiLoadedListener(async () => {
+  console.log("after api loaded");
+});
+
 
 function App() {
   const params = getUrlVars();

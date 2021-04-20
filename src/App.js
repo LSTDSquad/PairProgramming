@@ -41,7 +41,7 @@ function App() {
 
     // pear_iframe is the tag you used for your iframe
     const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
-    await window.ohyay.updateElement(iframe.id, { url: 'https://pearprogram.com/#/' + roomId + '?inohyay=true' })
+    await window.ohyay.updateElement(iframe.id, { url: 'https://www.pearprogram.com/#/' + roomId + '?inohyay=true' })
     console.log('Current Room', roomId);
   }
 
@@ -68,19 +68,7 @@ function App() {
 
     if (params['newohyay'] === 'true') {
       console.log(window.ohyay);
-      if (window.ohyay.getCurrentRoomId) {
-        calibrateOhYay();
-      } else {
-        window.ohyay.registerMessageHandler(async () => {
-          console.log("calibrating");
-          const roomId = await window.ohyay.getCurrentRoomId();
-
-          // pear_iframe is the tag you used for your iframe
-          const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
-          await window.ohyay.updateElement(iframe.id, { url: 'https://pearprogram.com/#/' + roomId + '?inohyay=true' })
-          console.log('Current Room', roomId);
-        });
-      }
+      ensureOhyayAction(calibrateOhYay);
     }
 
     if (params['inohyay'] === 'true') {

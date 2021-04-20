@@ -3,13 +3,6 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
-window.onload = () => {
-    console.log('pre-set-apiloaded')
-    window.ohyay.setApiLoadedListener(async () => {
-      console.log('post-set-apiloaded');
-    }); 
-}
-
 
 ReactDOM.render(<App />, document.getElementById('root'));
 

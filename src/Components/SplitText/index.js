@@ -376,7 +376,10 @@ class SplitText extends React.Component {
   }
 
   componentDidUpdate(prevProps, props) {
-    console.log(prevProps.email, props.email);
+    if (prevProps.email || props.email) {
+      console.log("prevprops", prevProps.email);
+      console.log("props email", props.email);
+    }
     if (prevProps.email !== props.email && props.email) {
       //now, update the sessions of the user
       const session = this.props.match.params.sessionID;

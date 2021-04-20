@@ -232,7 +232,7 @@ class SplitText extends React.Component {
               //you came first! 
               this.setPilot(myID);
             }
-          } 
+          }
           this.updateInternalPilot(pilotID);
           if (!this.state.isPilot && Object.keys(s).length === 1) {
             this.setPilot(myID)
@@ -270,7 +270,7 @@ class SplitText extends React.Component {
 
       this.unsubscribeChannel();
     });
-    const {name, email} = this.props;
+    const { name } = this.props;
 
 
     //add PubNub listener to handle messages
@@ -356,11 +356,6 @@ class SplitText extends React.Component {
 
     this.changeShowFirstTimerModal(true);
 
-    //now, update the sessions of the user
-    if (email) {
-      apiPutCall("updateSessions/" + email, { session });
-    }
-    
 
     //set once!
     //for the reminder tips that pop up
@@ -375,6 +370,13 @@ class SplitText extends React.Component {
         this.setState({ tipMessage: RemindingTipMessages[tipNum] });
       }
     }, MS_BETWEEN_TIME_CHECKS);
+  }
+
+  componentDidUpdate(prevProps, props) {
+    if (prevProps.email !== props.email && props.email) {
+      //now, update the sessions of the user
+      apiPutCall("updateSessions/" + email, { session });
+    }
   }
 
 
@@ -727,7 +729,7 @@ class SplitText extends React.Component {
     let data = { message: String(new Date()), who, newMessage };
 
     axios.put(url, data).then(
-      _ => {},
+      _ => { },
       error => {
         console.log(error);
       }

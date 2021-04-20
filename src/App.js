@@ -32,38 +32,42 @@ function App() {
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
       setAttributes(user.attributes);
-    }).catch(() => {});
+    }).catch(() => { });
   };
 
   const calibrateOhYay = async () => {
+    if (params['newohyay'] !== 'true') {
+      return;
+    }
     const roomId = await window.ohyay.getCurrentRoomId();
 
     // pear_iframe is the tag you used for your iframe
     const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
-    await window.ohyay.updateElement(iframe.id, { url: 'https://pearprogram.com/#/' + roomId})
+    await window.ohyay.updateElement(iframe.id, { url: 'https://pearprogram.com/#/' + roomId + '?inohyay=true' })
     console.log('Current Room', roomId);
+  }
 
-    const userId = await window.ohyay.getCurrentUserId();
-    const user = await window.ohyay.getUser(userId);
-    console.log('userId', userId);
-    console.log('user', user);
-    setAttributes({name: user.name, email: userId});
+  const setOhyayUser = async () => {
+    if (params['inohyay'] === 'true') {
+      const userId = await window.ohyay.getCurrentUserId();
+      const user = await window.ohyay.getUser(userId);
+      console.log('userId', userId);
+      console.log('user', user);
+      setAttributes({ name: user.name, email: userId });
+    }
   }
 
   // get user info upon initial load 
   useEffect(() => {
     getAttributes();
-    console.log("ohyay", (params['ohyay'] === 'true'));
-    if (params['ohyay'] === 'true') {
-
-      if (window.ohyay.getCurrentRoomId) {
+    if (window.ohyay.getCurrentRoomId) {
+      calibrateOhYay();
+      setOhyayUser();
+    } else {
+      window.ohyay.setApiLoadedListener(async s => {
         calibrateOhYay();
-      }
-      else {
-        window.ohyay.setApiLoadedListener(async s => {
-          calibrateOhYay();
-        });
-      }
+        setOhyayUser();
+      });
     }
 
   }, []);

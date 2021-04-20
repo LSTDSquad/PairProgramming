@@ -224,6 +224,7 @@ class SplitText extends React.Component {
         if (this.props.name !== s[this.state.userID]) {
           s[this.state.userID] = this.props.name;
           changed = true;
+          this.setUserName();
         }
         this.fetchPilot((pilotID) => {
           if (!(pilotID in s)) {
@@ -240,12 +241,23 @@ class SplitText extends React.Component {
         });
       }
 
-      console.log("props name", this.props.name);
-
       if (changed) {
         this.setState({ onlineUsers: s });
       }
     });
+  }
+
+  setUserName = () => {
+    this.PubNub.setState({
+      state: { UserName: this.props.name },
+      channels: [this.state.sessionID],
+    }, function (status, response) {
+      if (status.isError) {
+        console.log(status);
+      }
+    });
+
+    this.setState({ user_name: this.props.name });
   }
 
 
@@ -270,7 +282,7 @@ class SplitText extends React.Component {
 
       this.unsubscribeChannel();
     });
-    const { name } = this.props;
+    // const { name } = this.props;
 
 
     //add PubNub listener to handle messages
@@ -343,16 +355,7 @@ class SplitText extends React.Component {
     }
 
     //set the username. this is used in things like toggle
-    this.PubNub.setState({
-      state: { UserName: name },
-      channels: [this.state.sessionID],
-    }, function (status, response) {
-      if (status.isError) {
-        console.log(status);
-      }
-    });
-
-    this.setState({ user_name: name });
+    setUserName();
 
     this.changeShowFirstTimerModal(true);
 

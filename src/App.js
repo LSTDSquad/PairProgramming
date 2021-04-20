@@ -36,6 +36,7 @@ function App() {
   };
 
   const calibrateOhYay = async () => {
+    console.log('newohyay', params['newohyay'])
     if (params['newohyay'] !== 'true') {
       return;
     }

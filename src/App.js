@@ -25,6 +25,8 @@ function getUrlVars() {
   return vars;
 }
 
+const TEMPLATE_ROOMS = new Set(['scene_JkvFBW0n', 'scene_-E27Igal']);
+
 
 function App() {
   const params = getUrlVars();
@@ -41,7 +43,8 @@ function App() {
   const calibrateOhYay = async () => {
     console.log("calibrating");
     const roomId = await window.ohyay.getCurrentRoomId();
-    if (roomId === 'scene_-E27Igal') { //whatever the template id is 
+    console.log("template room has", true);
+    if (TEMPLATE_ROOMS.has(roomId)) { //whatever the template id is 
       return;
     }
     // pear_iframe is the tag you used for your iframe

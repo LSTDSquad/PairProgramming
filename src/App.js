@@ -32,7 +32,7 @@ function App() {
   const [email, setEmail] = useState(null);
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
-      const {name, email} = user;
+      const {name, email} = user.attributes;
       setDisplayName(name);
       setEmail(email);
     }).catch(() => { });

@@ -88,7 +88,8 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
     if (!isPilot) {
       fetchPilot((pilotID) => {
         //directed to pilotID
-        packageMessage(pilotID, "toggleRequest");
+        setPilot(userID);
+        // packageMessage(pilotID, "toggleRequest");
       })
     }
   };

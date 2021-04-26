@@ -4,6 +4,7 @@ import TextOutput from "./TextOutput/";
 import TextInput from "./TextInput/";
 import ToolBar from "./ToolBar/";
 import Loading from "../Loading/";
+import RemindingTipModal from "./RemindingTipModal";
 import PubNub from "pubnub";
 import axios from "axios";
 import Sk from "skulpt";
@@ -306,7 +307,7 @@ class SplitText extends React.Component {
           (message.Who !== this.state.userID)
         ) {
           this.setState({ lines: message.What });
-        } else if (message.Type === "toggleRequest") {
+        } else if (message.Type === "toggleRequest") { //not currently being used anymore. 
           if ((message.Who !== this.state.userID) & message.What === myID) {
             // you're the pilot and your partner requested to switch.
             this.toggleAlert(message.Who, message.UserName);
@@ -317,8 +318,6 @@ class SplitText extends React.Component {
         } else if (message.Type === "toggleResponse") {
           //the pilot declined and you're the copilot
           if ((message.What === "decline") & this.state.showCopilotToggleMsg) {
-            // clearInterval(this.toggleTimer);
-            // this.toggleTimer = null;
             this.setState({
               showCopilotToggleMsg: false
             });
@@ -791,11 +790,11 @@ class SplitText extends React.Component {
           show={this.state.isFirstSessionEver}
           changeFirstTimerModalState={this.changeShowFirstTimerModal}
         /> */}
-        {/* <RemindingTipModal
+        <RemindingTipModal
           show={this.state.showRemindingTip}
           changeShowRemindingTip={this.changeShowRemindingTip}
           tipMessage={this.state.tipMessage}
-        /> */}
+        />
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
             <Toast

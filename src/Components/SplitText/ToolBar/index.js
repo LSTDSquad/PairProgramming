@@ -304,12 +304,12 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
               <Add />
             </Button>
           </OverlayTrigger> */}
-        <CopyButton
+        {/* <CopyButton
           //component to save session to backend
           editorRef={editorRef}
           sessionID={sessionID}
           onSessionIDChange={handleIDChange}
-        />
+        /> */}
         {/* LOGGING OUT */}
         {/* <Button
             className="m-2 bg-dark"

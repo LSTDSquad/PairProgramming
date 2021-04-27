@@ -12,6 +12,7 @@ import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
 import "./SplitText.css";
 import MyToast from "./MyToast";
+import FirstTimerModal from "./FirstTimerModal";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { RemindingTipMessages } from "../../utilities/SessionUtilities";
@@ -786,10 +787,10 @@ class SplitText extends React.Component {
           handleDownloadChange={this.handleDownloadChange}
           handleFinishDownload={this.handleFinishDownload}
         /> */}
-        {/* <FirstTimerModal
+        <FirstTimerModal
           show={this.state.isFirstSessionEver}
           changeFirstTimerModalState={this.changeShowFirstTimerModal}
-        /> */}
+        />
         <RemindingTipModal
           show={this.state.showRemindingTip}
           changeShowRemindingTip={this.changeShowRemindingTip}

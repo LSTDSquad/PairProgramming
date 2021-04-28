@@ -177,11 +177,11 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
           </ListGroup>
         </Drawer> */}
       <div className="left-side-toolbar">
-        <Link to="/">
+        {/* <Link to="/">
           <Button className="home-button">
             <HomeRounded fontSize="large" />
           </Button>
-        </Link>
+        </Link> */}
         <Form onSubmit={e => e.preventDefault()}>
           <Form.Control
             type="text"

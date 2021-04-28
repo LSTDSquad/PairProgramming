@@ -378,11 +378,8 @@ class SplitText extends React.Component {
 
   componentDidUpdate(prevProps, props) {
     if ((this.props.email || prevProps.email) && !this.updatedUserTable) {
-      console.log("prevprops", prevProps.email);
-      console.log("props email", this.props.email);
       //now, update the sessions of the user
       const session = this.props.match.params.sessionID;
-      console.log("updating user table", this.props.email, session);
       apiPutCall("updateSessions/" + this.props.email, { session });
       this.updatedUserTable = true;
     }
@@ -452,14 +449,16 @@ class SplitText extends React.Component {
       type === "toggleRequest" ||
       type === "chat"
     ) {
-      let who = this.state.user_name;
+      let who = this.props.email || this.props.name || 'guest';
       const data = { event: String(new Date()), who, type };
       apiPutCall("updateTimeStamps/" + this.state.sessionID, data);
     }
 
     //send cursor/selection message on sessionID channel
-    this.PubNub.publish(
-      { channel: this.state.sessionID, message: messageObj },
+    this.PubNub.publish({ 
+      channel: this.state.sessionID, 
+      message: messageObj 
+    },
       function (status, response) { }
     );
   }
@@ -473,7 +472,7 @@ class SplitText extends React.Component {
    */
   putSessionLength = async () => {
 
-    const who = this.state.user_name;
+    const who = this.props.email || this.props.name || 'guest';
     const data = { start: this.state.startTime, end: String(new Date()), who };
     apiPutCall("updateSessionLength/" + this.state.sessionID, data);
   };
@@ -734,7 +733,7 @@ class SplitText extends React.Component {
   handleNewUserMessage = newMessage => {
 
     const url = ENDPOINT + "updateChat/" + this.state.sessionID;
-    let who = this.state.user_name;
+    let who = this.props.email || 'guest'; // or user id, if it's ohyay
     let data = { message: String(new Date()), who, newMessage };
 
     axios.put(url, data).then(

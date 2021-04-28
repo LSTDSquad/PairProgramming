@@ -59,7 +59,7 @@ function App() {
     console.log('userId', userId);
     console.log('user', user);
     setDisplayName(user.name);
-    setEmail(userId);
+    setEmail(userId); //it's not actually their email, but we are just calling it email. it's actually something like u_jwwiu1ijefj08
   }
 
   const ensureOhyayAction = async action => {

@@ -636,16 +636,11 @@ class SplitText extends React.Component {
     let sessionID = this.state.sessionID;
     if (this.props.path !== "/") {
       //if this session exists already, update the entry in dynamoDB
-      const url = ENDPOINT + "updateRunCount/" + sessionID;
+      const subpath = "updateRunCount/" + sessionID;
 
       let data = { timeStamp: String(new Date()) };
 
-      axios.put(url, data).then(
-        _ => { },
-        error => {
-          console.log(error);
-        }
-      );
+      apiPutCall(subpath, data);
     }
   }
 
@@ -732,16 +727,11 @@ class SplitText extends React.Component {
 
   handleNewUserMessage = newMessage => {
 
-    const url = ENDPOINT + "updateChat/" + this.state.sessionID;
-    let who = this.props.email || 'guest'; // or user id, if it's ohyay
+    const subpath = "updateChat/" + this.state.sessionID;
+    let who = this.props.email || this.props.name || 'guest'; // or user id, if it's ohyay
     let data = { message: String(new Date()), who, newMessage };
 
-    axios.put(url, data).then(
-      _ => { },
-      error => {
-        console.log(error);
-      }
-    );
+    apiPutCall(subpath, data);
 
     // package chat text and send through PubNub
     this.packageMessage(newMessage, "chat");

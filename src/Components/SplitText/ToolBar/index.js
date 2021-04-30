@@ -86,11 +86,10 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
   const requestToggle = e => {
     e.preventDefault();
     if (!isPilot) {
-      fetchPilot((pilotID) => {
+      // fetchPilot((pilotID) => {
         //directed to pilotID
         setPilot(userID);
-        // packageMessage(pilotID, "toggleRequest");
-      })
+      // })
     }
   };
 

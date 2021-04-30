@@ -289,6 +289,7 @@ class SplitText extends React.Component {
     //add PubNub listener to handle messages
     this.PubNub.addListener({
       message: ({ channel, message }) => {
+        console.log("received", message);
         if (
           (message.Type === "chat") &
           (message.Who !== this.state.userID)
@@ -306,23 +307,6 @@ class SplitText extends React.Component {
           (message.Who !== this.state.userID)
         ) {
           this.setState({ lines: message.What });
-        } else if (message.Type === "toggleRequest") {
-          if ((message.Who !== this.state.userID) & message.What === myID) {
-            // you're the pilot and your partner requested to switch.
-            this.toggleAlert(message.Who, message.UserName);
-          } else if (message.Who === this.state.userID) {
-            //you are the copilot and you requested the handoff. 
-            this.setState({ showCopilotToggleMsg: true });
-          }
-        } else if (message.Type === "toggleResponse") {
-          //the pilot declined and you're the copilot
-          if ((message.What === "decline") & this.state.showCopilotToggleMsg) {
-            // clearInterval(this.toggleTimer);
-            // this.toggleTimer = null;
-            this.setState({
-              showCopilotToggleMsg: false
-            });
-          }
         }
       },
       presence: ({ action, occupancy, state, uuid }) => {
@@ -388,51 +372,6 @@ class SplitText extends React.Component {
     }
   }
 
-
-  /**
-   * toggleAlert
-   * happens to the pilot if the copilot wants to switch roles
-   */
-  toggleAlert = (id, name) => {
-    //function to bypass Chrome blocking alerts on background windows
-
-    var toggleTimeout = setTimeout(() => {
-      //switch because time is up!
-      this.setPilot(id);
-      apiPutCall("updateToggleCount/" + this.state.sessionID, { timeStamp: String(new Date()) });
-
-      confirmAlert({
-        title: "Pilot Time Out",
-        message: "You timed out and are now co-pilot",
-        buttons: [{ label: "Ok" }]
-      });
-      clearTimeout(toggleTimeout);
-    }, MAX_TOGGLE_WAIT); //10 second timeout for no pilot response
-
-    confirmAlert({
-      title: "Toggle Role Request",
-      message: name + " requests pilot role",
-      buttons: [
-        {
-          label: "Yes",
-          onClick: () => {
-            //swap id and current
-
-            clearTimeout(toggleTimeout);
-            this.setPilot(id);
-          }
-        },
-        {
-          label: "No",
-          onClick: () => {
-            this.packageMessage("decline", "toggleResponse");
-            clearTimeout(toggleTimeout);
-          }
-        }
-      ]
-    });
-  };
-
   packageMessage(what, type) {
     //package either cursor or selection change into message
     //object and send it in SplitText.js sendMessage function
@@ -444,12 +383,12 @@ class SplitText extends React.Component {
       When: new Date().valueOf()
     };
 
+
     if (
       type === "codeOutput" ||
       type === "confused" ||
       type === "resolve" ||
       type === "comment" ||
-      type === "toggleRequest" ||
       type === "chat"
     ) {
       let who = this.state.user_name;
@@ -460,7 +399,10 @@ class SplitText extends React.Component {
     //send cursor/selection message on sessionID channel
     this.PubNub.publish(
       { channel: this.state.sessionID, message: messageObj },
-      function (status, response) { }
+      function (status, response) {
+        console.log(status, type, messageObj);
+
+      }
     );
   }
 
@@ -798,18 +740,6 @@ class SplitText extends React.Component {
         /> */}
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
-            <Toast
-              className="copilot-toggle-msg"
-              show={this.state.showCopilotToggleMsg}
-            >
-              <Toast.Header closeButton={false}>
-                Swap request sent!
-              </Toast.Header>
-              <Toast.Body>
-                If pilot does not respond to request within{" "}
-                {this.state.msRemaining / 1000} seconds, you will become pilot.
-              </Toast.Body>
-            </Toast>
             <ToolBar
               isPilot={isPilot}
               userID={userID}

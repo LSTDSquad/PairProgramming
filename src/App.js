@@ -58,8 +58,9 @@ function App() {
     const user = await window.ohyay.getUser(userId);
     console.log('userId', userId);
     console.log('user', user);
-    setDisplayName(user.name);
-    setEmail(userId);
+    const display = user ? user.name : "Guest"; //to handle incognito mode 
+    setDisplayName(display);
+    setEmail(userId); //it's not actually their email, but we are just calling it email. it's actually something like u_jwwiu1ijefj08
   }
 
   const ensureOhyayAction = async action => {

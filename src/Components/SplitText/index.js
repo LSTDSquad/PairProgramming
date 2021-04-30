@@ -172,22 +172,6 @@ class SplitText extends React.Component {
     });
   }
 
-  // getNameOfUser = (id, callback) =>  {
-  //   this.PubNub.getState(
-  //     {
-  //       uuid: id,
-  //       channels: [this.state.sessionID],
-  //     },
-  //     function (status, response) {
-  //       try {
-  //         const name = response.channels[this.state.sessionID].UserName
-  //         if (callback) callback(name)
-  //       } catch {
-  //         return;
-  //       }
-  //     }
-  //   );
-  // }
 
   updatePresences = (isFirstTime) => {
     const myID = this.state.userID;
@@ -302,24 +286,7 @@ class SplitText extends React.Component {
           (message.Who !== this.state.userID)
         ) {
           this.setState({ lines: message.What });
-        } else if (message.Type === "toggleRequest") {
-          if ((message.Who !== this.state.userID) & message.What === myID) {
-            // you're the pilot and your partner requested to switch.
-            this.toggleAlert(message.Who, message.UserName);
-          } else if (message.Who === this.state.userID) {
-            //you are the copilot and you requested the handoff. 
-            this.setState({ showCopilotToggleMsg: true });
-          }
-        } else if (message.Type === "toggleResponse") {
-          //the pilot declined and you're the copilot
-          if ((message.What === "decline") & this.state.showCopilotToggleMsg) {
-            // clearInterval(this.toggleTimer);
-            // this.toggleTimer = null;
-            this.setState({
-              showCopilotToggleMsg: false
-            });
-          }
-        }
+        } 
       },
       presence: ({ action, occupancy, state, uuid }) => {
         if (action === 'join' || action === 'leave' || action === 'timeout') {
@@ -393,51 +360,6 @@ class SplitText extends React.Component {
     }, MS_BETWEEN_TIME_CHECKS);
   }
 
-
-  /**
-   * toggleAlert
-   * happens to the pilot if the copilot wants to switch roles
-   */
-  toggleAlert = (id, name) => {
-    //function to bypass Chrome blocking alerts on background windows
-
-    var toggleTimeout = setTimeout(() => {
-      //switch because time is up!
-      this.setPilot(id);
-      apiPutCall("updateToggleCount/" + this.state.sessionID, { timeStamp: String(new Date()) });
-
-      confirmAlert({
-        title: "Pilot Time Out",
-        message: "You timed out and are now co-pilot",
-        buttons: [{ label: "Ok" }]
-      });
-      clearTimeout(toggleTimeout);
-    }, MAX_TOGGLE_WAIT); //10 second timeout for no pilot response
-
-    confirmAlert({
-      title: "Toggle Role Request",
-      message: name + " requests pilot role",
-      buttons: [
-        {
-          label: "Yes",
-          onClick: () => {
-            //swap id and current
-
-            clearTimeout(toggleTimeout);
-            this.setPilot(id);
-          }
-        },
-        {
-          label: "No",
-          onClick: () => {
-            this.packageMessage("decline", "toggleResponse");
-            clearTimeout(toggleTimeout);
-          }
-        }
-      ]
-    });
-  };
-
   packageMessage(what, type) {
     //package either cursor or selection change into message
     //object and send it in SplitText.js sendMessage function
@@ -454,7 +376,6 @@ class SplitText extends React.Component {
       type === "confused" ||
       type === "resolve" ||
       type === "comment" ||
-      type === "toggleRequest" ||
       type === "chat"
     ) {
       let who = this.state.user_name;
@@ -714,16 +635,7 @@ class SplitText extends React.Component {
   };
 
   componentWillUnmount() {
-    //mostly removes users from PubNub channels on browserclose/refresh (not 100% successful)
-    // this.setTimeout(3000);
 
-    // if (this.state.isPilot) {
-    //   //need to handoff
-    //   //the next random one
-    //   const newPilot = Object.entries(this.state.onlineUsers).find((user) => user[0] !== this.state.userID);
-    //   //newPilot is like [uuid, userName]
-    //   this.setPilot(newPilot[0]);
-    // }
     clearInterval(this.hereNowInterval);
     this.unsubscribeChannel();
     window.removeEventListener("beforeunload", this.unsubscribeChannel);

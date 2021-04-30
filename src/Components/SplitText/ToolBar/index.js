@@ -42,7 +42,7 @@ import HoverClickPopover from "../../HoverClickPopover";
     />
  */
 function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
-  userName, packageMessage, handleIDChange, fetchPilot, setPilot, handleDownload,
+  userName, packageMessage, handleIDChange, setPilot, handleDownload,
   title, changeShowFirstTimerModal }) {
   //used for the hamburger menu
   let [drawerOpen, setDrawerOpen] = useState(false);
@@ -86,10 +86,7 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
   const requestToggle = e => {
     e.preventDefault();
     if (!isPilot) {
-      fetchPilot((pilotID) => {
-        //directed to pilotID
-        packageMessage(pilotID, "toggleRequest");
-      })
+      setPilot(userID);
     }
   };
 
@@ -176,11 +173,11 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
           </ListGroup>
         </Drawer> */}
       <div className="left-side-toolbar">
-        <Link to="/">
+        {/* <Link to="/">
           <Button className="home-button">
             <HomeRounded fontSize="large" />
           </Button>
-        </Link>
+        </Link> */}
         <Form onSubmit={e => e.preventDefault()}>
           <Form.Control
             type="text"
@@ -302,12 +299,12 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
               <Add />
             </Button>
           </OverlayTrigger> */}
-        <CopyButton
+        {/* <CopyButton
           //component to save session to backend
           editorRef={editorRef}
           sessionID={sessionID}
           onSessionIDChange={handleIDChange}
-        />
+        /> */}
         {/* LOGGING OUT */}
         {/* <Button
             className="m-2 bg-dark"

@@ -2,6 +2,12 @@
     z-index: 10;
 }
 
+@media screen and (max-width: 800px) {
+    .split-text-container > .rcw-widget-container {
+        display: none;
+    }
+}
+
 button.chat-btn {
     position: absolute;
     bottom: 0px;

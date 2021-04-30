@@ -176,11 +176,11 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
           </ListGroup>
         </Drawer> */}
       <div className="left-side-toolbar">
-        <Link to="/">
+        {/* <Link to="/">
           <Button className="home-button">
             <HomeRounded fontSize="large" />
           </Button>
-        </Link>
+        </Link> */}
         <Form onSubmit={e => e.preventDefault()}>
           <Form.Control
             type="text"
@@ -288,7 +288,8 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
         </label>
       </div>
       <div className="right-side-toolbar">
-        <TeammateCount userArray={Object.entries(onlineUsers)} />
+        {/* TEAMMATE COUNT AND HOVER */}
+        {/* <TeammateCount userArray={Object.entries(onlineUsers)} /> */}
         {/* CREATING NEW SESSION */}
         {/* <OverlayTrigger
             trigger={["hover", "focus"]}
@@ -302,12 +303,12 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
               <Add />
             </Button>
           </OverlayTrigger> */}
-        <CopyButton
+        {/* <CopyButton
           //component to save session to backend
           editorRef={editorRef}
           sessionID={sessionID}
           onSessionIDChange={handleIDChange}
-        />
+        /> */}
         {/* LOGGING OUT */}
         {/* <Button
             className="m-2 bg-dark"

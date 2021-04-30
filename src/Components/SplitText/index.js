@@ -4,6 +4,7 @@ import TextOutput from "./TextOutput/";
 import TextInput from "./TextInput/";
 import ToolBar from "./ToolBar/";
 import Loading from "../Loading/";
+import RemindingTipModal from "./RemindingTipModal";
 import PubNub from "pubnub";
 import axios from "axios";
 import Sk from "skulpt";
@@ -11,6 +12,7 @@ import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
 import "./SplitText.css";
 import MyToast from "./MyToast";
+import FirstTimerModal from "./FirstTimerModal";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { RemindingTipMessages } from "../../utilities/SessionUtilities";
@@ -362,11 +364,8 @@ class SplitText extends React.Component {
 
   componentDidUpdate(prevProps, props) {
     if ((this.props.email || prevProps.email) && !this.updatedUserTable) {
-      console.log("prevprops", prevProps.email);
-      console.log("props email", this.props.email);
       //now, update the sessions of the user
       const session = this.props.match.params.sessionID;
-      console.log("updating user table", this.props.email, session);
       apiPutCall("updateSessions/" + this.props.email, { session });
       this.updatedUserTable = true;
     }
@@ -391,7 +390,7 @@ class SplitText extends React.Component {
       type === "comment" ||
       type === "chat"
     ) {
-      let who = this.state.user_name;
+      let who = this.props.email;
       const data = { event: String(new Date()), who, type };
       apiPutCall("updateTimeStamps/" + this.state.sessionID, data);
     }
@@ -415,7 +414,7 @@ class SplitText extends React.Component {
    */
   putSessionLength = async () => {
 
-    const who = this.state.user_name;
+    const who = this.props.email;
     const data = { start: this.state.startTime, end: String(new Date()), who };
     apiPutCall("updateSessionLength/" + this.state.sessionID, data);
   };
@@ -579,16 +578,11 @@ class SplitText extends React.Component {
     let sessionID = this.state.sessionID;
     if (this.props.path !== "/") {
       //if this session exists already, update the entry in dynamoDB
-      const url = ENDPOINT + "updateRunCount/" + sessionID;
+      const subpath = "updateRunCount/" + sessionID;
 
       let data = { timeStamp: String(new Date()) };
 
-      axios.put(url, data).then(
-        _ => { },
-        error => {
-          console.log(error);
-        }
-      );
+      apiPutCall(subpath, data);
     }
   }
 
@@ -675,16 +669,11 @@ class SplitText extends React.Component {
 
   handleNewUserMessage = newMessage => {
 
-    const url = ENDPOINT + "updateChat/" + this.state.sessionID;
-    let who = this.state.user_name;
+    const subpath = "updateChat/" + this.state.sessionID;
+    let who = this.props.email || this.props.name || 'guest'; // or user id, if it's ohyay
     let data = { message: String(new Date()), who, newMessage };
 
-    axios.put(url, data).then(
-      _ => { },
-      error => {
-        console.log(error);
-      }
-    );
+    apiPutCall(subpath, data);
 
     // package chat text and send through PubNub
     this.packageMessage(newMessage, "chat");
@@ -729,15 +718,15 @@ class SplitText extends React.Component {
           handleDownloadChange={this.handleDownloadChange}
           handleFinishDownload={this.handleFinishDownload}
         /> */}
-        {/* <FirstTimerModal
+        <FirstTimerModal
           show={this.state.isFirstSessionEver}
           changeFirstTimerModalState={this.changeShowFirstTimerModal}
-        /> */}
-        {/* <RemindingTipModal
+        />
+        <RemindingTipModal
           show={this.state.showRemindingTip}
           changeShowRemindingTip={this.changeShowRemindingTip}
           tipMessage={this.state.tipMessage}
-        /> */}
+        />
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
             <ToolBar

@@ -56,24 +56,29 @@ function App() {
   }
 
   const setOhyayUser = async () => {
+    console.log("setting ohyay user");
     const userId = await window.ohyay.getCurrentUserId();
     const user = await window.ohyay.getUser(userId);
-    if (user) {
+    console.log(user);
+    if (user) { // if user is not anonymous 
       setDisplayName(user.name);
+      setUserSignature(userId); //something like u_jwwiu1ijefj08 . 
     }
-    setUserSignature(userId); //something like u_jwwiu1ijefj08
     console.log('userID', userId);
   }
 
   const ensureOhyayAction = async action => {
     if (!window.ohyay) {
       // resource didn't load 
+      console.log("window.ohyay doesn't exist");
       return;
     }
     if (window.ohyay.getCurrentRoomId) {
+      console.log("ohyay already loaded");
       await action();
     } else {
-      await window.ohyay.setApiLoadedListener(async s => await action());
+      console.log("waiting to load");
+      await window.ohyay.setApiLoadedListener(async s => await action()); //it doesn't wait forever! 
     }
   }
 

@@ -44,7 +44,7 @@ class Home extends React.Component {
           () => this.getUserSessions()
         );
       })
-      .catch(err => console.log(err));
+      .catch(err => {});
   }
 
   makeNewSession = () => {

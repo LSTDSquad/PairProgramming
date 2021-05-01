@@ -44,22 +44,8 @@ import HoverClickPopover from "../../HoverClickPopover";
 function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
   userName, packageMessage, handleIDChange, setPilot, handleDownload,
   title, changeShowFirstTimerModal }) {
-  //used for the hamburger menu
-  let [drawerOpen, setDrawerOpen] = useState(false);
   let [fileName, setFileName] = useState(title);
-  let [user, setUser] = useState(null); //from aws auth
 
-  useEffect(() => {
-    if (user === null) {
-      Auth.currentAuthenticatedUser()
-        .then(userID => setUser(userID));
-    }
-  });
-
-  ///// for the hamburger menu
-  const toggleDrawer = open => {
-    setDrawerOpen(open);
-  };
 
   /////     handles the actual toggling for the pilot -> copilot
   const handleToggleClick = e => {
@@ -304,16 +290,6 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
           sessionID={sessionID}
           onSessionIDChange={handleIDChange}
         /> */}
-        {/* LOGGING OUT */}
-        {/* <Button
-            className="m-2 bg-dark"
-            onClick={() => {
-              user.signOut();
-              window.location.reload(true);
-            }}
-          >
-            Log out
-          </Button> */}
         {/* <Button
           variant={isPilot ? "primary" : ""}
           className={isPilot ? "" : "help-button-copilot"}

@@ -81,10 +81,12 @@ function App() {
       await action();
     } else {
       console.log("waiting to load");
-      await window.ohyay.setApiLoadedListener(() => {
-        action().then(() => setHasUserInfo(true)); //it doesn't wait forever! 
-        console.log('displayname after action ', displayName);
-      });
+      await window.ohyay.setApiLoadedListener(() =>
+        action().then(() => {
+          setHasUserInfo(true);
+          console.log('displayname after action ', displayName);
+        }) //it doesn't wait forever! 
+      );
     }
   }
 

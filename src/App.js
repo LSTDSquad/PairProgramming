@@ -56,16 +56,10 @@ function App() {
   }
 
   const setOhyayUser = async () => {
-<<<<<<< HEAD
     console.log("setting ohyay user");
     const userId = await window.ohyay.getCurrentUserId();
     const user = await window.ohyay.getUser(userId);
     console.log(user);
-=======
-    console.log("set ohyay user");
-    const userId = await window.ohyay.getCurrentUserId();
-    const user = await window.ohyay.getUser(userId);
->>>>>>> 6d25fe13d8a6243a9051fce159e36630b8481bc1
     if (user) { // if user is not anonymous 
       setDisplayName(user.name);
       setUserSignature(userId); //something like u_jwwiu1ijefj08 . 
@@ -83,10 +77,7 @@ function App() {
       console.log("ohyay already loaded");
       await action();
     } else {
-<<<<<<< HEAD
       console.log("waiting to load");
-=======
->>>>>>> 6d25fe13d8a6243a9051fce159e36630b8481bc1
       await window.ohyay.setApiLoadedListener(async s => await action()); //it doesn't wait forever! 
     }
   }

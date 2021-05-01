@@ -193,10 +193,16 @@ class SplitText extends React.Component {
         if (!(uuid in s) || !s[uuid]) {
           changed = true;
         }
+
         if (!state) {
           return; // probably means it's a ghost
+        } else if (state.UserName && s[uuid] !== state.UserName) {
+          //check that it matches yours 
+          s[uuid] = state.UserName;
+        } else if (!s[uuid]) { // you don't already have a name for it. 
+          //make the default: 
+          s[uuid] = "Guest";
         }
-        s[uuid] = (state && state.UserName) || "Guest";
         unAccountedFor.delete(uuid);
       });
 

@@ -52,8 +52,7 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
   useEffect(() => {
     if (user === null) {
       Auth.currentAuthenticatedUser()
-        .then(userID => setUser(userID))
-        .catch(err => console.log(err));
+        .then(userID => setUser(userID));
     }
   });
 

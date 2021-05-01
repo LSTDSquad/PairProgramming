@@ -33,7 +33,7 @@ const MINUTES_BETWEEN_TIPS = 10;
 
 /**
  * props: 
- * attributes: {name, email}
+ * name, userSignature
  */
 class SplitText extends React.Component {
   constructor(props) {
@@ -208,7 +208,7 @@ class SplitText extends React.Component {
 
       if (isFirstTime) {
         changed = true;
-        s[this.state.userID] = this.props.attributes.name;
+        s[this.state.userID] = this.props.name;
         this.fetchPilot((pilotID) => {
           //if you're the only one, or if 
           if (occupants.length === 0 || (occupants.length === 1 && occupants[0].uuid === myID) || !(pilotID in s)) {
@@ -263,7 +263,6 @@ class SplitText extends React.Component {
 
       this.unsubscribeChannel();
     });
-    const attributes = this.props.attributes;
 
 
     //add PubNub listener to handle messages
@@ -327,7 +326,7 @@ class SplitText extends React.Component {
 
     //set the username. this is used in things like toggle
     this.PubNub.setState({
-      state: { UserName: attributes.name },
+      state: { UserName: this.props.name },
       channels: [this.state.sessionID],
     }, function (status, response) {
       if (status.isError) {
@@ -335,13 +334,14 @@ class SplitText extends React.Component {
       }
     });
 
-    this.setState({ user_name: attributes.name });
+    this.setState({ user_name: this.props.name });
 
     this.changeShowFirstTimerModal(true);
 
     //now, update the sessions of the user
-    if (attributes.email) {
-      apiPutCall("updateSessions/" + attributes.email, { session });
+    //remember to try this again in case it's an ohyay user
+    if (this.props.userSignature) {
+      apiPutCall("updateSessions/" + this.props.userSignature, { session });
     }
     
 
@@ -732,7 +732,7 @@ class SplitText extends React.Component {
               userID={userID}
               sessionID={sessionID}
               editorRef={this.editorRef}
-              userName={this.props.attributes.name}
+              userName={this.props.name}
               onlineUsers={this.state.onlineUsers}
               fetchPilot={this.fetchPilot}
               history={history}

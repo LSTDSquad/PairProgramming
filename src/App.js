@@ -17,6 +17,8 @@ import About from "./About";
 
 Amplify.configure(awsconfig);
 
+const URL_PREFIX = 'https://fix-for-ohyay.d1tkneodyg1kgq.amplifyapp.com/#/';
+
 function getUrlVars() {
   var vars = {};
   var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
@@ -28,15 +30,28 @@ function getUrlVars() {
 
 function App() {
   const params = getUrlVars();
-  const [attributes, setAttributes] = useState({name: params['user'] || "Guest", email: null});
+  let [displayName, setDisplayName] = useState(params['user'] || 'Guest');
+
+  //used for the userTable
+  let [userSignature, setUserSignature] = useState(null); //normally the email, but sometimes the ohyay userID
+
+
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
-      setAttributes(user.attributes);
-    });
+      const {name, email} = user.attributes;
+      setDisplayName(name);
+      setUserSignature(email);
+    }).catch(() => {});
   };
 
   // get user info upon initial load 
-  useEffect(() => getAttributes(), []);
+  useEffect(() => {
+    if (params['inohyay'] === 'true') {
+      //don't care about the authentication or logged in state if it's in ohyay
+    } else {
+      getAttributes();
+    }
+  }, []);
 
   return (
     <>
@@ -47,7 +62,7 @@ function App() {
             <Route
               exact
               path="/"
-              render={routeProps => attributes.email ? <Home {...routeProps} /> : 
+              render={routeProps => userSignature ? <Home {...routeProps} /> : 
               <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={ signUpConfig } theme={myTheme} usernameAttributes='email' />} />
             <Route
               exact
@@ -59,11 +74,7 @@ function App() {
             <Route
               exact
               path="/:sessionID"
-              render={routeProps => attributes ? 
-                <SplitText {...routeProps} attributes={attributes} /> : 
-                <SplitText {...routeProps} attributes={attributes} />
-                // <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
-              }/>
+              render={routeProps => <SplitText {...routeProps} name={displayName} userSignature={userSignature} /> }/>
           </Switch>
         </div>
       </Router>

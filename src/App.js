@@ -35,7 +35,7 @@ function App() {
   let [hasUserInfo, setHasUserInfo] = useState(false);
   //used for the userTable
   let [userSignature, setUserSignature] = useState(null); //normally the email, but sometimes the ohyay userID
-
+  let timer;
 
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
@@ -46,7 +46,7 @@ function App() {
     }).catch(() => {}).finally(() => setHasUserInfo(true));
   };
 
-  const calibrateOhYay = async () => {
+  const calibrateOhYay = () => new Promise(async (resolve, reject) => {
     const roomId = await window.ohyay.getCurrentRoomId();
     if (TEMPLATE_ROOMS.has(roomId)) { //whatever the template id is 
       return;
@@ -54,9 +54,10 @@ function App() {
     // pear_iframe is the tag you used for your iframe
     const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
     await window.ohyay.updateElement(iframe.id, { url: URL_PREFIX + roomId + '?inohyay=true' })
-  }
+    resolve();
+  });
 
-  const setOhyayUser = async () => {
+  const setOhyayUser = () => new Promise(async (resolve, reject) => {
     console.log("setting ohyay user");
     const userId = await window.ohyay.getCurrentUserId();
     const user = await window.ohyay.getUser(userId);
@@ -66,7 +67,8 @@ function App() {
       setUserSignature(userId); //something like u_jwwiu1ijefj08 . 
     }
     console.log('userID', userId);
-  }
+    resolve();
+  });
 
   const ensureOhyayAction = async action => {
     if (!window.ohyay) {
@@ -79,14 +81,23 @@ function App() {
       await action();
     } else {
       console.log("waiting to load");
-      await window.ohyay.setApiLoadedListener(async s => await action()); //it doesn't wait forever! 
-      console.log('displayname after action ', displayName);
-      setHasUserInfo(true);
+      await window.ohyay.setApiLoadedListener(() => {
+        action().then(() => setHasUserInfo(true)); //it doesn't wait forever! 
+        console.log('displayname after action ', displayName);
+      });
     }
   }
 
   // get user info upon initial load 
   useEffect(() => {
+    //in case ohyay doesn't actually respond. 
+    timer = setTimeout(() => {
+      console.log('3000 is up');
+      clearTimeout(timer);
+      if (hasUserInfo) return;
+      setHasUserInfo(true);
+    }, 3000); //give ohyay 3000 sec before giving up 
+
     //splittext won't load until user info has been loaded. 
     if (params['inohyay'] === 'true') {
       //don't care about the authentication or logged in state if it's in ohyay

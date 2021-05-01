@@ -32,7 +32,7 @@ function getUrlVars() {
 function App() {
   const params = getUrlVars();
   let [displayName, setDisplayName] = useState(params['user'] || 'Guest');
-
+  let [hasUserInfo, setHasUserInfo] = useState(false);
   //used for the userTable
   let [userSignature, setUserSignature] = useState(null); //normally the email, but sometimes the ohyay userID
 
@@ -42,7 +42,8 @@ function App() {
       const {name, email} = user.attributes;
       setDisplayName(name);
       setUserSignature(email);
-    }).catch(() => {});
+    
+    }).catch(() => {}).finally(() => setHasUserInfo(true));
   };
 
   const calibrateOhYay = async () => {
@@ -79,11 +80,14 @@ function App() {
     } else {
       console.log("waiting to load");
       await window.ohyay.setApiLoadedListener(async s => await action()); //it doesn't wait forever! 
+      console.log('displayname after action ', displayName);
+      setHasUserInfo(true);
     }
   }
 
   // get user info upon initial load 
   useEffect(() => {
+    //splittext won't load until user info has been loaded. 
     if (params['inohyay'] === 'true') {
       //don't care about the authentication or logged in state if it's in ohyay
       ensureOhyayAction(setOhyayUser);
@@ -112,10 +116,12 @@ function App() {
               return (<About {...routeProps} />)
             }}
             />
+            
             <Route
               exact
               path="/:sessionID"
-              render={routeProps => <SplitText {...routeProps} name={displayName} userSignature={userSignature} /> }/>
+              render={routeProps => 
+                hasUserInfo ? <SplitText {...routeProps} name={displayName} userSignature={userSignature} /> : <Loading/>}/>
           </Switch>
         </div>
       </Router>

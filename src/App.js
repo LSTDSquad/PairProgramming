@@ -18,6 +18,7 @@ import About from "./About";
 Amplify.configure(awsconfig);
 
 const URL_PREFIX = 'https://fix-for-ohyay.d1tkneodyg1kgq.amplifyapp.com/#/';
+const TEMPLATE_ROOMS = new Set(['scene_JkvFBW0n', 'scene_-E27Igal']);
 
 function getUrlVars() {
   var vars = {};
@@ -44,11 +45,46 @@ function App() {
     }).catch(() => {});
   };
 
+  const calibrateOhYay = async () => {
+    const roomId = await window.ohyay.getCurrentRoomId();
+    if (TEMPLATE_ROOMS.has(roomId)) { //whatever the template id is 
+      return;
+    }
+    // pear_iframe is the tag you used for your iframe
+    const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
+    await window.ohyay.updateElement(iframe.id, { url: URL_PREFIX + roomId + '?inohyay=true' })
+  }
+
+  const setOhyayUser = async () => {
+    const userId = await window.ohyay.getCurrentUserId();
+    const user = await window.ohyay.getUser(userId);
+    if (user) {
+      setDisplayName(user.name);
+    }
+    setUserSignature(userId); //something like u_jwwiu1ijefj08
+    console.log('userID', userId);
+  }
+
+  const ensureOhyayAction = async action => {
+    if (!window.ohyay) {
+      // resource didn't load 
+      return;
+    }
+    if (window.ohyay.getCurrentRoomId) {
+      await action();
+    } else {
+      await window.ohyay.setApiLoadedListener(async s => await action());
+    }
+  }
+
   // get user info upon initial load 
   useEffect(() => {
     if (params['inohyay'] === 'true') {
       //don't care about the authentication or logged in state if it's in ohyay
-    } else {
+      ensureOhyayAction(setOhyayUser);
+    } else if (params['newohyay'] === 'true') {
+      ensureOhyayAction(calibrateOhYay);
+    } else { // just a regular browser 
       getAttributes();
     }
   }, []);

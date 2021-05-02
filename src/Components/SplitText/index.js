@@ -57,6 +57,10 @@ class SplitText extends React.Component {
     this.updatePresences = this.updatePresences.bind(this);
     const userID = PubNub.generateUUID();
 
+    let startOnlineUsers = {};
+    startOnlineUsers[userID] = props.name;
+    console.log('initial props name:', props.name);
+
     this.state = {
       textLoaded: false,
       startTime: String(),
@@ -68,7 +72,7 @@ class SplitText extends React.Component {
       cursors: {},
       selections: {},
       isPilot: true,
-      onlineUsers: {}, //serves as a dict from uuid to name
+      onlineUsers: startOnlineUsers, //serves as a dict from uuid to name
       lines: [
         "Welcome to PearProgram! This is your console. Click the run button to see your output here."
       ],
@@ -88,6 +92,8 @@ class SplitText extends React.Component {
       tipMessage: "",
       isRunningCode: false,
     };
+
+    
     this.editorRef = null;
 
     // this.toggleTimer = null;
@@ -175,7 +181,6 @@ class SplitText extends React.Component {
 
   updatePresences = (isFirstTime) => {
     const myID = this.state.userID;
-    console.log('pubnubID', myID);
     this.PubNub.hereNow({
       channels: [this.state.sessionID],
       includeState: true,
@@ -201,12 +206,19 @@ class SplitText extends React.Component {
         } else if (state.UserName && s[uuid] !== state.UserName) {
           //check that it matches yours 
           s[uuid] = state.UserName;
+          changed = true;
+
         } else if (uuid === myID && this.props.name !== state.UserName) {
+          //check that your own name matches. 
           console.log('myID didnt match');
           s[uuid] = this.props.name;
-        }else if (!s[uuid]) { // you don't already have a name for it. 
+          changed = true;
+
+        } else if (!s[uuid]) { // you don't already have a name for it. 
           //make the default: 
           s[uuid] = "Guest";
+          changed = true;
+
         }
         unAccountedFor.delete(uuid);
       });

@@ -42,7 +42,7 @@ import HoverClickPopover from "../../HoverClickPopover";
     />
  */
 function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
-  userName, packageMessage, handleIDChange, setPilot, handleDownload,
+  userName, packageMessage, handleIDChange, setPilot, handleDownload, userSignature,
   title, changeShowFirstTimerModal }) {
   let [fileName, setFileName] = useState(title);
 
@@ -57,14 +57,12 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
       setPilot(newPilot[0]);
 
       let type = "pilotHandoff";
-      let who = userName;
+      let who = userSignature ? userSignature : userName;
       let data = { event: String(new Date()), who, type };
       apiPutCall("updateTimeStamps/" + sessionID, data);
-
       //if this session exists already, update the entry in dynamoDB
       apiPutCall("updateToggleCount/" + sessionID, { timeStamp: String(new Date()) });
-    };
-
+    }
   };
 
   /////     handles the toggling for copilot -> pilot
@@ -72,6 +70,13 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
     e.preventDefault();
     if (!isPilot) {
       setPilot(userID);
+
+      let type = "pilotRequest";
+      let who = userSignature ? userSignature : userName;
+      let data = { event: String(new Date()), who, type };
+      apiPutCall("updateTimeStamps/" + sessionID, data);
+      //if this session exists already, update the entry in dynamoDB
+      apiPutCall("updateToggleCount/" + sessionID, { timeStamp: String(new Date()) });
     }
   };
 

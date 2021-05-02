@@ -57,10 +57,6 @@ class SplitText extends React.Component {
     this.updatePresences = this.updatePresences.bind(this);
     const userID = PubNub.generateUUID();
 
-    let startOnlineUsers = {};
-    startOnlineUsers[userID] = props.name;
-    console.log('initial props name:', props.name);
-
     this.state = {
       textLoaded: false,
       startTime: String(),
@@ -72,7 +68,7 @@ class SplitText extends React.Component {
       cursors: {},
       selections: {},
       isPilot: true,
-      onlineUsers: startOnlineUsers, //serves as a dict from uuid to name
+      onlineUsers: {}, //serves as a dict from uuid to name
       lines: [
         "Welcome to PearProgram! This is your console. Click the run button to see your output here."
       ],
@@ -213,6 +209,16 @@ class SplitText extends React.Component {
           console.log('myID didnt match');
           s[uuid] = this.props.name;
           changed = true;
+
+          //officially update it. 
+          this.PubNub.setState({
+            state: { UserName: this.props.name },
+            channels: [this.state.sessionID],
+          }, function (status, response) {
+            if (status.isError) {
+              console.log(status);
+            }
+          });
 
         } else if (!s[uuid]) { // you don't already have a name for it. 
           //make the default: 
@@ -757,6 +763,7 @@ class SplitText extends React.Component {
               handleIDChange={this.handleSessionIDChange}
               handleDownload={this.handleFinishDownload}
               title={this.state.fileName}
+              userSignature={this.props.userSignature}
               numUsers={this.state.numUsers}
               changeShowFirstTimerModal={this.changeShowFirstTimerModal}
             />

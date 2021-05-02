@@ -19,6 +19,7 @@ Amplify.configure(awsconfig);
 
 const URL_PREFIX = 'https://fix-for-ohyay.d1tkneodyg1kgq.amplifyapp.com/#/';
 const TEMPLATE_ROOMS = new Set(['scene_JkvFBW0n', 'scene_-E27Igal']);
+const NEW_OHYAY = 10;
 
 function getUrlVars() {
   var vars = {};
@@ -49,12 +50,12 @@ function App() {
   const calibrateOhYay = () => new Promise(async (resolve, reject) => {
     const roomId = await window.ohyay.getCurrentRoomId();
     if (TEMPLATE_ROOMS.has(roomId)) { //whatever the template id is 
-      return;
+      reject();
     }
     // pear_iframe is the tag you used for your iframe
     const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
     await window.ohyay.updateElement(iframe.id, { url: URL_PREFIX + roomId + '?inohyay=true' })
-    resolve();
+    resolve(NEW_OHYAY);
   });
 
   const setOhyayUser = () => new Promise(async (resolve, reject) => {
@@ -67,7 +68,7 @@ function App() {
       setUserSignature(userId); //something like u_jwwiu1ijefj08 . 
     }
     console.log('userID', userId);
-    resolve();
+    resolve(user ? user.name : 'guest');
   });
 
   const ensureOhyayAction = async action => {
@@ -82,9 +83,13 @@ function App() {
     } else {
       console.log("waiting to load");
       await window.ohyay.setApiLoadedListener(() =>
-        action().then(() => {
+        action().then((ret) => {
+          if (ret === NEW_OHYAY) {
+            console.log('finished new ohyay');
+            return;
+          }
           setHasUserInfo(true);
-          console.log('displayname after action ', displayName);
+          console.log('displayname after action ', ret);
         }) //it doesn't wait forever! 
       );
     }
@@ -94,11 +99,11 @@ function App() {
   useEffect(() => {
     //in case ohyay doesn't actually respond. 
     timer = setTimeout(() => {
-      console.log('3000 is up');
+      console.log('5000 is up');
       clearTimeout(timer);
       if (hasUserInfo) return;
       setHasUserInfo(true);
-    }, 3000); //give ohyay 3000 sec before giving up 
+    }, 5000); //give ohyay 5000 sec before giving up 
 
     //splittext won't load until user info has been loaded. 
     if (params['inohyay'] === 'true') {

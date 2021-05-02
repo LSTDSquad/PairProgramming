@@ -86,6 +86,11 @@ function App() {
         action().then((ret) => {
           if (ret === NEW_OHYAY) {
             console.log('finished new ohyay');
+            setOhyayUser().then(ret => {
+              //clean up later
+              setHasUserInfo(true);
+              console.log('displayname after setohyay after calibrate ', ret);
+            })
             return;
           }
           setHasUserInfo(true);
@@ -104,7 +109,7 @@ function App() {
       if (hasUserInfo) return;
       setHasUserInfo(true);
     }, 5000); //give ohyay 5000 sec before giving up 
-
+    console.log('params:', params);
     //splittext won't load until user info has been loaded. 
     if (params['inohyay'] === 'true') {
       //don't care about the authentication or logged in state if it's in ohyay

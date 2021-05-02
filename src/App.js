@@ -47,16 +47,16 @@ function App() {
     }).catch(() => {}).finally(() => setHasUserInfo(true));
   };
 
-  const calibrateOhYay = () => new Promise(async (resolve, reject) => {
+  const calibrateOhYay = async () => {
     const roomId = await window.ohyay.getCurrentRoomId();
     if (TEMPLATE_ROOMS.has(roomId)) { //whatever the template id is 
-      reject();
+      return;
     }
     // pear_iframe is the tag you used for your iframe
     const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
-    await window.ohyay.updateElement(iframe.id, { url: URL_PREFIX + roomId + '?inohyay=true' })
-    resolve(NEW_OHYAY);
-  });
+    await window.ohyay.updateElement(iframe.id, { url: URL_PREFIX + roomId + '?inohyay=true' });
+    setOhyayUser();
+  };
 
   const setOhyayUser = () => new Promise(async (resolve, reject) => {
     console.log("setting ohyay user");
@@ -69,6 +69,9 @@ function App() {
     }
     console.log('userID', userId);
     resolve(user ? user.name : 'guest');
+  }).then(ret => {
+    setHasUserInfo(true);
+    console.log('displayname after action ', ret);
   });
 
   const ensureOhyayAction = async action => {
@@ -82,21 +85,7 @@ function App() {
       await action();
     } else {
       console.log("waiting to load");
-      await window.ohyay.setApiLoadedListener(() =>
-        action().then((ret) => {
-          if (ret === NEW_OHYAY) {
-            console.log('finished new ohyay');
-            setOhyayUser().then(ret => {
-              //clean up later
-              setHasUserInfo(true);
-              console.log('displayname after setohyay after calibrate ', ret);
-            })
-            return;
-          }
-          setHasUserInfo(true);
-          console.log('displayname after action ', ret);
-        }) //it doesn't wait forever! 
-      );
+      await window.ohyay.setApiLoadedListener(() => action());
     }
   }
 

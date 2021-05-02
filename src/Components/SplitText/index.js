@@ -175,6 +175,7 @@ class SplitText extends React.Component {
 
   updatePresences = (isFirstTime) => {
     const myID = this.state.userID;
+    console.log('pubnubID', myID);
     this.PubNub.hereNow({
       channels: [this.state.sessionID],
       includeState: true,
@@ -190,6 +191,7 @@ class SplitText extends React.Component {
       let changed = false;
 
       occupants.map(({ uuid, state }) => {
+        
         if (!(uuid in s) || !s[uuid]) {
           changed = true;
         }
@@ -199,7 +201,10 @@ class SplitText extends React.Component {
         } else if (state.UserName && s[uuid] !== state.UserName) {
           //check that it matches yours 
           s[uuid] = state.UserName;
-        } else if (!s[uuid]) { // you don't already have a name for it. 
+        } else if (uuid === myID && this.props.name !== state.UserName) {
+          console.log('myID didnt match');
+          s[uuid] = this.props.name;
+        }else if (!s[uuid]) { // you don't already have a name for it. 
           //make the default: 
           s[uuid] = "Guest";
         }
@@ -294,13 +299,6 @@ class SplitText extends React.Component {
         } 
       },
       presence: ({ action, occupancy, state, uuid }) => {
-        if (action === 'join' || action === 'leave' || action === 'timeout') {
-        }
-        if (action === 'join' && uuid === this.state.userID) {
-        } else if (action === 'leave') {
-        } else if (action === 'timeout') {
-        } else if (action === 'state-change' && state.name) {
-        }
       },
       objects: ({ message }) => {
         if (!message.data.custom.pilot) return;
@@ -384,7 +382,7 @@ class SplitText extends React.Component {
       type === "comment" ||
       type === "chat"
     ) {
-      let who = this.state.user_name;
+      let who = this.props.userSignature || this.props.name;
       const data = { event: String(new Date()), who, type };
       apiPutCall("updateTimeStamps/" + this.state.sessionID, data);
     }
@@ -405,7 +403,7 @@ class SplitText extends React.Component {
    */
   putSessionLength = async () => {
 
-    const who = this.state.user_name;
+    const who = this.props.userSignature || this.props.name;
     const data = { start: this.state.startTime, end: String(new Date()), who };
     apiPutCall("updateSessionLength/" + this.state.sessionID, data);
   };
@@ -657,7 +655,7 @@ class SplitText extends React.Component {
   handleNewUserMessage = newMessage => {
 
     const url = ENDPOINT + "updateChat/" + this.state.sessionID;
-    let who = this.state.user_name;
+    let who = this.props.userSignature || this.props.name;
     let data = { message: String(new Date()), who, newMessage };
 
     axios.put(url, data).then(

@@ -738,15 +738,15 @@ class SplitText extends React.Component {
           handleDownloadChange={this.handleDownloadChange}
           handleFinishDownload={this.handleFinishDownload}
         /> */}
-        {/* <FirstTimerModal
+        <FirstTimerModal
           show={this.state.isFirstSessionEver}
           changeFirstTimerModalState={this.changeShowFirstTimerModal}
-        /> */}
-        {/* <RemindingTipModal
+        />
+        <RemindingTipModal
           show={this.state.showRemindingTip}
           changeShowRemindingTip={this.changeShowRemindingTip}
           tipMessage={this.state.tipMessage}
-        /> */}
+        />
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
             <Toast

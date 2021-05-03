@@ -77,7 +77,6 @@ function App() {
   const ensureOhyayAction = async action => {
     if (!window.ohyay) {
       // resource didn't load 
-      console.log("window.ohyay doesn't exist");
       return;
     }
     if (window.ohyay.getCurrentRoomId) {

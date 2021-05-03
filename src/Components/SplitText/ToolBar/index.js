@@ -275,7 +275,7 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
         </label>
       </div>
       <div className="right-side-toolbar">
-        <TeammateCount userArray={Object.entries(onlineUsers)} />
+        {/* <TeammateCount userArray={Object.entries(onlineUsers)} /> */}
         {/* CREATING NEW SESSION */}
         {/* <OverlayTrigger
             trigger={["hover", "focus"]}

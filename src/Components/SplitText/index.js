@@ -24,6 +24,8 @@ import "./ReactChatWidget.css";
 import { isMobile } from 'react-device-detect';
 import { Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
+import FirstTimerModal from './FirstTimerModal';
+import RemindingTipModal from './RemindingTipModal';
 
 import { apiGetCall, apiPutCall, ENDPOINT } from "../endpoints";
 
@@ -82,7 +84,7 @@ class SplitText extends React.Component {
       fileName: "",
       waitingForInput: false,
       showDownloadForm: false,
-      isFirstSessionEver: false,
+      isFirstSessionEver: true,
       stopExecution: false,
       showRemindingTip: false,
       tipMessage: "",

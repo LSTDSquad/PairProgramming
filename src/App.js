@@ -17,10 +17,6 @@ import About from "./About";
 
 Amplify.configure(awsconfig);
 
-const URL_PREFIX = 'https://www.pearprogram.com/#/';
-const TEMPLATE_ROOMS = new Set(['scene_JkvFBW0n', 'scene_-E27Igal']);
-const NEW_OHYAY = 10;
-
 function getUrlVars() {
   var vars = {};
   var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
@@ -34,82 +30,59 @@ const TEMPLATE_ROOMS = new Set(['scene_JkvFBW0n', 'scene_-E27Igal']);
 
 function App() {
   const params = getUrlVars();
-  let [displayName, setDisplayName] = useState(params['user'] || 'Guest');
-  let [hasUserInfo, setHasUserInfo] = useState(false);
-  //used for the userTable
-  let [userSignature, setUserSignature] = useState(null); //normally the email, but sometimes the ohyay userID
-  let timer;
-
+  const [displayName, setDisplayName] = useState(params['user'] || "Guest");
+  const [email, setEmail] = useState(null);
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
       const {name, email} = user.attributes;
       setDisplayName(name);
-      setUserSignature(email);
-    
-    }).catch(() => {}).finally(() => setHasUserInfo(true));
+      setEmail(email);
+    }).catch(() => { });
   };
 
   const calibrateOhYay = async () => {
+    console.log("calibrating");
     const roomId = await window.ohyay.getCurrentRoomId();
-
+    console.log("template room has", true);
     if (TEMPLATE_ROOMS.has(roomId)) { //whatever the template id is 
       return;
     }
     // pear_iframe is the tag you used for your iframe
     const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
-    await window.ohyay.updateElement(iframe.id, { url: URL_PREFIX + roomId + '?inohyay=true' });
-    setOhyayUser();
-  };
+    await window.ohyay.updateElement(iframe.id, { url: 'https://www.pearprogram.com/#/' + roomId + '?inohyay=true' })
+    console.log('Current Room', roomId);
+  }
 
-  const setOhyayUser = () => new Promise(async (resolve, reject) => {
-    console.log("setting ohyay user");
+  const setOhyayUser = async () => {
     const userId = await window.ohyay.getCurrentUserId();
     const user = await window.ohyay.getUser(userId);
-    console.log(user);
-    if (user) { // if user is not anonymous 
-      setDisplayName(user.name);
-      setUserSignature(userId); //something like u_jwwiu1ijefj08 . 
-    }
-    console.log('userID', userId);
-    resolve(user ? user.name : 'guest');
-  }).then(ret => {
-    setHasUserInfo(true);
-    console.log('displayname after action ', ret);
-  });
+    console.log('userId', userId);
+    console.log('user', user);
+    const display = user ? user.name : "Guest"; //to handle incognito mode 
+    setDisplayName(display);
+    setEmail(userId); //it's not actually their email, but we are just calling it email. it's actually something like u_jwwiu1ijefj08
+  }
 
   const ensureOhyayAction = async action => {
-    if (!window.ohyay) {
-      // resource didn't load 
-      console.log("window.ohyay doesn't exist");
-      return;
-    }
+    console.log(window.ohyay);
     if (window.ohyay.getCurrentRoomId) {
-      console.log("ohyay already loaded");
       await action();
     } else {
-      console.log("waiting to load");
-      await window.ohyay.setApiLoadedListener(() => action());
+      await window.ohyay.setApiLoadedListener(async s => await action());
     }
   }
 
   // get user info upon initial load 
   useEffect(() => {
-    //in case ohyay doesn't actually respond. 
-    timer = setTimeout(() => {
-      console.log('5000 is up');
-      clearTimeout(timer);
-      if (hasUserInfo) return;
-      setHasUserInfo(true);
-    }, 5000); //give ohyay 5000 sec before giving up 
-    console.log('params:', params);
-    //splittext won't load until user info has been loaded. 
-    if (params['inohyay'] === 'true') {
-      //don't care about the authentication or logged in state if it's in ohyay
-      ensureOhyayAction(setOhyayUser);
-    } else if (params['newohyay'] === 'true') {
+    getAttributes();
+
+    if (params['newohyay'] === 'true') {
+      console.log(window.ohyay);
       ensureOhyayAction(calibrateOhYay);
-    } else { // just a regular browser 
-      getAttributes();
+    }
+
+    if (params['inohyay'] === 'true') {
+      ensureOhyayAction(setOhyayUser);
     }
 
   }, []);
@@ -123,9 +96,8 @@ function App() {
             <Route
               exact
               path="/"
-              render={routeProps => userSignature ? <Home {...routeProps} /> : 
-              <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={ signUpConfig } theme={myTheme} usernameAttributes='email' />} />
-
+              render={routeProps => email ? <Home {...routeProps} /> :
+                <Authenticator onStateChange={(authState) => getAttributes()} signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
             <Route
               exact
               path="/about"
@@ -133,13 +105,14 @@ function App() {
                 return (<About {...routeProps} />)
               }}
             />
-            
             <Route
               exact
               path="/:sessionID"
-              render={routeProps => 
-                hasUserInfo ? <SplitText {...routeProps} name={displayName} userSignature={userSignature} /> : <Loading/>}/>
-
+              render={routeProps => email ?
+                <SplitText {...routeProps} name={displayName} email={email} /> :
+                <SplitText {...routeProps} name={displayName} email={email} />
+                // <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
+              } />
           </Switch>
         </div>
       </Router>

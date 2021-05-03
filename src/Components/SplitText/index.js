@@ -26,8 +26,6 @@ import "./ReactChatWidget.css";
 import { isMobile } from 'react-device-detect';
 import { Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
-import FirstTimerModal from './FirstTimerModal';
-import RemindingTipModal from './RemindingTipModal';
 
 import { apiGetCall, apiPutCall, ENDPOINT } from "../endpoints";
 
@@ -37,8 +35,7 @@ const MINUTES_BETWEEN_TIPS = 10;
 
 /**
  * props: 
- * name, userSignature
-
+ * name, email
  */
 class SplitText extends React.Component {
   constructor(props) {
@@ -87,15 +84,12 @@ class SplitText extends React.Component {
       fileName: "",
       waitingForInput: false,
       showDownloadForm: false,
-      isFirstSessionEver: true,
+      isFirstSessionEver: false,
       stopExecution: false,
       showRemindingTip: false,
       tipMessage: "",
       isRunningCode: false,
     };
-
-    this.updatedUserTable = false;
-    
     this.editorRef = null;
     this.updatedUserTable = false;
 
@@ -181,7 +175,6 @@ class SplitText extends React.Component {
     });
   }
 
-
   updatePresences = (isFirstTime) => {
     const myID = this.state.userID;
     this.PubNub.hereNow({
@@ -199,41 +192,13 @@ class SplitText extends React.Component {
       let changed = false;
 
       occupants.map(({ uuid, state }) => {
-        
         if (!(uuid in s) || !s[uuid]) {
           changed = true;
         }
-
         if (!state) {
           return; // probably means it's a ghost
-        } else if (state.UserName && s[uuid] !== state.UserName) {
-          //check that it matches yours 
-          s[uuid] = state.UserName;
-          changed = true;
-
-        } else if (uuid === myID && this.props.name !== state.UserName) {
-
-          // THIS IS STILL NOT WORK ING 
-          //check that your own name matches. 
-          console.log('myID didnt match', 'state', state, 'name', this.props.name);
-          s[uuid] = this.props.name;
-          changed = true;
-
-          this.PubNub.setState({
-            state: { UserName: this.props.name },
-            channels: [this.state.sessionID],
-          }, function (status, response) {
-            console.log('setstate pubnub response', response);
-            if (status.isError) {
-              console.log(status);
-            }
-          });
-        } else if (!s[uuid]) { // you don't already have a name for it. 
-          //make the default: 
-          s[uuid] = "Guest";
-          changed = true;
-
         }
+        s[uuid] = (state && state.UserName) || "Guest";
         unAccountedFor.delete(uuid);
       });
 
@@ -285,14 +250,17 @@ class SplitText extends React.Component {
     });
   }
 
-  componentDidUpdate(prevProps, props) {
-    if ((this.props.userSignature || prevProps.userSignature) && !this.updatedUserTable) {
-      //now, update the sessions of the user
-      const session = this.props.match.params.sessionID;
-      apiPutCall("updateSessions/" + this.props.userSignature, { session });
-      this.updatedUserTable = true;
-    }
+  setUserName = () => {
+    this.PubNub.setState({
+      state: { UserName: this.props.name },
+      channels: [this.state.sessionID],
+    }, function (status, response) {
+      if (status.isError) {
+        console.log(status);
+      }
+    });
 
+    this.setState({ user_name: this.props.name });
   }
 
 
@@ -317,7 +285,7 @@ class SplitText extends React.Component {
 
       this.unsubscribeChannel();
     });
-
+    // const { name } = this.props;
 
 
     //add PubNub listener to handle messages
@@ -341,7 +309,7 @@ class SplitText extends React.Component {
           (message.Who !== this.state.userID)
         ) {
           this.setState({ lines: message.What });
-        } 
+        }
       },
       presence: ({ action, occupancy, state, uuid }) => {
       },
@@ -374,26 +342,10 @@ class SplitText extends React.Component {
     }
 
     //set the username. this is used in things like toggle
-    this.PubNub.setState({
-      state: { UserName: this.props.name },
-      channels: [this.state.sessionID],
-    }, function (status, response) {
-      if (status.isError) {
-        console.log(status);
-      }
-    });
-
-    this.setState({ user_name: this.props.name });
+    this.setUserName();
 
     this.changeShowFirstTimerModal(true);
 
-    //now, update the sessions of the user
-    //remember to try this again in case it's an ohyay user
-    if (this.props.userSignature) {
-      this.updatedUserTable = true;
-      apiPutCall("updateSessions/" + this.props.userSignature, { session });
-    }
-    
 
     //set once!
     //for the reminder tips that pop up
@@ -410,12 +362,21 @@ class SplitText extends React.Component {
     }, MS_BETWEEN_TIME_CHECKS);
   }
 
+  componentDidUpdate(prevProps, props) {
+    if ((this.props.email || prevProps.email) && !this.updatedUserTable) {
+      //now, update the sessions of the user
+      const session = this.props.match.params.sessionID;
+      apiPutCall("updateSessions/" + this.props.email, { session });
+      this.updatedUserTable = true;
+    }
+  }
+
   packageMessage(what, type) {
     //package either cursor or selection change into message
     //object and send it in SplitText.js sendMessage function
     const messageObj = {
       Who: this.state.userID,
-      UserName: this.props.name,
+      UserName: this.state.user_name,
       Type: type,
       What: what,
       When: new Date().valueOf()
@@ -429,8 +390,7 @@ class SplitText extends React.Component {
       type === "comment" ||
       type === "chat"
     ) {
-      let who = this.props.userSignature || this.props.name;
-
+      let who = this.props.email;
       const data = { event: String(new Date()), who, type };
       apiPutCall("updateTimeStamps/" + this.state.sessionID, data);
     }
@@ -454,8 +414,7 @@ class SplitText extends React.Component {
    */
   putSessionLength = async () => {
 
-    const who = this.props.userSignature || this.props.name;
-
+    const who = this.props.email;
     const data = { start: this.state.startTime, end: String(new Date()), who };
     apiPutCall("updateSessionLength/" + this.state.sessionID, data);
   };
@@ -686,7 +645,16 @@ class SplitText extends React.Component {
   };
 
   componentWillUnmount() {
+    //mostly removes users from PubNub channels on browserclose/refresh (not 100% successful)
+    // this.setTimeout(3000);
 
+    // if (this.state.isPilot) {
+    //   //need to handoff
+    //   //the next random one
+    //   const newPilot = Object.entries(this.state.onlineUsers).find((user) => user[0] !== this.state.userID);
+    //   //newPilot is like [uuid, userName]
+    //   this.setPilot(newPilot[0]);
+    // }
     clearInterval(this.hereNowInterval);
     this.unsubscribeChannel();
     window.removeEventListener("beforeunload", this.unsubscribeChannel);
@@ -701,9 +669,8 @@ class SplitText extends React.Component {
 
   handleNewUserMessage = newMessage => {
 
-    const url = ENDPOINT + "updateChat/" + this.state.sessionID;
-    let who = this.props.userSignature || this.props.name;
-
+    const subpath = "updateChat/" + this.state.sessionID;
+    let who = this.props.email || this.props.name || 'guest'; // or user id, if it's ohyay
     let data = { message: String(new Date()), who, newMessage };
 
     apiPutCall(subpath, data);
@@ -776,7 +743,6 @@ class SplitText extends React.Component {
               handleIDChange={this.handleSessionIDChange}
               handleDownload={this.handleFinishDownload}
               title={this.state.fileName}
-              userSignature={this.props.userSignature}
               numUsers={this.state.numUsers}
               changeShowFirstTimerModal={this.changeShowFirstTimerModal}
             />
@@ -800,7 +766,7 @@ class SplitText extends React.Component {
                 handleRun={this.runCode}
                 setEditorRef={this.setEditorRef}
                 addToast={this.addToast}
-                user_name={this.props.name}
+                user_name={this.state.user_name}
                 packageMessage={this.packageMessage}
                 isRunningCode={this.state.isRunningCode}
                 handleInterrupt={this.handleInterrupt} // to stop code

@@ -205,21 +205,22 @@ class SplitText extends React.Component {
           changed = true;
 
         } else if (uuid === myID && this.props.name !== state.UserName) {
+
+          // THIS IS STILL NOT WORK ING 
           //check that your own name matches. 
-          console.log('myID didnt match');
+          console.log('myID didnt match', 'state', state, 'name', this.props.name);
           s[uuid] = this.props.name;
           changed = true;
-
-          //officially update it. 
+          
           this.PubNub.setState({
             state: { UserName: this.props.name },
             channels: [this.state.sessionID],
           }, function (status, response) {
+            console.log('setstate pubnub response', response);
             if (status.isError) {
               console.log(status);
             }
           });
-
         } else if (!s[uuid]) { // you don't already have a name for it. 
           //make the default: 
           s[uuid] = "Guest";
@@ -387,7 +388,7 @@ class SplitText extends React.Component {
     //object and send it in SplitText.js sendMessage function
     const messageObj = {
       Who: this.state.userID,
-      UserName: this.state.user_name,
+      UserName: this.props.name,
       Type: type,
       What: what,
       When: new Date().valueOf()
@@ -787,7 +788,7 @@ class SplitText extends React.Component {
                 handleRun={this.runCode}
                 setEditorRef={this.setEditorRef}
                 addToast={this.addToast}
-                user_name={this.state.user_name}
+                user_name={this.props.name}
                 packageMessage={this.packageMessage}
                 isRunningCode={this.state.isRunningCode}
                 handleInterrupt={this.handleInterrupt} // to stop code

@@ -77,6 +77,7 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
       apiPutCall("updateTimeStamps/" + sessionID, data);
       //if this session exists already, update the entry in dynamoDB
       apiPutCall("updateToggleCount/" + sessionID, { timeStamp: String(new Date()) });
+
     }
   };
 
@@ -275,6 +276,7 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
         </label>
       </div>
       <div className="right-side-toolbar">
+        {/* TEAMMATE COUNT AND HOVER */}
         {/* <TeammateCount userArray={Object.entries(onlineUsers)} /> */}
         {/* CREATING NEW SESSION */}
         {/* <OverlayTrigger
@@ -295,6 +297,7 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
           sessionID={sessionID}
           onSessionIDChange={handleIDChange}
         /> */}
+
         {/* <Button
           variant={isPilot ? "primary" : ""}
           className={isPilot ? "" : "help-button-copilot"}

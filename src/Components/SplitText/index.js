@@ -4,6 +4,7 @@ import TextOutput from "./TextOutput/";
 import TextInput from "./TextInput/";
 import ToolBar from "./ToolBar/";
 import Loading from "../Loading/";
+import RemindingTipModal from "./RemindingTipModal";
 import PubNub from "pubnub";
 import axios from "axios";
 import Sk from "skulpt";
@@ -11,6 +12,7 @@ import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
 import "./SplitText.css";
 import MyToast from "./MyToast";
+import FirstTimerModal from "./FirstTimerModal";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { RemindingTipMessages } from "../../utilities/SessionUtilities";
@@ -36,6 +38,7 @@ const MINUTES_BETWEEN_TIPS = 10;
 /**
  * props: 
  * name, userSignature
+
  */
 class SplitText extends React.Component {
   constructor(props) {
@@ -94,6 +97,7 @@ class SplitText extends React.Component {
     this.updatedUserTable = false;
     
     this.editorRef = null;
+    this.updatedUserTable = false;
 
     // this.toggleTimer = null;
     this.remindingTipsInterval = null;
@@ -253,6 +257,13 @@ class SplitText extends React.Component {
           }
         }, () => this.setPilot(myID)); // pilot hasn't been set yet if there's an error.
       } else {
+
+        //in case name was updated from props. 
+        if (this.props.name !== s[this.state.userID]) {
+          s[this.state.userID] = this.props.name;
+          changed = true;
+          this.setUserName();
+        }
         this.fetchPilot((pilotID) => {
           if (!(pilotID in s)) {
             const sorted = Object.keys(s).sort();
@@ -260,7 +271,7 @@ class SplitText extends React.Component {
               //you came first! 
               this.setPilot(myID);
             }
-          } 
+          }
           this.updateInternalPilot(pilotID);
           if (!this.state.isPilot && Object.keys(s).length === 1) {
             this.setPilot(myID)
@@ -281,6 +292,7 @@ class SplitText extends React.Component {
       apiPutCall("updateSessions/" + this.props.userSignature, { session });
       this.updatedUserTable = true;
     }
+
   }
 
 
@@ -307,9 +319,11 @@ class SplitText extends React.Component {
     });
 
 
+
     //add PubNub listener to handle messages
     this.PubNub.addListener({
       message: ({ channel, message }) => {
+        console.log("received", message);
         if (
           (message.Type === "chat") &
           (message.Who !== this.state.userID)
@@ -407,6 +421,7 @@ class SplitText extends React.Component {
       When: new Date().valueOf()
     };
 
+
     if (
       type === "codeOutput" ||
       type === "confused" ||
@@ -415,6 +430,7 @@ class SplitText extends React.Component {
       type === "chat"
     ) {
       let who = this.props.userSignature || this.props.name;
+
       const data = { event: String(new Date()), who, type };
       apiPutCall("updateTimeStamps/" + this.state.sessionID, data);
     }
@@ -422,7 +438,10 @@ class SplitText extends React.Component {
     //send cursor/selection message on sessionID channel
     this.PubNub.publish(
       { channel: this.state.sessionID, message: messageObj },
-      function (status, response) { }
+      function (status, response) {
+        console.log(status, type, messageObj);
+
+      }
     );
   }
 
@@ -436,6 +455,7 @@ class SplitText extends React.Component {
   putSessionLength = async () => {
 
     const who = this.props.userSignature || this.props.name;
+
     const data = { start: this.state.startTime, end: String(new Date()), who };
     apiPutCall("updateSessionLength/" + this.state.sessionID, data);
   };
@@ -599,16 +619,11 @@ class SplitText extends React.Component {
     let sessionID = this.state.sessionID;
     if (this.props.path !== "/") {
       //if this session exists already, update the entry in dynamoDB
-      const url = ENDPOINT + "updateRunCount/" + sessionID;
+      const subpath = "updateRunCount/" + sessionID;
 
       let data = { timeStamp: String(new Date()) };
 
-      axios.put(url, data).then(
-        _ => { },
-        error => {
-          console.log(error);
-        }
-      );
+      apiPutCall(subpath, data);
     }
   }
 
@@ -688,14 +703,10 @@ class SplitText extends React.Component {
 
     const url = ENDPOINT + "updateChat/" + this.state.sessionID;
     let who = this.props.userSignature || this.props.name;
+
     let data = { message: String(new Date()), who, newMessage };
 
-    axios.put(url, data).then(
-      _ => {},
-      error => {
-        console.log(error);
-      }
-    );
+    apiPutCall(subpath, data);
 
     // package chat text and send through PubNub
     this.packageMessage(newMessage, "chat");
@@ -751,18 +762,6 @@ class SplitText extends React.Component {
         />
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
-            <Toast
-              className="copilot-toggle-msg"
-              show={this.state.showCopilotToggleMsg}
-            >
-              <Toast.Header closeButton={false}>
-                Swap request sent!
-              </Toast.Header>
-              <Toast.Body>
-                If pilot does not respond to request within{" "}
-                {this.state.msRemaining / 1000} seconds, you will become pilot.
-              </Toast.Body>
-            </Toast>
             <ToolBar
               isPilot={isPilot}
               userID={userID}

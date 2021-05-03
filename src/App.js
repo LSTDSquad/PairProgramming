@@ -17,17 +17,19 @@ import About from "./About";
 
 Amplify.configure(awsconfig);
 
-const URL_PREFIX = 'https://fix-for-ohyay.d1tkneodyg1kgq.amplifyapp.com/#/';
+const URL_PREFIX = 'https://www.pearprogram.com/#/';
 const TEMPLATE_ROOMS = new Set(['scene_JkvFBW0n', 'scene_-E27Igal']);
 const NEW_OHYAY = 10;
 
 function getUrlVars() {
   var vars = {};
-  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-      vars[key.toLowerCase()] = value;
+  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+    vars[key.toLowerCase()] = value;
   });
   return vars;
 }
+
+const TEMPLATE_ROOMS = new Set(['scene_JkvFBW0n', 'scene_-E27Igal']);
 
 
 function App() {
@@ -49,6 +51,7 @@ function App() {
 
   const calibrateOhYay = async () => {
     const roomId = await window.ohyay.getCurrentRoomId();
+
     if (TEMPLATE_ROOMS.has(roomId)) { //whatever the template id is 
       return;
     }
@@ -108,6 +111,7 @@ function App() {
     } else { // just a regular browser 
       getAttributes();
     }
+
   }, []);
 
   return (
@@ -121,12 +125,13 @@ function App() {
               path="/"
               render={routeProps => userSignature ? <Home {...routeProps} /> : 
               <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={ signUpConfig } theme={myTheme} usernameAttributes='email' />} />
+
             <Route
               exact
               path="/about"
               render={routeProps => {
-              return (<About {...routeProps} />)
-            }}
+                return (<About {...routeProps} />)
+              }}
             />
             
             <Route
@@ -134,6 +139,7 @@ function App() {
               path="/:sessionID"
               render={routeProps => 
                 hasUserInfo ? <SplitText {...routeProps} name={displayName} userSignature={userSignature} /> : <Loading/>}/>
+
           </Switch>
         </div>
       </Router>

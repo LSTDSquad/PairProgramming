@@ -89,6 +89,7 @@ class SplitText extends React.Component {
       isRunningCode: false,
     };
 
+    this.updatedUserTable = false;
     
     this.editorRef = null;
 
@@ -211,7 +212,7 @@ class SplitText extends React.Component {
           console.log('myID didnt match', 'state', state, 'name', this.props.name);
           s[uuid] = this.props.name;
           changed = true;
-          
+
           this.PubNub.setState({
             state: { UserName: this.props.name },
             channels: [this.state.sessionID],
@@ -269,6 +270,15 @@ class SplitText extends React.Component {
         this.setState({ onlineUsers: s });
       }
     });
+  }
+
+  componentDidUpdate(prevProps, props) {
+    if ((this.props.userSignature || prevProps.userSignature) && !this.updatedUserTable) {
+      //now, update the sessions of the user
+      const session = this.props.match.params.sessionID;
+      apiPutCall("updateSessions/" + this.props.userSignature, { session });
+      this.updatedUserTable = true;
+    }
   }
 
 
@@ -364,6 +374,7 @@ class SplitText extends React.Component {
     //now, update the sessions of the user
     //remember to try this again in case it's an ohyay user
     if (this.props.userSignature) {
+      this.updatedUserTable = true;
       apiPutCall("updateSessions/" + this.props.userSignature, { session });
     }
     

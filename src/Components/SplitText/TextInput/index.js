@@ -109,10 +109,15 @@ function TextInput({ isPilot, sessionID, userID, pubnub, setEditorRef,
     selMgr.current = new AceMultiSelectionManager(session.current); //setup selection manager in reference to editor
     session.current.$useWorker = false;
 
+    const defaultText = "def main():\n\tpass \n\nif __name__ == '__main__':\n\tmain()";
     //get the previously saved session's code.
     apiGetCall("getData/" + sessionID, response => {
-      setText(response.data);
-    }, () => {});
+      let startText = response.data;
+      if (startText === '') {
+        startText = defaultText;
+      }
+      setText(startText);
+    }, () => setText(defaultText));
 
 
     pubnub.addListener({

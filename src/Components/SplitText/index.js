@@ -24,6 +24,8 @@ import "./ReactChatWidget.css";
 import { isMobile } from 'react-device-detect';
 import { Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
+import FirstTimerModal from './FirstTimerModal';
+import RemindingTipModal from './RemindingTipModal';
 
 import { apiGetCall, apiPutCall, ENDPOINT } from "../endpoints";
 
@@ -82,7 +84,7 @@ class SplitText extends React.Component {
       fileName: "",
       waitingForInput: false,
       showDownloadForm: false,
-      isFirstSessionEver: false,
+      isFirstSessionEver: true,
       stopExecution: false,
       showRemindingTip: false,
       tipMessage: "",
@@ -738,15 +740,15 @@ class SplitText extends React.Component {
           handleDownloadChange={this.handleDownloadChange}
           handleFinishDownload={this.handleFinishDownload}
         /> */}
-        {/* <FirstTimerModal
+        <FirstTimerModal
           show={this.state.isFirstSessionEver}
           changeFirstTimerModalState={this.changeShowFirstTimerModal}
-        /> */}
-        {/* <RemindingTipModal
+        />
+        <RemindingTipModal
           show={this.state.showRemindingTip}
           changeShowRemindingTip={this.changeShowRemindingTip}
           tipMessage={this.state.tipMessage}
-        /> */}
+        />
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
             <Toast

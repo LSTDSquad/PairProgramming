@@ -42,25 +42,10 @@ import HoverClickPopover from "../../HoverClickPopover";
     />
  */
 function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
-  userName, packageMessage, handleIDChange, fetchPilot, setPilot, handleDownload,
+  userName, packageMessage, handleIDChange, setPilot, handleDownload, userSignature,
   title, changeShowFirstTimerModal }) {
-  //used for the hamburger menu
-  let [drawerOpen, setDrawerOpen] = useState(false);
   let [fileName, setFileName] = useState(title);
-  let [user, setUser] = useState(null); //from aws auth
 
-  useEffect(() => {
-    if (user === null) {
-      Auth.currentAuthenticatedUser()
-        .then(userID => setUser(userID))
-        .catch(err => {});
-    }
-  });
-
-  ///// for the hamburger menu
-  const toggleDrawer = open => {
-    setDrawerOpen(open);
-  };
 
   /////     handles the actual toggling for the pilot -> copilot
   const handleToggleClick = e => {
@@ -72,24 +57,27 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
       setPilot(newPilot[0]);
 
       let type = "pilotHandoff";
-      let who = userName;
+      let who = userSignature ? userSignature : userName;
       let data = { event: String(new Date()), who, type };
       apiPutCall("updateTimeStamps/" + sessionID, data);
-
       //if this session exists already, update the entry in dynamoDB
       apiPutCall("updateToggleCount/" + sessionID, { timeStamp: String(new Date()) });
-    };
-
+    }
   };
 
   /////     handles the toggling for copilot -> pilot
   const requestToggle = e => {
     e.preventDefault();
     if (!isPilot) {
-      // fetchPilot((pilotID) => {
-        //directed to pilotID
-        setPilot(userID);
-      // })
+      setPilot(userID);
+
+      let type = "pilotRequest";
+      let who = userSignature ? userSignature : userName;
+      let data = { event: String(new Date()), who, type };
+      apiPutCall("updateTimeStamps/" + sessionID, data);
+      //if this session exists already, update the entry in dynamoDB
+      apiPutCall("updateToggleCount/" + sessionID, { timeStamp: String(new Date()) });
+
     }
   };
 
@@ -309,16 +297,7 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
           sessionID={sessionID}
           onSessionIDChange={handleIDChange}
         /> */}
-        {/* LOGGING OUT */}
-        {/* <Button
-            className="m-2 bg-dark"
-            onClick={() => {
-              user.signOut();
-              window.location.reload(true);
-            }}
-          >
-            Log out
-          </Button> */}
+
         {/* <Button
           variant={isPilot ? "primary" : ""}
           className={isPilot ? "" : "help-button-copilot"}

@@ -203,10 +203,9 @@ function TextInput({ isPilot, sessionID, userID, pubnub, setEditorRef,
     ace_div.onkeyup = (e) => {
       handleMyCursorChange();
       const currText = editorRef.current.editor.getValue();
-      if (currText.length !== text.length) {
-        setText(currText);
-        handleTextChange(currText);
-      }
+      //for some reason, in here, text is always ""
+      setText(currText);
+      handleTextChange(currText);
     }
   }, [])
 

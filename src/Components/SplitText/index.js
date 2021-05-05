@@ -281,6 +281,9 @@ class SplitText extends React.Component {
       apiPutCall("updateSessions/" + this.props.userSignature, { session });
       this.updatedUserTable = true;
     }
+    if (this.state.isFirstSessionEver && this.props.userSignature && this.props.userSignature.indexOf('ANONYMOUS') >= 0) {
+      this.changeShowFirstTimerModal(false);
+    }
   }
 
 

@@ -7,24 +7,11 @@ import confusionButtonPNG from "../../resources/confusion_button.png";
 import chatButtonPNG from "../../resources/chat_button.png";
 
 /**
- * This file was made for CS bridge - 
  * It's the intro pop up that welcomes the user to a new session. 
  * It is used by splittext. 
  */
 
-const pairProgrammingVideoBody = () => {
-  return (
-    <iframe
-      width="100%"
-      height={window.innerHeight * 0.7}
-      src="https://www.youtube.com/embed/q7d_JtyCq1A?start=19"
-      frameBorder="0"
-      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-      allowFullScreen
-      title="tutorial pair programming"
-    ></iframe>
-  );
-};
+
 
 const introductionAndGuidelines = () => {
   return (
@@ -63,7 +50,6 @@ const FirstTimerModal = props => {
   let [pageNumber, setPageNumber] = useState(0);
 
   const pageMapping = [
-    pairProgrammingVideoBody,
     introductionAndGuidelines,
     pointOutChat,
     pointOutConfusion

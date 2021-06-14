@@ -11,9 +11,6 @@ import "skulpt/dist/skulpt.min.js";
 import "skulpt/dist/skulpt-stdlib.js";
 import "./SplitText.css";
 import MyToast from "./MyToast";
-import { confirmAlert } from "react-confirm-alert";
-import "react-confirm-alert/src/react-confirm-alert.css";
-import { RemindingTipMessages } from "../../utilities/SessionUtilities";
 import {
   Widget,
   addResponseMessage,
@@ -24,14 +21,10 @@ import "./ReactChatWidget.css";
 import { isMobile } from 'react-device-detect';
 import { Container, Row, Toast } from "react-bootstrap";
 import { Switch, FormControlLabel } from "@material-ui/core";
-// import FirstTimerModal from './FirstTimerModal';
-// import RemindingTipModal from './RemindingTipModal';
 
 import { apiGetCall, apiPutCall, ENDPOINT } from "../endpoints";
 
 const MAX_TOGGLE_WAIT = 10000; //10 seconds is the max amount of time before toggle gets handed over to copilot
-const MS_BETWEEN_TIME_CHECKS = 60 * 1000; //60 seconds
-const MINUTES_BETWEEN_TIPS = 10;
 
 /**
  * props: 
@@ -40,35 +33,26 @@ const MINUTES_BETWEEN_TIPS = 10;
 class SplitText extends React.Component {
   constructor(props) {
     super(props);
-    //used for splitPane, i think. (textOutput)
-    this.outputRef = React.createRef();
-    this.inputRef = React.createRef();
-
+    this.codeText = React.createRef();
     //BINDINGS
     this.setEditorRef = this.setEditorRef.bind(this);
-    this.handleTextChange = this.handleTextChange.bind(this);
     this.handleSessionIDChange = this.handleSessionIDChange.bind(this);
     this.runCode = this.runCode.bind(this);
-    this.handleDownload = this.handleDownload.bind(this);
     this.addToast = this.addToast.bind(this);
     this.packageMessage = this.packageMessage.bind(this);
     this.basicSetState = this.basicSetState.bind(this);
-    this.handleDownloadChange = this.handleDownloadChange.bind(this);
-    this.changeShowFirstTimerModal = this.changeShowFirstTimerModal.bind(this);
-    this.changeShowRemindingTip = this.changeShowRemindingTip.bind(this);
     this.updatePresences = this.updatePresences.bind(this);
+    this.setCodeText = this.setCodeText.bind(this);
     const userID = PubNub.generateUUID();
 
     this.state = {
       textLoaded: false,
       startTime: String(),
       titleLoaded: false,
-      text: "# happy coding!",
+      text: "",
       sessionID: this.props.match.params.sessionID, //new session will default to 'unsaved' as the session ID
       userID, //NOTE THAT THIS IS ONLY FOR PUBNUB PURPOSES. THIS IS NOT THAT SPECIFIC USER'S UNIQUE IDENTIFIER
       //these two items operate like dictionaries key: userID, value: cursor/highlight coordinates
-      cursors: {},
-      selections: {},
       isPilot: true,
       onlineUsers: {}, //serves as a dict from uuid to name
       lines: [
@@ -79,15 +63,10 @@ class SplitText extends React.Component {
       resolve: {},
       seeToasts: true,
       user_name: "",
-      showCopilotToggleMsg: false,
       msRemaining: MAX_TOGGLE_WAIT,
       fileName: "",
       waitingForInput: false,
-      showDownloadForm: false,
-      isFirstSessionEver: true,
       stopExecution: false,
-      showRemindingTip: false,
-      tipMessage: "",
       isRunningCode: false,
     };
 
@@ -108,7 +87,6 @@ class SplitText extends React.Component {
       publishKey: "pub-c-4da51e8f-f106-4eef-a124-5bc6548b0306",
       uuid: userID,
       state: [],
-      // presenceTimeout: 20, // this is working! 
     });
 
     this.MessageAuthor = ({ author }) => (
@@ -147,9 +125,6 @@ class SplitText extends React.Component {
   updateInternalPilot = (pilotID) => {
     const myID = this.state.userID;
     if (!this.state.isPilot && pilotID === myID) {
-      if (this.state.showCopilotToggleMsg) {
-        this.setState({ showCopilotToggleMsg: false });
-      }
       this.setState({ isPilot: true });
     } else if (this.state.isPilot && pilotID !== myID) {
       this.setState({ isPilot: false });
@@ -274,7 +249,7 @@ class SplitText extends React.Component {
     });
   }
 
-  componentDidUpdate(prevProps, props) {
+  componentDidUpdate(prevProps, _) {
     if ((this.props.userSignature || prevProps.userSignature) && !this.updatedUserTable) {
       //now, update the sessions of the user
       const session = this.props.match.params.sessionID;
@@ -285,8 +260,6 @@ class SplitText extends React.Component {
 
 
   componentDidMount() {
-
-    const myID = this.state.userID;
 
     // initial update
     this.updatePresences(true);
@@ -309,7 +282,7 @@ class SplitText extends React.Component {
 
     //add PubNub listener to handle messages
     this.PubNub.addListener({
-      message: ({ channel, message }) => {
+      message: ({ _, message }) => {
         if (
           (message.Type === "chat") &
           (message.Who !== this.state.userID)
@@ -328,8 +301,6 @@ class SplitText extends React.Component {
         ) {
           this.setState({ lines: message.What });
         } 
-      },
-      presence: ({ action, occupancy, state, uuid }) => {
       },
       objects: ({ message }) => {
         if (!message.data.custom.pilot) return;
@@ -371,8 +342,6 @@ class SplitText extends React.Component {
 
     this.setState({ user_name: this.props.name });
 
-    this.changeShowFirstTimerModal(true);
-
     //now, update the sessions of the user
     //remember to try this again in case it's an ohyay user
     if (this.props.userSignature) {
@@ -380,20 +349,6 @@ class SplitText extends React.Component {
       apiPutCall("updateSessions/" + this.props.userSignature, { session });
     }
     
-
-    //set once!
-    //for the reminder tips that pop up
-    this.remindingTipsInterval = setInterval(() => {
-      const now = new Date();
-      //tip on the 00:10, :20, etc. of the time
-      if (now.getMinutes() % MINUTES_BETWEEN_TIPS === 0) {
-        this.changeShowRemindingTip(true);
-        //make a global array that has the tip messages. length 6
-        //based on getMinutes() / MINUTES_BETWEEN_TIPS
-        const tipNum = Math.floor(now.getMinutes() / 10);
-        this.setState({ tipMessage: RemindingTipMessages[tipNum] });
-      }
-    }, MS_BETWEEN_TIME_CHECKS);
   }
 
   packageMessage(what, type) {
@@ -422,12 +377,15 @@ class SplitText extends React.Component {
     //send cursor/selection message on sessionID channel
     this.PubNub.publish(
       { channel: this.state.sessionID, message: messageObj },
-      function (status, response) { }
     );
   }
 
   setEditorRef = editorRef => {
     this.editorRef = editorRef;
+  }
+
+  setCodeText = text => {
+    this.codeText.current = text;
   }
 
   /**
@@ -611,23 +569,16 @@ class SplitText extends React.Component {
       );
     }
   }
-
-  /**
-   * to be called when we want the predownload form shown, and also someone is trying to download
-   */
-  handleDownload = () => {
-    this.setState({ showDownloadForm: true });
-  };
-
   /**
    * When we can actually carry through with the .py download. 
    */
   handleFinishDownload = () => {
     this.setState({ showDownloadForm: false });
     const element = document.createElement("a");
-    const file = new Blob([this.state.text], { type: "text/x-python" });
+    const file = new Blob([this.codeText.current], { type: "text/x-python" });
+    console.log(this.codeText);
     element.href = URL.createObjectURL(file);
-    element.download = "pearprogram.py"; // change to 
+    element.download = this.state.fileName + '.py'; // change to 
     document.body.appendChild(element); // Required for this to work in FireFox
     element.click();
   };
@@ -635,12 +586,6 @@ class SplitText extends React.Component {
   //////                                                    //////
   //////   Functions that handle state changes/updates      //////
   //////                                                    //////
-
-  /////       for both input and output panes
-  /////         updates the state
-  handleTextChange = text => {
-    this.setState({ text });
-  };
 
   handleSessionIDChange(id) {
     //on sessionID change (session was loaded), unsubscribe
@@ -701,18 +646,6 @@ class SplitText extends React.Component {
     this.packageMessage(newMessage, "chat");
   };
 
-  handleDownloadChange(newValue) {
-    this.setState({ showDownloadForm: newValue });
-  }
-
-  changeShowFirstTimerModal(newValue) {
-    this.setState({ isFirstSessionEver: newValue });
-  }
-
-  changeShowRemindingTip(newValue) {
-    this.setState({ showRemindingTip: newValue });
-  }
-
   render() {
     const {
       sessionID,
@@ -735,34 +668,10 @@ class SplitText extends React.Component {
       </div>
     ) : this.state.titleLoaded ? (
       <div>
-        {/* <PredownloadModal
-          show={this.state.showDownloadForm}
-          handleDownloadChange={this.handleDownloadChange}
-          handleFinishDownload={this.handleFinishDownload}
-        /> */}
-        {/* <FirstTimerModal
-          show={this.state.isFirstSessionEver}
-          changeFirstTimerModalState={this.changeShowFirstTimerModal}
-        />
-        <RemindingTipModal
-          show={this.state.showRemindingTip}
-          changeShowRemindingTip={this.changeShowRemindingTip}
-          tipMessage={this.state.tipMessage}
-        /> */}
+       
         <Container fluid style={{ padding: 0, margin: 0 }}>
           <Row noGutters={true} style={{ justifyContent: "center" }}>
-            <Toast
-              className="copilot-toggle-msg"
-              show={this.state.showCopilotToggleMsg}
-            >
-              <Toast.Header closeButton={false}>
-                Swap request sent!
-              </Toast.Header>
-              <Toast.Body>
-                If pilot does not respond to request within{" "}
-                {this.state.msRemaining / 1000} seconds, you will become pilot.
-              </Toast.Body>
-            </Toast>
+            
             <ToolBar
               isPilot={isPilot}
               userID={userID}
@@ -773,7 +682,6 @@ class SplitText extends React.Component {
               fetchPilot={this.fetchPilot}
               history={history}
               setPilot={this.setPilot}
-              packageMessage={this.packageMessage}
               handleIDChange={this.handleSessionIDChange}
               handleDownload={this.handleFinishDownload}
               title={this.state.fileName}
@@ -802,6 +710,7 @@ class SplitText extends React.Component {
                 setEditorRef={this.setEditorRef}
                 addToast={this.addToast}
                 user_name={this.props.name}
+                setParentText={this.setCodeText}
                 packageMessage={this.packageMessage}
                 isRunningCode={this.state.isRunningCode}
                 handleInterrupt={this.handleInterrupt} // to stop code
@@ -857,7 +766,6 @@ class SplitText extends React.Component {
             />
           </Row>
         </Container>
-        <div id="hello.txt" style={{ display: "none" }}>{`hello\nworld\n`}</div>
       </div>
     ) : (
       <Loading />

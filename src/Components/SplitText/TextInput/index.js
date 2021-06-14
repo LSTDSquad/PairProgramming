@@ -16,21 +16,6 @@ import SplitPane from "react-split-pane";
 import { apiGetCall, apiPutCall } from "../../endpoints";
 import { RunOrStopButton, CommentButton, ConfusedButton, ResolveButton } from "./ProgramButtons";
 
-function usePrevious(value) {
-  const ref = useRef();
-  useEffect(() => {
-    ref.current = value;
-  });
-  return ref.current;
-}
-
-function areDifferentPositions(one, two) {
-  if (!one || !two) return false;
-  if (one.row !== two.row) return true;
-  if (one.column !== two.column) return true;
-  return false;
-}
-
 
 /*
 Props:
@@ -44,17 +29,22 @@ cursors: in the form {10392: cursorPositionObject, }
   addToast={this.addToast}
   user_name={this.state.user_name}
   packageMessage={this.packageMessage}
+  setParentText={this.setCodeText}
   isRunningCode={this.state.isRunningCode}
   pubnub={this.PubNub}
   handleInterrupt={this.handleInterrupt} // to stop code
 />
 
 */
-function TextInput({ isPilot, sessionID, userID, pubnub, setEditorRef,
+function TextInput({ isPilot, sessionID, userID, pubnub, setEditorRef, setParentText,
   handleRun, addToast, user_name, packageMessage, isRunningCode, handleInterrupt }) {
   const editorRef = useRef(); //set reference to ace editor
 
-  let [text, setText] = useState("");
+  let [text, setCodeText] = useState("");
+  function setText(t) {
+    setCodeText(t);
+    setParentText(t);
+  }
   //individual text boxes that send state to split view
 
   //selection, used for processing comments and confusions
@@ -91,7 +81,7 @@ function TextInput({ isPilot, sessionID, userID, pubnub, setEditorRef,
     pubnub.setState({
       state: { cursor: { row: currRow, column: currColumn }, selection: mySelected.current, UserName: user_name },
       channels: [sessionID],
-    }, function (status, response) {
+    }, function (status, _) {
       if (status.isError) {
         console.log(status);
       }

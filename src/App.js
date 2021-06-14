@@ -5,11 +5,11 @@ import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-github";
 import SplitText from "./Components/SplitText/";
 import Home from "./Components/Home/";
-import { HashRouter as Router, Route, Switch } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Amplify from "aws-amplify";
 import { I18n, Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
-import { withAuthenticator, Authenticator } from "aws-amplify-react"; // or 'aws-amplify-react-native';
+import { Authenticator } from "aws-amplify-react"; // or 'aws-amplify-react-native';
 import "@aws-amplify/ui/dist/style.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Loading from "./Components/Loading";
@@ -17,14 +17,14 @@ import About from "./About";
 
 Amplify.configure(awsconfig);
 
-const URL_PREFIX = 'https://fix-for-ohyay.d1tkneodyg1kgq.amplifyapp.com/#/';
-const TEMPLATE_ROOMS = new Set(['scene_JkvFBW0n', 'scene_-E27Igal']);
-const NEW_OHYAY = 10;
-
+/**
+ * getUrlVars
+ * @returns a dictionary of param to value 
+ */
 function getUrlVars() {
   var vars = {};
-  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-      vars[key.toLowerCase()] = value;
+  window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+    vars[key.toLowerCase()] = value;
   });
   return vars;
 }
@@ -35,78 +35,20 @@ function App() {
   let [displayName, setDisplayName] = useState(params['user'] || 'Guest');
   let [hasUserInfo, setHasUserInfo] = useState(false);
   //used for the userTable
-  let [userSignature, setUserSignature] = useState(null); //normally the email, but sometimes the ohyay userID
-  let timer;
+  let [userSignature, setUserSignature] = useState(null); //normally the email
 
   const getAttributes = () => {
     Auth.currentAuthenticatedUser().then(user => {
-      const {name, email} = user.attributes;
+      const { name, email } = user.attributes;
       setDisplayName(name);
       setUserSignature(email);
-    
-    }).catch(() => {}).finally(() => setHasUserInfo(true));
+
+    }).catch(() => { }).finally(() => setHasUserInfo(true));
   };
-
-  const calibrateOhYay = async () => {
-    const roomId = await window.ohyay.getCurrentRoomId();
-    if (TEMPLATE_ROOMS.has(roomId)) { //whatever the template id is 
-      return;
-    }
-    // pear_iframe is the tag you used for your iframe
-    const iframe = (await window.ohyay.getRoomElements(roomId, 'pear_iframe'))[0];
-    await window.ohyay.updateElement(iframe.id, { url: URL_PREFIX + roomId + '?inohyay=true' });
-    setOhyayUser();
-  };
-
-  const setOhyayUser = () => new Promise(async (resolve, reject) => {
-    console.log("setting ohyay user");
-    const userId = await window.ohyay.getCurrentUserId();
-    const user = await window.ohyay.getUser(userId);
-    console.log(user);
-    if (user) { // if user is not anonymous 
-      setDisplayName(user.name);
-      setUserSignature(userId); //something like u_jwwiu1ijefj08 . 
-    }
-    console.log('userID', userId);
-    resolve(user ? user.name : 'guest');
-  }).then(ret => {
-    setHasUserInfo(true);
-    console.log('displayname after action ', ret);
-  });
-
-  const ensureOhyayAction = async action => {
-    if (!window.ohyay) {
-      // resource didn't load 
-      return;
-    }
-    if (window.ohyay.getCurrentRoomId) {
-      console.log("ohyay already loaded");
-      await action();
-    } else {
-      console.log("waiting to load");
-      await window.ohyay.setApiLoadedListener(() => action());
-    }
-  }
 
   // get user info upon initial load 
   useEffect(() => {
-    //in case ohyay doesn't actually respond. 
-    timer = setTimeout(() => {
-      console.log('5000 is up');
-      clearTimeout(timer);
-      if (hasUserInfo) return;
-      setHasUserInfo(true);
-    }, 5000); //give ohyay 5000 sec before giving up 
-    console.log('params:', params);
-    //splittext won't load until user info has been loaded. 
-    if (params['inohyay'] === 'true') {
-      //don't care about the authentication or logged in state if it's in ohyay
-      ensureOhyayAction(setOhyayUser);
-    } else if (params['newohyay'] === 'true') {
-      ensureOhyayAction(calibrateOhYay);
-    } else { // just a regular browser 
-      getAttributes();
-    }
+    getAttributes();
   }, []);
 
   return (
@@ -118,21 +60,21 @@ function App() {
             <Route
               exact
               path="/"
-              render={routeProps => userSignature ? <Home {...routeProps} /> : 
-              <Authenticator onStateChange={(authState) => getAttributes()}  signUpConfig={ signUpConfig } theme={myTheme} usernameAttributes='email' />} />
+              render={routeProps => userSignature ? <Home {...routeProps} /> :
+                <Authenticator onStateChange={_ => getAttributes()} signUpConfig={signUpConfig} theme={myTheme} usernameAttributes='email' />} />
             <Route
               exact
               path="/about"
               render={routeProps => {
-              return (<About {...routeProps} />)
-            }}
+                return (<About {...routeProps} />)
+              }}
             />
-            
+
             <Route
               exact
               path="/:sessionID"
-              render={routeProps => 
-                hasUserInfo ? <SplitText {...routeProps} name={displayName} userSignature={userSignature} /> : <Loading/>}/>
+              render={routeProps =>
+                hasUserInfo ? <SplitText {...routeProps} name={displayName} userSignature={userSignature} /> : <Loading />} />
           </Switch>
         </div>
       </Router>

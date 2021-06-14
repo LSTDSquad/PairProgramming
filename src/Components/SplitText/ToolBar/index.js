@@ -33,7 +33,6 @@ import HoverClickPopover from "../../HoverClickPopover";
       userArray={this.state.userArray}
       history={history}
       userName={this.props.attributes.name}
-      packageMessage={this.packageMessage}
       handleIDChange={this.handleSessionIDChange}\
       setPilot={this.setPilot}
       handleDownload={this.handleDownload}
@@ -42,7 +41,7 @@ import HoverClickPopover from "../../HoverClickPopover";
     />
  */
 function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
-  userName, packageMessage, handleIDChange, setPilot, handleDownload, userSignature,
+  userName, handleIDChange, setPilot, handleDownload, userSignature,
   title, changeShowFirstTimerModal }) {
   let [fileName, setFileName] = useState(title);
 
@@ -149,25 +148,12 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
     >
       {/* Hamburger Menu. experimental 
          */}
-      {/* <Button variant="light" onClick={() => this.toggleDrawer(true)}>
-          <Menu />
-        </Button>
-        <Drawer
-          anchor="left"
-          open={this.state.drawerOpen}
-          onClose={() => this.toggleDrawer(false)}
-        >
-          <ListGroup variant="flush">
-            <ListGroup.Item>Profile</ListGroup.Item>
-            <ListGroup.Item>Pair Programming Tips</ListGroup.Item>
-          </ListGroup>
-        </Drawer> */}
       <div className="left-side-toolbar">
-        {/* <Link to="/">
+        <Link to="/">
           <Button className="home-button">
             <HomeRounded fontSize="large" />
           </Button>
-        </Link> */}
+        </Link>
         <Form onSubmit={e => e.preventDefault()}>
           <Form.Control
             type="text"
@@ -275,7 +261,7 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
         </label>
       </div>
       <div className="right-side-toolbar">
-        {/* <TeammateCount userArray={Object.entries(onlineUsers)} /> */}
+        <TeammateCount userArray={Object.entries(onlineUsers)} />
         {/* CREATING NEW SESSION */}
         {/* <OverlayTrigger
             trigger={["hover", "focus"]}
@@ -289,12 +275,12 @@ function ToolBar({ isPilot, userID, sessionID, editorRef, onlineUsers, history,
               <Add />
             </Button>
           </OverlayTrigger> */}
-        {/* <CopyButton
+        <CopyButton
           //component to save session to backend
           editorRef={editorRef}
           sessionID={sessionID}
           onSessionIDChange={handleIDChange}
-        /> */}
+        />
         {/* <Button
           variant={isPilot ? "primary" : ""}
           className={isPilot ? "" : "help-button-copilot"}

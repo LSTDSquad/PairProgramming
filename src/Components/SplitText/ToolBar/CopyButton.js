@@ -47,7 +47,7 @@ function CopyButton({ editorRef, sessionID, onSessionIDChange }) {
     axios.post(url, data).then(
       response => {
         let newSession = "/" + response.data.id;
-        window.open("/#" + newSession);
+        window.open(newSession);
         addFork(response.data.id)
       },
       error => {

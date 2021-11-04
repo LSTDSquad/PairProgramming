@@ -14,7 +14,7 @@
     "async": "^3.2.0",
     "aws-amplify": "^3.0.7",
     "aws-amplify-react": "^4.1.6",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "bootstrap": "^4.4.1",
     "brace": "^0.11.1",
     "node-sass": "^4.14.1",

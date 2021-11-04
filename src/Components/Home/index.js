@@ -212,8 +212,6 @@ class Home extends React.Component {
                             <Card.Header className="d-flex w-100 flex-row justify-content-between">
                               {title}
                               <div>
-                                
-
                                 {forks && forks.length > 0 && (
                                   <Accordion.Toggle
                                     as={Button}
